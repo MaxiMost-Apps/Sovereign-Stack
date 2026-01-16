@@ -176,9 +176,9 @@ export default function LoginCore() {
               <p className="text-slate-400 text-sm mb-8">Join the inner circle. Build the future.</p>
 
               <div className="flex items-baseline gap-2 mb-8">
-                  <span className="text-5xl font-black text-white">$99</span>
+                  <span className="text-5xl font-black text-white">$199</span>
                   <span className="text-lg font-bold text-blue-500">Lifetime</span>
-                  <span className="text-xs text-slate-500 line-through ml-2">$299/yr</span>
+                  <span className="text-xs text-slate-500 line-through ml-2">$499</span>
               </div>
 
               <ul className="space-y-4 mb-8">
