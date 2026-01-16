@@ -7,6 +7,7 @@ import { supabase } from '../supabase';
 import { useAuth } from '../AuthSystem';
 import { subDays, format, parseISO, isSameDay } from 'date-fns';
 import { getThemeStyles } from '../config/themeConfig';
+import { AscensionOverlay } from '../components/AscensionOverlay';
 
 export default function ProgressPage() {
   const { user } = useAuth();
@@ -14,6 +15,7 @@ export default function ProgressPage() {
   const [consistencyData, setConsistencyData] = useState<any[]>([]);
   const [dailyPerfectionData, setDailyPerfectionData] = useState<any[]>([]); // For Siege Map
   const [ledgerData, setLedgerData] = useState<any[]>([]); // For Heatmap (Archive)
+  const [userProfile, setUserProfile] = useState<any>(null); // For Garnish Protocol
 
   // Fetch Data on Load
   useEffect(() => {
@@ -28,6 +30,10 @@ export default function ProgressPage() {
         .from('habits')
         .select('id, title, color, daily_goal')
         .eq('user_id', user.id);
+
+      // Fetch Profile for Tier Check
+      const { data: p } = await supabase.from('profiles').select('tier_name').eq('id', user.id).single();
+      setUserProfile(p);
 
       // 2. Fetch Logs (Last 90 Days) for Graphs
       const { data: logs } = await supabase
@@ -126,25 +132,32 @@ export default function ProgressPage() {
 
   if (loading) return <div className="p-12 text-center text-slate-500">Loading Telemetry...</div>;
 
+  const isInitiate = userProfile?.tier_name === 'INITIATE';
+
   return (
 
     <div className="p-6 max-w-6xl mx-auto space-y-12 pb-24">
 
       {/* SECTION 0: THE LEDGER (HEATMAP) */}
-      <div>
+      <div className="relative">
         <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">The Ledger</h1>
         <p className="text-slate-400 mb-6">Historical topology of your sovereignty.</p>
-        <div className="bg-[#0b0c10] border border-white/5 p-6 rounded-2xl mb-8">
+
+        {isInitiate && <AscensionOverlay />}
+
+        <div className="bg-[#0b0c10] border border-white/5 p-6 rounded-2xl mb-8" style={isInitiate ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
             <ContributionHeatmap data={ledgerData} />
         </div>
       </div>
 
       {/* SECTION 1: CONSISTENCY INDEX (Bar Chart) */}
-      <div>
+      <div className="relative">
         <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">Consistency Index</h1>
         <p className="text-slate-400 mb-6">Compliance Percentage by Protocol (Last 90 Days).</p>
 
-        <div className="h-[300px] w-full bg-[#0b0c10] border border-white/5 rounded-2xl p-4">
+        {isInitiate && <AscensionOverlay />}
+
+        <div className="h-[300px] w-full bg-[#0b0c10] border border-white/5 rounded-2xl p-4" style={isInitiate ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={consistencyData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
                     <XAxis type="number" domain={[0, 100]} hide />
@@ -165,11 +178,13 @@ export default function ProgressPage() {
       </div>
 
       {/* SECTION 2: SIEGE MAP (Daily Perfection) */}
-      <div>
+      <div className="relative">
         <h2 className="text-xl font-bold text-white uppercase tracking-tighter mb-2">Siege Map (Daily Perfection)</h2>
         <p className="text-slate-400 mb-6">Visualizing daily execution quality.</p>
 
-        <div className="bg-[#0b0c10] border border-white/5 p-6 rounded-2xl overflow-x-auto">
+        {isInitiate && <AscensionOverlay />}
+
+        <div className="bg-[#0b0c10] border border-white/5 p-6 rounded-2xl overflow-x-auto" style={isInitiate ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
             <div className="flex gap-1 min-w-max flex-wrap max-w-[800px]">
                 {/*
                    Displaying as a grid of 90 squares.

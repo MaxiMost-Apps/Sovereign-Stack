@@ -22,6 +22,7 @@ import { calculateStreak } from './utils/streakLogic';
 import { useToast } from './components/Toast';
 import { HabitCard } from './components/HabitCard'; // Import new HabitCard
 import { CouncilGhost } from '../features/ghost/CouncilGhost';
+import { AscensionOverlay } from '../components/AscensionOverlay';
 
 export default function DashboardCore() {
   const { toast } = useToast();
@@ -556,16 +557,30 @@ export default function DashboardCore() {
                     {/* Weekly Matrix needs DndContext to be present if it supports DnD, but it's not sortable usually */}
                     {/* However, since DndContext wraps everything, it's fine. */}
                     {viewMode === 'weekly' && (
-                         <WeeklyMatrix
-                           habits={safeHabits} currentDate={selectedDate} logs={logs}
-                           onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete}
-                           isSystemLocked={isSystemLocked}
-                           isSortMode={isSortMode}
-                           startOfWeek={startOfWeekVal}
-                           adjustedToday={adjustedToday}
-                         />
+                        <div className="relative">
+                             {/* GARNISH PROTOCOL: Blur for Initiates */}
+                             {userProfile?.tier_name === 'INITIATE' && <AscensionOverlay />}
+                             <div style={userProfile?.tier_name === 'INITIATE' ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                                 <WeeklyMatrix
+                                   habits={safeHabits} currentDate={selectedDate} logs={logs}
+                                   onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete}
+                                   isSystemLocked={isSystemLocked}
+                                   isSortMode={isSortMode}
+                                   startOfWeek={startOfWeekVal}
+                                   adjustedToday={adjustedToday}
+                                 />
+                             </div>
+                        </div>
                     )}
-                     {viewMode === 'monthly' && <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />}
+                     {viewMode === 'monthly' && (
+                        <div className="relative">
+                             {/* GARNISH PROTOCOL: Blur for Initiates */}
+                             {userProfile?.tier_name === 'INITIATE' && <AscensionOverlay />}
+                             <div style={userProfile?.tier_name === 'INITIATE' ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                                <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />
+                             </div>
+                        </div>
+                     )}
                 </DndContext>
             ) : (
                 /* STATIC MODE: Direct Render without DnD Context (Prevents "DragHandle in uninitialized Draggable" crash) */
@@ -607,16 +622,30 @@ export default function DashboardCore() {
                     )}
 
                     {viewMode === 'weekly' && (
-                         <WeeklyMatrix
-                           habits={safeHabits} currentDate={selectedDate} logs={logs}
-                           onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete}
-                           isSystemLocked={isSystemLocked}
-                           isSortMode={isSortMode}
-                           startOfWeek={startOfWeekVal}
-                           adjustedToday={adjustedToday}
-                         />
+                        <div className="relative">
+                             {/* GARNISH PROTOCOL: Blur for Initiates */}
+                             {userProfile?.tier_name === 'INITIATE' && <AscensionOverlay />}
+                             <div style={userProfile?.tier_name === 'INITIATE' ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                                 <WeeklyMatrix
+                                   habits={safeHabits} currentDate={selectedDate} logs={logs}
+                                   onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete}
+                                   isSystemLocked={isSystemLocked}
+                                   isSortMode={isSortMode}
+                                   startOfWeek={startOfWeekVal}
+                                   adjustedToday={adjustedToday}
+                                 />
+                             </div>
+                        </div>
                     )}
-                     {viewMode === 'monthly' && <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />}
+                     {viewMode === 'monthly' && (
+                        <div className="relative">
+                             {/* GARNISH PROTOCOL: Blur for Initiates */}
+                             {userProfile?.tier_name === 'INITIATE' && <AscensionOverlay />}
+                             <div style={userProfile?.tier_name === 'INITIATE' ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+                                <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />
+                             </div>
+                        </div>
+                     )}
                 </>
             )}
 
