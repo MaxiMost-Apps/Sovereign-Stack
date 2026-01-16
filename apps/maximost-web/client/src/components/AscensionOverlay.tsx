@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../core/AuthSystem';
-import { useToast } from './Toast';
+import { useToast } from '../core/components/Toast';
 
 export const AscensionOverlay = () => {
     const { user } = useAuth();

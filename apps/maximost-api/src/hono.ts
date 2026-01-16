@@ -9,6 +9,8 @@ export interface EnrichedUser extends User {
     display_name?: string;
     full_name?: string;
     timezone?: string;
+    tier_name?: string; // Add tier_name to match DB schema usage
+    is_vanguard?: boolean; // Add is_vanguard as requested
   };
 }
 

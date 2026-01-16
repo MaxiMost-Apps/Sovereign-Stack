@@ -79,7 +79,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
         // Determine Tier based on Price ID (Assuming config holds these IDs)
         // Note: Prices: Monthly $14.99, Yearly $149.99, Vanguard $199, Sovereign $499
-        if (priceId === config.STRIPE_PRICE_ID_MONTHLY || priceId === config.STRIPE_PRICE_ID_YEARLY) {
+        if (priceId === config.STRIPE_PRICE_ID_OPERATOR) {
             newTier = 'operator';
         } else if (priceId === config.STRIPE_PRICE_ID_VANGUARD) {
             newTier = 'vanguard';
