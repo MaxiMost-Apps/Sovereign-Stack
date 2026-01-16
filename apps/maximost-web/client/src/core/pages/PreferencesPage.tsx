@@ -7,12 +7,14 @@ import { useNavigate } from 'react-router-dom';
 import { useKinetic } from '@/core/hooks/useKinetic';
 
 import { useToast } from '../components/Toast';
+import { AscensionOverlay } from '@/components/AscensionOverlay';
 
 export default function PreferencesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { triggerImpact } = useKinetic();
+  const [tierName, setTierName] = useState('INITIATE');
 
   // -- STATE --
   const [activeCoach, setActiveCoach] = useState('stoic');
@@ -48,6 +50,7 @@ export default function PreferencesPage() {
       let { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
       if (profile) {
+        setTierName(profile.tier_name || 'INITIATE');
         setActiveCoach(profile.coach_preference || 'stoic');
         setDayEndOffset(profile.day_end_offset || 0);
         setReducedMotion(profile.reduced_motion || false);
@@ -148,16 +151,20 @@ export default function PreferencesPage() {
       "UTC", "America/New_York", "America/Los_Angeles", "America/Chicago", "Europe/London", "Europe/Paris", "Asia/Tokyo", "Australia/Sydney"
   ];
 
+  const isInitiate = tierName === 'INITIATE';
+
   return (
-    <div className="space-y-8 p-6 max-w-2xl mx-auto pb-40">
+    <div className="space-y-8 p-6 max-w-2xl mx-auto pb-40 relative">
       {/* HEADER */}
       <div className="border-b border-zinc-800 pb-4">
         <h1 className="text-2xl font-black uppercase tracking-tighter text-white">Identity Calibration</h1>
         <p className="text-zinc-500 font-mono text-xs">ANCHOR THE MACHINE.</p>
       </div>
 
+      {isInitiate && <AscensionOverlay />}
+
       {/* GLOBAL PARAMETERS */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-6" style={isInitiate ? { filter: 'blur(8px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Operational Timezone</label>
           <select

@@ -50,6 +50,27 @@ export function VaultCore({ isOverlay = false }: { isOverlay?: boolean }) {
       toast.success('Neural Archives Updated');
   };
 
+  const handleUpload = async (event: any) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      try {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `${user?.id}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+              .from('vault_imports')
+              .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          toast.success("Infiltration Successful");
+      } catch (error: any) {
+          toast.error("Upload Failed: " + error.message);
+      }
+  };
+
   const handleExport = () => {
       // Mock Export
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ user_id: user?.id, neuralConfig, timestamp: Date.now() }));
@@ -210,15 +231,20 @@ export function VaultCore({ isOverlay = false }: { isOverlay?: boolean }) {
         <div className="grid md:grid-cols-2 gap-6">
             {/* INFILTRATION MODULE */}
             <div
-                className={`p-8 border-2 border-dashed rounded-xl bg-black/40 transition-all flex flex-col items-center justify-center text-center group cursor-pointer ${isDragging ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-white/5 hover:border-white/20'}`}
+                className={`p-8 border-2 border-dashed rounded-xl bg-black/40 transition-all flex flex-col items-center justify-center text-center group cursor-pointer relative ${isDragging ? 'border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-white/5 hover:border-white/20'}`}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
-                onDrop={(e) => { e.preventDefault(); setIsDragging(false); toast.info("Infiltration Started (Simulation)"); }}
+                onDrop={(e) => { e.preventDefault(); setIsDragging(false); }}
             >
+                <input
+                    type="file"
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                    onChange={handleUpload}
+                />
                 <FileUp className={`w-8 h-8 mb-4 transition-colors ${isDragging ? 'text-blue-500 animate-bounce' : 'text-slate-700 group-hover:text-slate-400'}`} />
                 <span className="text-xs font-black text-blue-500 uppercase tracking-[0.2em] mb-2">CONFIG YOUR RIG</span>
                 <h3 className="text-xl font-black text-slate-300 uppercase tracking-tight mb-4">INFILTRATION MODULE</h3>
-                <button className="bg-slate-900 border border-slate-800 text-slate-400 px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 hover:text-white transition-all">
+                <button className="bg-slate-900 border border-slate-800 text-slate-400 px-6 py-3 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-slate-800 hover:text-white transition-all pointer-events-none">
                     [ INITIATE MIGRATION ]
                 </button>
             </div>
