@@ -49,6 +49,10 @@ app.use('*', cors({
     if (origin.match(/^https:\/\/maximost-frontend-.*\.vercel\.app$/)) {
       return origin;
     }
+    // 4. Allow Specific Sovereign Stack Vercel URL
+    if (origin === 'https://maximost-juwyfkma4-sovereign-stack.vercel.app') {
+      return origin;
+    }
     return undefined; // Block others
   },
   allowHeaders: ['Authorization', 'Content-Type', 'apikey', 'x-client-info', 'expires', 'x-admin-secret'],
