@@ -9,7 +9,11 @@ journalRoutes.get('/', async (c) => {
   const supabase = c.get('supabase');
 
   // Garnish Protocol: If not Vanguard, limit history to 7 days
-  const isVanguard = user.profile?.is_vanguard === true || user.profile?.membership_tier === 'vanguard' || user.profile?.membership_tier === 'sovereign';
+  // Fix: Check 'tier_name' or legacy 'membership_tier' and handle potential missing 'is_vanguard' in type
+  const profile = user.profile as any; // Cast to any to avoid strict type error during build if interface outdated
+  const isVanguard = profile.is_vanguard === true ||
+                     ['VANGUARD', 'SOVEREIGN', 'ARCHITECT'].includes(profile.tier_name?.toUpperCase()) ||
+                     ['vanguard', 'sovereign'].includes(profile.membership_tier);
 
   let query = supabase
     .from('journal_entries')
