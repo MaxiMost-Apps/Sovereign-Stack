@@ -22,7 +22,7 @@ import { calculateStreak } from './utils/streakLogic';
 import { useToast } from './components/Toast';
 import { HabitCard } from './components/HabitCard'; // Import new HabitCard
 import { CouncilGhost } from '../features/ghost/CouncilGhost';
-import { AscensionOverlay } from '../components/AscensionOverlay';
+import { AscensionOverlay } from '@/components/AscensionOverlay';
 
 export default function DashboardCore() {
   const { toast } = useToast();

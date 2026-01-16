@@ -7,7 +7,7 @@ import { supabase } from '../supabase';
 import { useAuth } from '../AuthSystem';
 import { subDays, format, parseISO, isSameDay } from 'date-fns';
 import { getThemeStyles } from '../config/themeConfig';
-import { AscensionOverlay } from '../components/AscensionOverlay';
+import { AscensionOverlay } from '@/components/AscensionOverlay';
 
 export default function ProgressPage() {
   const { user } = useAuth();
