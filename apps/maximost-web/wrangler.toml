@@ -1,0 +1,40 @@
+# This is the configuration for your Cloudflare Pages Frontend project.
+
+name = "maximost-frontend"
+compatibility_date = "2024-08-25"
+pages_build_output_dir = "dist"
+compatibility_flags = [ "nodejs_compat" ]
+
+# --------------------------------------------------
+# PRODUCTION ENVIRONMENT VARIABLES
+# These are used when you deploy your 'main' branch.
+# --------------------------------------------------
+[vars]
+# This securely connects your live frontend to your live backend worker.
+VITE_API_BASE_URL = "${PROD_API_URL}"
+
+# These are your public Firebase keys for the frontend.
+VITE_FIREBASE_API_KEY = "AIzaSyAml6FYQQOuhG2_EpPRs2AahkdDWdeic5w"
+VITE_FIREBASE_AUTH_DOMAIN = "maximost-a0401.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID = "maximost-a0401"
+VITE_FIREBASE_STORAGE_BUCKET = "maximost-a0401.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID = "161512806223"
+VITE_FIREBASE_APP_ID = "1:161512806223:web:5bde0190d46718f8a5973a"
+
+
+# --------------------------------------------------
+# PREVIEW ENVIRONMENT VARIABLES
+# These are used for any branch that is NOT 'main'.
+# --------------------------------------------------
+[env.preview.vars]
+# For now, your previews will also point to your live backend.
+# In the future, you could create a separate preview backend and a PREVIEW_API_URL secret.
+VITE_API_BASE_URL = "${PROD_API_URL}"
+
+# Public Firebase keys are the same for preview.
+VITE_FIREBASE_API_KEY = "AIzaSyAml6FYQQOuhG2_EpPRs2AahkdDWdeic5w"
+VITE_FIREBASE_AUTH_DOMAIN = "maximost-a0401.firebaseapp.com"
+VITE_FIREBASE_PROJECT_ID = "maximost-a0401"
+VITE_FIREBASE_STORAGE_BUCKET = "maximost-a0401.firebasestorage.app"
+VITE_FIREBASE_MESSAGING_SENDER_ID = "161512806223"
+VITE_FIREBASE_APP_ID = "1:161512806223:web:5bde0190d46718f8a5973a"

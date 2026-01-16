@@ -1,0 +1,2 @@
+- Week 1: The Sovereignty Briefing (Anti-Self-Help).
+- Week 2: Data Truth Flex (Simulation Heatmaps).
