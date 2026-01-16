@@ -27,6 +27,7 @@ import publicRoutes from './routes/publicRoutes';
 import telemetryRoutes from './routes/telemetryRoutes';
 import completionsRoutes from './routes/completionsRoutes';
 import statsRoutes from './routes/statsRoutes';
+import keysRoutes from './routes/keysRoutes';
 
 import { calculateConsistencyIndex } from './lib/telemetry';
 import { calculateDrift } from './lib/shadowAudit';
@@ -193,6 +194,7 @@ app.route('/api/public', publicRoutes);
 app.route('/api/telemetry', telemetryRoutes);
 app.route('/api/completions', completionsRoutes);
 app.route('/api/stats', statsRoutes);
+app.route('/api/keys', keysRoutes);
 
 // Telemetry Endpoint: Uptime
 app.get('/api/telemetry/uptime', async (c) => {

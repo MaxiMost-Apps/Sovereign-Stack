@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../config';
+import { v4 as uuidv4 } from 'uuid';
 
 const webhookRoutes = new Hono();
 
@@ -108,16 +109,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                  console.log(`Updated user ${userId} to tier ${newTier}`);
 
                  // Scholarship Logic for Vanguard and Sovereign ($199 or $499)
+                 // REVISED: Mint Sovereign Keys
                  if (isVanguard) {
-                     // Create a scholarship row
-                     const { error: scholarError } = await supabase.from('scholarships').insert({
-                         status: 'available',
-                         source_purchase_id: session.id,
-                         sponsor_id: userId, // Optional, linking back to purchaser
-                         // granted_to_user_id will be filled when assigned
-                     });
-
-                     if (scholarError) console.error('Error creating scholarship:', scholarError);
+                    await mintSovereignKeys(supabase, userId, newTier);
                  }
              }
         }
