@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Info, Activity, Zap, Brain, Settings, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Habit } from '@/types/habit';
@@ -36,15 +36,20 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
   }
 
   // REPAIR ORDER: Hide Goal/Time Display in Library Trays (Archive Mode)
-  const goalDisplay = (!isDashboard) ? null : (habit.type === 'boolean'
-        ? (habit.target_value ? `${habit.target_value}x / ${habit.unit || 'day'}` : '1x / day')
-        : (habit.target_value ? `${habit.target_value} ${habit.unit || 'mins'}` : null));
+  // AND Hide in Dashboard Library Tray (which uses mode='archive')
+  // Basically, only show goal display if it's an ACTIVE habit row, which HabitCard is generally not used for (DailyHabitRow handles that).
+  // HabitCard is used for the Library Grid on Dashboard and Archive Page.
+  // So we should hide it always for HabitCard unless specifically requested.
+  // The prompt says "Hide the target_value and unit labels on all cards in the Habit Library trays."
+  const goalDisplay = null;
 
   // DUAL-ACTION HANDLERS
   const handleCardClick = (e: React.MouseEvent) => {
-      // Prevent double triggers if clicking specific buttons
       // If Archive Mode: Adopt
       if (!isDashboard && onQuickImport) {
+          onQuickImport(habit);
+      } else if (isDashboard && onQuickImport) {
+          // Dashboard Library Tray also uses onQuickImport for "Add to Dash"
           onQuickImport(habit);
       }
   };
@@ -53,6 +58,30 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
       e.stopPropagation(); // Stop card click
       if (onEdit) onEdit(habit);
       else setShowIntel(!showIntel);
+  };
+
+  // REPAIR ORDER: Fix Metadata Parsing for Intel Display
+  const getIntelText = () => {
+      if (showIntel) {
+          // Prioritize Why/Identity, then Tactical
+          return habit.metadata?.intel?.why ||
+                 habit.metadata?.compiler?.why ||
+                 habit.why_instruction || // If flattened
+                 "Data Unavailable";
+      } else {
+          // Prioritize Tactical/Description
+          // The prompt says "display the metadata.tactical string"
+          // In DB, tactical might be a string or object.
+          // Based on seeds: how_instruction -> metadata.compiler.step
+          // Let's try multiple fallbacks
+          const tactical = habit.metadata?.tactical;
+          if (typeof tactical === 'string') return tactical;
+          if (typeof tactical === 'object' && tactical?.instruction) return tactical.instruction;
+
+          return habit.metadata?.compiler?.step ||
+                 habit.description ||
+                 "No tactical data";
+      }
   };
 
   return (
@@ -67,7 +96,7 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
 
       {/* LEFT FLANK: TITLE / INTEL SWAP */}
       <div className="flex items-center gap-4">
-        {/* CHECKBOX (DASHBOARD ONLY) */}
+        {/* CHECKBOX (DASHBOARD ONLY - but HabitCard is usually Library view) */}
         {isDashboard && onToggle && (
             <button
             onClick={(e) => { e.stopPropagation(); onToggle(habit.id); }}
@@ -80,8 +109,8 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
             </button>
         )}
 
-        {/* ICON (ARCHIVE ONLY - Replaces Checkbox for visual balance) */}
-        {!isDashboard && (
+        {/* ICON (Archive Mode OR Dashboard Library Tray) */}
+        {(!isDashboard || !onToggle) && (
              <div className="w-8 h-8 rounded border border-white/10 flex items-center justify-center bg-white/5">
                  <Icon className="w-4 h-4 opacity-70" />
              </div>
@@ -111,31 +140,23 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
             </div>
           </div>
 
-          {/* SUBTEXT (Tactical Description OR Intel Why) */}
+          {/* SUBTEXT */}
           <span className={cn(
             "text-xs font-mono transition-all duration-300",
             showIntel ? "text-emerald-400" : "text-zinc-600"
           )}>
-            {showIntel
-              ? (habit.metadata?.intel?.why || habit.metadata?.compiler?.why || "Data Unavailable")
-              : (habit.metadata?.tactical?.description || habit.description || "No tactical data")}
+            {getIntelText()}
           </span>
         </div>
       </div>
 
       {/* RIGHT FLANK: ACTION AREA */}
       <div className="flex items-center gap-3">
-        {goalDisplay && (
-            <div className="hidden md:flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded border border-white/5 text-[10px] text-zinc-500 uppercase font-mono tracking-wide">
-                <Target className="w-3 h-3" />
-                <span>{goalDisplay}</span>
-            </div>
-        )}
+        {/* Goal Display Removed */}
 
-        {/* ARCHIVE MODE: IMPORT BUTTON (Redundant now if card clicks adopt, but kept for clarity) */}
-        {!isDashboard && onQuickImport && (
+        {/* ARCHIVE MODE: IMPORT BUTTON (Visual only, click handled by card) */}
+        {onQuickImport && (
             <button
-                // onClick handled by card
                 className="opacity-0 group-hover:opacity-100 transition-all px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-white/20 hover:bg-white hover:text-black rounded"
             >
                 Import
