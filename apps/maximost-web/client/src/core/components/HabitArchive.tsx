@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/core/supabase'; // Adjust based on your setup
 import { HabitCard } from './HabitCard';
 import { Habit } from '@/types/habit';
 import { Loader2 } from 'lucide-react';
@@ -20,16 +21,17 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     useEffect(() => {
         const fetchLibrary = async () => {
             try {
-                // REPAIR ORDER: Fetch from Render API Only
-                const response = await fetch('https://sovereign-stack.onrender.com/api/habits/library');
+                // Fetch from API
+                // REPAIR ORDER: Ensure using correct URL and no auth headers if implicit
+                const response = await fetch('/api/habits/library');
                 if (!response.ok) throw new Error('API Sync Failed');
                 const data = await response.json();
 
                 setLibraryHabits(data || []);
             } catch (error) {
                 console.error("Archive Load Error:", error);
-                toast.error("Failed to load archive. Check connection.");
-                setLibraryHabits([]); // Fail safe
+                // Fallback handled by parent or empty state
+                setLibraryHabits([]);
             } finally {
                 setLoading(false);
             }
@@ -39,11 +41,13 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     }, []);
 
     const handleAdopt = async (habit: Habit) => {
+        // Optimistic UI updates handled by parent (onImport)
+        // Here we just trigger the backend adoption
         try {
             const response = await fetch('/api/habits/adopt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slug: habit.slug })
+                body: JSON.stringify({ slug: habit.slug }) // Ensure slug is passed
             });
 
             if (!response.ok) throw new Error('Adoption Failed');
@@ -61,7 +65,8 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     return (
         <div className="space-y-6">
              <div className="flex justify-between items-center mb-6">
-                 <h2 className="text-xl font-bold text-white uppercase tracking-widest">Protocol Archive</h2>
+                 {/* REPAIR ORDER: Rename Tray */}
+                 <h2 className="text-xl font-bold text-white uppercase tracking-widest">HABIT LIBRARY</h2>
                  <span className="text-xs font-mono text-zinc-500">{libraryHabits.length} PROTOCOLS AVAILABLE</span>
               </div>
 
@@ -69,11 +74,10 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
                  {libraryHabits.map((t: any) => {
                     const isActive = activeHabitSlugs.has(t.slug);
 
-                    // REPAIR ORDER: Ensure mapping uses metadata.tactical or direct fields
                     const mappedHabit: Habit = {
                         id: t.slug, // Use slug as ID for library display
                         title: t.title,
-                        description: t.metadata?.tactical?.description || t.description || "No description available",
+                        description: t.description,
                         category: t.category, // Pass through new categories
                         metadata: t.metadata,
                         type: t.type,
