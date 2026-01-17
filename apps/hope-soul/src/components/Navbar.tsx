@@ -13,13 +13,20 @@ export const Navbar = () => {
           </a>
         </Link>
 
+        {/* "Independent Authority" Navigation */}
+        <div className="hidden md:flex items-center space-x-8">
+            <a href="#" className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">The Path</a>
+            <a href="#" className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">Stories</a>
+            <a href="#" className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">The Foundation</a>
+            <a href="#" className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">The Mirror</a>
+        </div>
+
         <div className="flex items-center space-x-6">
           <Link href="/dashboard">
-            <a className="text-sm font-medium hover:text-primary transition-colors">Dashboard</a>
+            <button className="bg-foreground text-background px-4 py-2 rounded-sm text-sm font-medium hover:bg-neutral-800 transition-colors">
+                Member Access
+            </button>
           </Link>
-          <button className="bg-foreground text-background px-4 py-2 rounded-sm text-sm font-medium hover:bg-neutral-800 transition-colors">
-            Connect
-          </button>
         </div>
       </div>
     </nav>
