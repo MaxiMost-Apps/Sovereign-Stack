@@ -21,8 +21,7 @@ habitRoutes.get('/stats', async (c) => {
     return c.json(data);
 });
 
-// GET /api/habits/library - REMOVED
-// Logic moved to apps/maximost-api/src/index.ts to ensure public access bypass
+// GET /api/habits/library - REMOVED (Handled in index.ts)
 
 // GET /api/habits - Fetch all habits for the logged-in user
 habitRoutes.get('/', async (c) => {
@@ -83,88 +82,62 @@ habitRoutes.post('/', async (c) => {
     return c.json(data, { status: 201 });
 });
 
-// POST /api/habits/adopt - Adopt a habit from the library
+// POST /api/habits/adopt - Adopt a habit (Single or Bulk)
 habitRoutes.post('/adopt', async (c) => {
     const user = c.get('user');
-    const { slug } = await c.req.json();
+    const body = await c.req.json();
     const supabase = c.get('supabase');
 
-    if (!slug) return c.json({ error: 'Slug is required' }, 400);
+    // Handle Bulk (slugs array) or Single (slug string)
+    const slugs = body.slugs || (body.slug ? [body.slug] : []);
 
-    // 1. Fetch from Library (Using Admin Client for Safety/Completeness if needed, but context user works if RLS allows public read)
-    // REPAIR ORDER: Use Admin client here too to ensure we can read from maximost_library_habits
-    // Note: We need to import createClient/config here if we want to use admin client inside this handler
-    // BUT since this is a protected route, we have c.get('supabase').
-    // If maximost_library_habits has RLS blocking 'authenticated' role, we need service role.
-    // Assuming we need Service Role based on earlier instructions.
+    if (slugs.length === 0) return c.json({ error: 'Slug(s) required' }, 400);
 
-    // DYNAMIC IMPORT to avoid circular dependency or context issues if config wasn't imported at top
-    // But better to just use the one from context if RLS permits, or fix RLS.
-    // However, following the pattern: "Ensure you are using the Service Role Key"
-    // I will use a direct query via RPC or just assume the user can read if RLS is fixed?
-    // Actually, I'll rely on the previous fix in index.ts for the public read.
-    // For 'adopt', the user is authenticated. They should be able to read.
-    // If not, I'd need to import createClient here too.
-    // Let's stick to the current code which uses `supabaseAdmin` if I added imports, OR standard supabase if RLS allows.
-    // Given I didn't add imports to this file in the previous step (I modified index.ts),
-    // I should check if I need to add them here or if the code I just read has them.
-    // The previous `read_file` showed NO imports of createClient/config in habitRoutes.ts!
-    // Wait, the previous `read_file` output DID show them:
-    // `import { createClient } from '@supabase/supabase-js'; // Import CreateClient`
-    // `import { config } from '../config'; // Import Config`
-    // So I can use them.
-
-    // I will re-implement `adopt` to use `maximost_library_habits` and `supabaseAdmin` just to be safe and consistent.
-
-    // Re-importing because write_file overwrites.
-
-    // ... wait, I need to write the imports at the top.
-
+    // Dynamic Import for Service Role Client (Bypassing RLS for Library Read)
     const { createClient } = await import('@supabase/supabase-js');
     const { config } = await import('../config');
-
     const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
-    const { data: libHabit, error: libError } = await supabaseAdmin
-        .from('maximost_library_habits') // Updated Table
+    // 1. Fetch from Library
+    const { data: libHabits, error: libError } = await supabaseAdmin
+        .from('maximost_library_habits')
         .select('*')
-        .eq('slug', slug)
-        .single();
+        .in('slug', slugs);
 
-    if (libError || !libHabit) {
-        return c.json({ error: 'Habit not found in library' }, 404);
+    if (libError || !libHabits || libHabits.length === 0) {
+        return c.json({ error: 'Habits not found in library' }, 404);
     }
 
-    // 2. Insert into User Habits
-    // Mapping v12 Metadata to User Habit Columns
+    // 2. Prepare Inserts
+    const habitsToInsert = libHabits.map((libHabit: any) => ({
+        user_id: user.id,
+        name: libHabit.title || libHabit.name,
+        description: libHabit.description || libHabit.metadata?.compiler?.why,
+        slug: libHabit.slug,
+        theme: libHabit.metadata?.visuals?.theme || libHabit.theme,
+        icon: libHabit.metadata?.visuals?.icon || libHabit.icon,
+        color: libHabit.color || libHabit.metadata?.visuals?.color,
+        metadata: libHabit.metadata,
+        how_instruction: libHabit.metadata?.compiler?.step,
+        why_instruction: libHabit.metadata?.compiler?.why,
+        type: (libHabit.type === 'metric' || libHabit.type === 'duration') ? 'unit' : 'absolute',
+        target_value: libHabit.target_value || 1,
+        unit: libHabit.unit,
+        category: libHabit.category,
+        frequency: libHabit.frequency || 'daily'
+    }));
+
+    // 3. Insert into User Habits
     const { error: insertError } = await supabase
         .from('habits')
-        .insert({
-            user_id: user.id,
-            name: libHabit.title || libHabit.name,
-            description: libHabit.description || libHabit.metadata?.compiler?.why,
-            slug: libHabit.slug,
-            theme: libHabit.metadata?.visuals?.theme || libHabit.theme,
-            icon: libHabit.metadata?.visuals?.icon || libHabit.icon,
-            color: libHabit.color || libHabit.metadata?.visuals?.color,
-            metadata: libHabit.metadata,
-            how_instruction: libHabit.metadata?.compiler?.step,
-            why_instruction: libHabit.metadata?.compiler?.why,
-            // Map v12 type to Schema ENUM
-            type: (libHabit.type === 'metric' || libHabit.type === 'duration') ? 'unit' : 'absolute',
-            target_value: libHabit.target_value || 1,
-            unit: libHabit.unit,
-            category: libHabit.category, // Pass through category
-            // Explicitly copy frequency if it exists (for non-absolute habits)
-            frequency: libHabit.frequency || 'daily'
-        });
+        .insert(habitsToInsert);
 
     if (insertError) {
         console.error('Adopt Habit Error:', insertError);
-        return c.json({ error: 'Failed to adopt habit', details: insertError.message }, 500);
+        return c.json({ error: 'Failed to adopt habits', details: insertError.message }, 500);
     }
 
-    return c.json({ message: 'Habit adopted successfully' });
+    return c.json({ message: `Successfully adopted ${habitsToInsert.length} habits` });
 });
 
 // PUT /api/habits/:id - Update a habit

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/core/supabase'; // Adjust based on your setup
 import { HabitCard } from './HabitCard';
 import { Habit } from '@/types/habit';
 import { Loader2 } from 'lucide-react';
@@ -8,9 +7,10 @@ import { useToast } from '../components/Toast';
 interface HabitArchiveProps {
     onImport: (habit: Habit) => void;
     userHabits: Habit[]; // Pass user's active habits to gray them out
+    onEdit?: (habit: Habit) => void; // Pass edit handler
 }
 
-export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits }) => {
+export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits, onEdit }) => {
     const [libraryHabits, setLibraryHabits] = useState<Habit[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
@@ -21,17 +21,16 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     useEffect(() => {
         const fetchLibrary = async () => {
             try {
-                // Fetch from API
-                // REPAIR ORDER: Ensure using correct URL and no auth headers if implicit
-                const response = await fetch('/api/habits/library');
+                // REPAIR ORDER: Fetch from Render API Only
+                const response = await fetch('https://sovereign-stack.onrender.com/api/habits/library');
                 if (!response.ok) throw new Error('API Sync Failed');
                 const data = await response.json();
 
                 setLibraryHabits(data || []);
             } catch (error) {
                 console.error("Archive Load Error:", error);
-                // Fallback handled by parent or empty state
-                setLibraryHabits([]);
+                toast.error("Failed to load archive. Check connection.");
+                setLibraryHabits([]); // Fail safe
             } finally {
                 setLoading(false);
             }
@@ -41,13 +40,12 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     }, []);
 
     const handleAdopt = async (habit: Habit) => {
-        // Optimistic UI updates handled by parent (onImport)
-        // Here we just trigger the backend adoption
         try {
-            const response = await fetch('/api/habits/adopt', {
+            // REPAIR ORDER: Use Absolute URL for Adoption
+            const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slug: habit.slug }) // Ensure slug is passed
+                body: JSON.stringify({ slug: habit.slug })
             });
 
             if (!response.ok) throw new Error('Adoption Failed');
@@ -65,7 +63,6 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     return (
         <div className="space-y-6">
              <div className="flex justify-between items-center mb-6">
-                 {/* REPAIR ORDER: Rename Tray */}
                  <h2 className="text-xl font-bold text-white uppercase tracking-widest">HABIT LIBRARY</h2>
                  <span className="text-xs font-mono text-zinc-500">{libraryHabits.length} PROTOCOLS AVAILABLE</span>
               </div>
@@ -77,7 +74,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
                     const mappedHabit: Habit = {
                         id: t.slug, // Use slug as ID for library display
                         title: t.title,
-                        description: t.description,
+                        description: t.metadata?.tactical?.description || t.description || "No description available",
                         category: t.category, // Pass through new categories
                         metadata: t.metadata,
                         type: t.type,
@@ -95,6 +92,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
                                habit={mappedHabit}
                                mode="archive"
                                onQuickImport={!isActive ? () => handleAdopt(mappedHabit) : undefined}
+                               onEdit={onEdit} // Pass the slide-in trigger
                             />
                         </div>
                     );

@@ -106,50 +106,30 @@ export default function DashboardCore() {
   const handleLoadDemo = async () => {
      setLoading(true);
 
-     // 1. Fetch Existing for Linking Logic
-     const { data: existing } = await supabase.from('habits').select('*').eq('user_id', user.id);
-     const existingMap = new Map((existing || []).map(e => [e.title, e]));
+     // REPAIR ORDER: Bulk Adoption of 5 Core Habits
+     // 1. Morning Sun (morning_sun)
+     // 2. Deep Work (deep_work)
+     // 3. Fasted Walk (fasted_walk) - Replacing Cardio for core stack
+     // 4. Shadow Audit (shadow_audit)
+     // 5. Digital Sunset (digital_sunset)
+     const coreSlugs = ['morning_sun', 'deep_work', 'fasted_walk', 'shadow_audit', 'digital_sunset'];
 
-     const stackInfo = { name: "Quick Start", color: "maximost_blue" };
-     const newHabits = [];
-     const updates = [];
+     try {
+         const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ slugs: coreSlugs })
+         });
 
-     for (const h of DEMO_HABITS) {
-         if (existingMap.has(h.title)) {
-             // Link existing
-             const existingHabit = existingMap.get(h.title);
-             const currentStacks = existingHabit.metadata?.linked_stacks || [];
-             if (!currentStacks.find((s:any) => s.name === stackInfo.name)) {
-                 const newMetadata = { ...existingHabit.metadata, linked_stacks: [...currentStacks, stackInfo] };
-                 updates.push({ id: existingHabit.id, metadata: newMetadata });
-             }
-         } else {
-             // Create new
-             newHabits.push({
-                 ...h,
-                 user_id: user.id,
-                 metadata: { linked_stacks: [stackInfo] } // Init linked stack
-             });
-         }
+         if (!response.ok) throw new Error('Bulk Adoption Failed');
+
+         toast.success("Core Protocols Deployed");
+         fetchData(); // Refresh UI
+     } catch (error: any) {
+         toast.error(error.message);
+     } finally {
+         setLoading(false);
      }
-
-     // Execute Updates
-     for(const u of updates) {
-         await supabase.from('habits').update({ metadata: u.metadata }).eq('id', u.id);
-     }
-
-     // Execute Inserts
-     if (newHabits.length > 0) {
-         const { error } = await supabase.from('habits').insert(newHabits);
-         if (error) {
-             toast.error("Deployment Failed: " + error.message);
-             setLoading(false);
-             return;
-         }
-     }
-
-     toast.success("Quick Start Deployed");
-     window.location.reload();
   };
 
   const handleDeployReserve = async (habit: any) => {
@@ -277,18 +257,19 @@ export default function DashboardCore() {
   };
 
   const handleLibraryClick = (template: any) => {
-    setEditingHabit(null);
+    // REPAIR ORDER: This opens the slide-in drawer for "Deep Edits"
+    // We reuse the existing modal logic but pre-fill from template
+    setEditingHabit(null); // It's a new habit based on template
     setInitialForm({
-      // EXPLICIT MAPPING to prevent schema leaks
       title: template.title,
       icon: template.icon,
-      color: template.theme || template.color || 'maximost_blue', // Use 'theme' from library, fallback to blue
-      frequency_type: template.default_frequency_type || 'absolute',
-      target_count: template.target_count || 3,
-      daily_goal: template.daily_goal || 1,
+      color: template.theme || template.color || 'maximost_blue',
+      frequency_type: template.type === 'absolute' ? 'absolute' : 'frequency',
+      target_count: template.target_value || 3,
+      daily_goal: 1,
       unit: template.unit || '',
-      how_instruction: template.how_instruction || '',
-      why_instruction: template.why_instruction || '',
+      how_instruction: template.metadata?.compiler?.step || '',
+      why_instruction: template.metadata?.compiler?.why || '',
       category: template.category || ''
     });
     setIsModalOpen(true);
@@ -457,7 +438,7 @@ export default function DashboardCore() {
                                 Browse systems from Huberman, Jocko, and Goggins. Tailored for specific outcomes.
                             </p>
                             <button
-                                onClick={() => navigate('/stacks')}
+                                onClick={() => navigate('/archive?tab=protocols')} // REPAIR ORDER: Direct Link
                                 className="w-full py-3 bg-emerald-600/10 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-600 hover:text-white rounded-lg font-bold text-xs uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]"
                             >
                                 [ BROWSE STACKS ]
@@ -658,8 +639,9 @@ export default function DashboardCore() {
            <div className="mt-12 pt-8 border-t border-gray-800">
                {/* REPLACED: Old direct fetch rendering with new HabitArchive component */}
                <HabitArchive
-                    onImport={(habit) => handleLibraryClick(habit)}
+                    onImport={(habit) => handleLibraryClick(habit)} // REPAIR ORDER: Opens slide-in edit
                     userHabits={safeHabits}
+                    onEdit={(habit) => handleLibraryClick(habit)} // Dual bind for clarity
                />
            </div>
         )}

@@ -15,17 +15,12 @@ interface HabitCardProps {
 export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, onEdit }: HabitCardProps) => {
   const [showIntel, setShowIntel] = useState(false);
 
-  // COLOR LOGIC (Restored & Enhanced)
+  // COLOR LOGIC
   const getStyles = (cat: string) => {
     const c = cat?.toLowerCase() || '';
     if (c.includes('kinetic') || c.includes('bio')) return 'border-emerald-500/50 text-emerald-500 hover:bg-emerald-950/20';
     if (c.includes('cognitive') || c.includes('creation') || c.includes('neural')) return 'border-violet-500/50 text-violet-500 hover:bg-violet-950/20';
-    if (c.includes('tactical') || c.includes('iron') || c.includes('combat')) return 'border-blue-500/50 text-blue-500 hover:bg-blue-950/20'; // Blue or Red? 'combat' usually red, but 'tactical' often blue/steel. Let's use Blue for standard, maybe Red for specific themes.
-    // Fallback based on specific theme if available
-    const theme = habit.metadata?.visuals?.theme || habit.theme || '';
-    if (theme.includes('red') || theme.includes('combat')) return 'border-red-500/50 text-red-500 hover:bg-red-950/20';
-    if (theme.includes('steel') || theme.includes('slate')) return 'border-slate-500/50 text-slate-400 hover:bg-slate-900';
-
+    if (c.includes('tactical') || c.includes('iron') || c.includes('combat')) return 'border-blue-500/50 text-blue-500 hover:bg-blue-950/20';
     return 'border-zinc-800 text-zinc-400 hover:bg-zinc-900';
   };
 
@@ -40,24 +35,41 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
       if (ResolvedIcon) Icon = ResolvedIcon;
   }
 
-  // Goal/Type Logic
   const goalDisplay = habit.type === 'boolean'
         ? (habit.target_value ? `${habit.target_value}x / ${habit.unit || 'day'}` : '1x / day')
         : (habit.target_value ? `${habit.target_value} ${habit.unit || 'mins'}` : null);
 
+  // DUAL-ACTION HANDLERS
+  const handleCardClick = (e: React.MouseEvent) => {
+      // Prevent double triggers if clicking specific buttons
+      // If Archive Mode: Adopt
+      if (!isDashboard && onQuickImport) {
+          onQuickImport(habit);
+      }
+  };
+
+  const handleInfoClick = (e: React.MouseEvent) => {
+      e.stopPropagation(); // Stop card click
+      if (onEdit) onEdit(habit);
+      else setShowIntel(!showIntel);
+  };
+
   return (
-    <div className={cn(
-      "relative group p-4 rounded-xl border bg-zinc-950/50 backdrop-blur-sm transition-all duration-300 flex items-center justify-between",
-      styles,
-      (isDashboard && habit.completed) && "opacity-50 grayscale"
-    )}>
+    <div
+        onClick={handleCardClick}
+        className={cn(
+            "relative group p-4 rounded-xl border bg-zinc-950/50 backdrop-blur-sm transition-all duration-300 flex items-center justify-between cursor-pointer",
+            styles,
+            (isDashboard && habit.completed) && "opacity-50 grayscale"
+        )}
+    >
 
       {/* LEFT FLANK: TITLE / INTEL SWAP */}
       <div className="flex items-center gap-4">
         {/* CHECKBOX (DASHBOARD ONLY) */}
         {isDashboard && onToggle && (
             <button
-            onClick={() => onToggle(habit.id)}
+            onClick={(e) => { e.stopPropagation(); onToggle(habit.id); }}
             className={cn(
                 "w-6 h-6 rounded border flex items-center justify-center transition-all",
                 habit.completed ? "bg-current border-transparent text-black" : "border-zinc-700 hover:border-white"
@@ -84,13 +96,17 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
               {showIntel ? "MISSION / LOGIC:" : habit.title}
             </span>
 
-            {/* THE INTEL TRIGGER */}
+            {/* THE INFO/EDIT TRIGGER (Anti-Shake Wrapper) */}
             <div
-              onMouseEnter={() => setShowIntel(true)}
-              onMouseLeave={() => setShowIntel(false)}
-              className="cursor-help p-1 rounded-full hover:bg-white/10 transition-colors"
+                className="relative min-w-[24px] min-h-[24px] flex items-center justify-center overflow-hidden"
+                style={{ willChange: 'transform' }} // GPU isolation
             >
-              <Info className="w-3 h-3 opacity-50 hover:opacity-100" />
+                <div
+                onClick={handleInfoClick}
+                className="cursor-help p-1 rounded-full hover:bg-white/10 transition-colors z-20"
+                >
+                    {onEdit ? <Settings className="w-3 h-3 opacity-50 hover:opacity-100" /> : <Info className="w-3 h-3 opacity-50 hover:opacity-100" />}
+                </div>
             </div>
           </div>
 
@@ -108,7 +124,6 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
 
       {/* RIGHT FLANK: ACTION AREA */}
       <div className="flex items-center gap-3">
-        {/* GOAL DISPLAY (If Available) */}
         {goalDisplay && (
             <div className="hidden md:flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded border border-white/5 text-[10px] text-zinc-500 uppercase font-mono tracking-wide">
                 <Target className="w-3 h-3" />
@@ -116,21 +131,14 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
             </div>
         )}
 
-        {/* ARCHIVE MODE: IMPORT BUTTON */}
+        {/* ARCHIVE MODE: IMPORT BUTTON (Redundant now if card clicks adopt, but kept for clarity) */}
         {!isDashboard && onQuickImport && (
             <button
-                onClick={() => onQuickImport(habit)}
+                // onClick handled by card
                 className="opacity-0 group-hover:opacity-100 transition-all px-3 py-1 text-[10px] font-bold uppercase tracking-widest border border-white/20 hover:bg-white hover:text-black rounded"
             >
                 Import
             </button>
-        )}
-
-        {/* SETTINGS (Both Modes, optional) */}
-        {onEdit && (
-             <button onClick={() => onEdit(habit)} className="opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500 hover:text-white">
-                 <Settings className="w-4 h-4" />
-             </button>
         )}
 
         {/* CATEGORY ICON */}
