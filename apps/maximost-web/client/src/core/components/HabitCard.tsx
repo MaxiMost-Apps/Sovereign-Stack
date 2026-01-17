@@ -97,14 +97,16 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
             </span>
 
             {/* THE INFO/EDIT TRIGGER (Anti-Shake Wrapper) */}
+            {/* REPAIR ORDER: Fixed w-5 h-5 container */}
             <div
-                className="relative min-w-[24px] min-h-[24px] flex items-center justify-center overflow-hidden"
+                className="relative w-5 h-5 flex items-center justify-center overflow-hidden"
                 style={{ willChange: 'transform' }} // GPU isolation
             >
                 <div
                 onClick={handleInfoClick}
-                className="cursor-help p-1 rounded-full hover:bg-white/10 transition-colors z-20"
+                className="cursor-help p-1 rounded-full hover:bg-white/10 transition-colors z-20 flex items-center justify-center w-full h-full"
                 >
+                    {/* Ensure icon itself is small enough to fit without clipping oddly, w-3 is 12px, perfectly safe in w-5 (20px) */}
                     {onEdit ? <Settings className="w-3 h-3 opacity-50 hover:opacity-100" /> : <Info className="w-3 h-3 opacity-50 hover:opacity-100" />}
                 </div>
             </div>
