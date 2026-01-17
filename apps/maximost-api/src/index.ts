@@ -43,13 +43,33 @@ app.use('*', cors({
 }));
 
 // --- Public Routes (Bypass Auth) ---
-// REPAIR ORDER: Mount public library route BEFORE auth middleware
-app.route('/api/habits/library', habitRoutes);
+// REPAIR ORDER: Define Public Library Route Directly
+// This avoids auth middleware and context issues
+app.get('/api/habits/library', async (c) => {
+    try {
+        const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+
+        // REPAIR ORDER: Query maximost_library_habits instead of library_habits
+        const { data, error } = await supabaseAdmin
+            .from('maximost_library_habits')
+            .select('*')
+            .order('title');
+
+        if (error) {
+            console.error('Error fetching library habits:', error.message);
+            return c.json({ error: 'Failed to fetch library habits' }, 500);
+        }
+
+        return c.json(data);
+    } catch (err: any) {
+        console.error("Library Route Error:", err);
+        return c.json({ error: "Internal Server Error" }, 500);
+    }
+});
 
 // --- Global Admin Bypass Middleware ---
 app.use('*', async (c, next) => {
-    // Skip if already handled (e.g. public routes that might overlap, though strict routing usually wins)
-    // But for safety, check path
+    // Skip if already handled (public routes)
     if (c.req.path === '/api/habits/library') {
         return next();
     }

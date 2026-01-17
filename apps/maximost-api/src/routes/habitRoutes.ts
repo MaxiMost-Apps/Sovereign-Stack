@@ -1,6 +1,4 @@
 import { Hono } from 'hono';
-import { createClient } from '@supabase/supabase-js'; // Import CreateClient
-import { config } from '../config'; // Import Config
 import type { AppEnv } from '../hono';
 
 const habitRoutes = new Hono<AppEnv>();
@@ -23,24 +21,8 @@ habitRoutes.get('/stats', async (c) => {
     return c.json(data);
 });
 
-// GET /api/habits/library - Fetch all habits from the archive
-habitRoutes.get('/library', async (c) => {
-    // REPAIR ORDER: Use Service Role to bypass RLS
-    const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
-
-    // REPAIR ORDER: Query maximost_library_habits instead of library_habits
-    const { data, error } = await supabaseAdmin
-        .from('maximost_library_habits')
-        .select('*')
-        .order('title');
-
-    if (error) {
-        console.error('Error fetching library habits:', error.message);
-        return c.json({ error: 'Failed to fetch library habits' }, 500);
-    }
-
-    return c.json(data);
-});
+// GET /api/habits/library - REMOVED
+// Logic moved to apps/maximost-api/src/index.ts to ensure public access bypass
 
 // GET /api/habits - Fetch all habits for the logged-in user
 habitRoutes.get('/', async (c) => {
@@ -111,6 +93,36 @@ habitRoutes.post('/adopt', async (c) => {
 
     // 1. Fetch from Library (Using Admin Client for Safety/Completeness if needed, but context user works if RLS allows public read)
     // REPAIR ORDER: Use Admin client here too to ensure we can read from maximost_library_habits
+    // Note: We need to import createClient/config here if we want to use admin client inside this handler
+    // BUT since this is a protected route, we have c.get('supabase').
+    // If maximost_library_habits has RLS blocking 'authenticated' role, we need service role.
+    // Assuming we need Service Role based on earlier instructions.
+
+    // DYNAMIC IMPORT to avoid circular dependency or context issues if config wasn't imported at top
+    // But better to just use the one from context if RLS permits, or fix RLS.
+    // However, following the pattern: "Ensure you are using the Service Role Key"
+    // I will use a direct query via RPC or just assume the user can read if RLS is fixed?
+    // Actually, I'll rely on the previous fix in index.ts for the public read.
+    // For 'adopt', the user is authenticated. They should be able to read.
+    // If not, I'd need to import createClient here too.
+    // Let's stick to the current code which uses `supabaseAdmin` if I added imports, OR standard supabase if RLS allows.
+    // Given I didn't add imports to this file in the previous step (I modified index.ts),
+    // I should check if I need to add them here or if the code I just read has them.
+    // The previous `read_file` showed NO imports of createClient/config in habitRoutes.ts!
+    // Wait, the previous `read_file` output DID show them:
+    // `import { createClient } from '@supabase/supabase-js'; // Import CreateClient`
+    // `import { config } from '../config'; // Import Config`
+    // So I can use them.
+
+    // I will re-implement `adopt` to use `maximost_library_habits` and `supabaseAdmin` just to be safe and consistent.
+
+    // Re-importing because write_file overwrites.
+
+    // ... wait, I need to write the imports at the top.
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const { config } = await import('../config');
+
     const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
     const { data: libHabit, error: libError } = await supabaseAdmin
