@@ -587,15 +587,28 @@ export default function DashboardCore() {
                 </>
             )}
 
+            {/* REPAIR ORDER: Dash Controls - Create Habit Button */}
             {viewMode === 'daily' && (
-               <div className="w-full flex justify-center py-6">
-                 <button
-                   onClick={() => setIsModalOpen(true)}
-                   className="flex items-center gap-2 px-6 py-3 border border-slate-700 hover:border-blue-500 rounded-lg text-slate-400 hover:text-blue-400 transition-all text-sm font-bold tracking-widest uppercase bg-slate-900/50"
-                 >
-                   <Plus className="w-4 h-4" />
-                   <span>Initialize New Habit</span>
-                 </button>
+               <div className="mt-12 pt-8 border-t border-gray-800">
+                   <div className="flex justify-between items-center mb-6">
+                       {/* REPAIR ORDER: Rename to ATOM LEDGER */}
+                       <h2 className="text-xl font-bold text-white uppercase tracking-widest">ATOM LEDGER</h2>
+                       <div className="flex items-center gap-4">
+                           <button
+                               onClick={() => setIsModalOpen(true)}
+                               className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded border border-blue-500/30 text-[10px] font-bold uppercase tracking-widest transition-all"
+                           >
+                               <Plus className="w-3 h-3" /> Create Habit
+                           </button>
+                       </div>
+                   </div>
+
+                   {/* REPLACED: Old direct fetch rendering with new HabitArchive component */}
+                   <HabitArchive
+                        onImport={(habit) => handleLibraryClick(habit)} // REPAIR ORDER: Opens slide-in edit
+                        userHabits={safeHabits}
+                        onEdit={(habit) => handleLibraryClick(habit)} // Dual bind for clarity
+                   />
                </div>
             )}
           </>
@@ -641,17 +654,6 @@ export default function DashboardCore() {
                     })}
                 </div>
             </div>
-        )}
-
-        {viewMode === 'daily' && (
-           <div className="mt-12 pt-8 border-t border-gray-800">
-               {/* REPLACED: Old direct fetch rendering with new HabitArchive component */}
-               <HabitArchive
-                    onImport={(habit) => handleLibraryClick(habit)} // REPAIR ORDER: Opens slide-in edit
-                    userHabits={safeHabits}
-                    onEdit={(habit) => handleLibraryClick(habit)} // Dual bind for clarity
-               />
-           </div>
         )}
 
         {isModalOpen && (

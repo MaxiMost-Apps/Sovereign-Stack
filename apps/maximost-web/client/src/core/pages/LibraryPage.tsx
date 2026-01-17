@@ -19,23 +19,21 @@ export default function LibraryPage() {
     const fetchLibrary = async () => {
       try {
         setLoading(true);
-        // Fetch Habits
-        const { data: h, error: hError } = await supabase
-          .from('library_habits')
+        // REPAIR ORDER: Fetch from Render API
+        const hResponse = await fetch('https://sovereign-stack.onrender.com/api/habits/library');
+        const h = hResponse.ok ? await hResponse.json() : [];
+
+        // Fetch Stacks (Direct Supabase or could be API if exposed)
+        const { data: s, error: sError } = await supabase
+          .from('maximost_library_protocols')
           .select('*')
           .order('title');
-
-        // Fetch Stacks
-        const { data: s, error: sError } = await supabase
-          .from('library_protocols')
-          .select('*')
-          .order('name');
 
         // Fallback Logic if DB is Empty
         const habitsSource = (h && h.length > 0) ? h : HABIT_ATOMS.map((atom: any, i: number) => ({
             id: `atom-${i}`,
             title: atom.title,
-            description: atom.how_instruction, // Map instruction to desc
+            description: atom.how_instruction,
             category: atom.category,
             metadata: {
                 intel: { why: atom.why_instruction, impact: "Bio-Optimization" },
@@ -60,6 +58,11 @@ export default function LibraryPage() {
             icon: item.metadata?.visuals?.icon || 'Activity',
             completed: false,
             metadata: item.metadata,
+            slug: item.slug,
+            // Pass raw fields for proper card rendering
+            type: item.type,
+            target_value: item.target_value,
+            unit: item.unit
         }));
 
         setLibraryHabits(mappedHabits);
@@ -67,25 +70,7 @@ export default function LibraryPage() {
 
       } catch (err: any) {
         console.error("Library Fetch Error:", err);
-        // Fallback on error too
-        setLibraryHabits(HABIT_ATOMS.map((atom: any, i: number) => ({
-            id: `atom-${i}`,
-            title: atom.title,
-            description: atom.how_instruction,
-            category: atom.category,
-            icon: atom.icon || 'Activity',
-            metadata: {
-                intel: { why: atom.why_instruction },
-                tactical: { instruction: atom.how_instruction },
-                visuals: { icon: atom.icon, theme: atom.theme }
-            }
-        })));
-        setLibraryStacks(PROTOCOL_MOLECULES.map((mol: any, i: number) => ({
-            id: `mol-${i}`,
-            name: mol.title,
-            description: mol.description,
-            habits: mol.habits
-        })));
+        // Fallback
       } finally {
         setLoading(false);
       }
@@ -94,15 +79,26 @@ export default function LibraryPage() {
     fetchLibrary();
   }, []);
 
-  const handleQuickImport = (habit: Habit) => {
-      console.log("Importing:", habit.title);
-      toast.success(`Import sequence initiated for [${habit.title}]`);
+  const handleQuickImport = async (habit: Habit) => {
+      // REPAIR ORDER: Use live API for individual adoption in Archive page too
+      try {
+          const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ slug: habit.slug })
+          });
+
+          if (!response.ok) throw new Error('Adoption Failed');
+          toast.success(`Protocol [${habit.title}] Deployed.`);
+      } catch (error: any) {
+          toast.error(error.message);
+      }
   };
 
   const getStackColor = (name: string) => {
       if (name.includes("Atlas")) return "amber";
       if (name.includes("Centenarian")) return "emerald";
-      if (name.includes("Iron Mind")) return "red"; // Crimson mapped to red
+      if (name.includes("Iron Mind")) return "red";
       if (name.includes("Neural")) return "blue";
       return "zinc";
   };
@@ -139,13 +135,13 @@ export default function LibraryPage() {
           </div>
         </div>
 
-        {/* CONTROLS */}
-        <div className="relative z-10 flex justify-end">
+        {/* CONTROLS - REPAIR ORDER: REMOVED NEW BUTTONS */}
+        {/* <div className="relative z-10 flex justify-end">
           <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(37,99,235,0.5)]">
               <Plus className="w-4 h-4" />
               <span>New {activeTab === 'habits' ? 'Habit' : 'Stack'}</span>
           </button>
-        </div>
+        </div> */}
 
         {/* LOADING STATE */}
         {loading && (
@@ -177,14 +173,14 @@ export default function LibraryPage() {
         {!loading && activeTab === 'stacks' && (
           <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {libraryStacks.map(stack => {
-                  const color = getStackColor(stack.name);
+                  const color = getStackColor(stack.title || stack.name); // Handle title/name ambiguity
                   const borderClass = {
                       amber: "hover:border-amber-500/50",
                       emerald: "hover:border-emerald-500/50",
                       red: "hover:border-red-500/50", // Crimson
                       blue: "hover:border-blue-500/50",
                       zinc: "hover:border-zinc-600"
-                  }[color];
+                  }[color] || "hover:border-zinc-600";
 
                   const iconColor = {
                       amber: "text-amber-500",
@@ -192,10 +188,10 @@ export default function LibraryPage() {
                       red: "text-red-500",
                       blue: "text-blue-500",
                       zinc: "text-zinc-500"
-                  }[color];
+                  }[color] || "text-zinc-500";
 
                   return (
-                    <div key={stack.id} className={`bg-zinc-950/50 backdrop-blur-md border border-zinc-800 p-6 rounded-lg ${borderClass} transition-colors cursor-pointer group relative overflow-hidden`}>
+                    <div key={stack.stack_id || stack.id} className={`bg-zinc-950/50 backdrop-blur-md border border-zinc-800 p-6 rounded-lg ${borderClass} transition-colors cursor-pointer group relative overflow-hidden`}>
                         {/* Glow Effect */}
                         <div className={`absolute top-0 right-0 w-32 h-32 bg-${color}-500/10 blur-[50px] rounded-full pointer-events-none`} />
 
@@ -204,10 +200,10 @@ export default function LibraryPage() {
                                 <Layers className={`w-6 h-6 ${iconColor} transition-colors`} />
                             </div>
                             <span className="text-[10px] font-mono font-bold text-zinc-500 bg-black/50 px-2 py-1 rounded border border-zinc-800">
-                                {stack.habits ? stack.habits.length : 0} ATOMS
+                                {stack.habit_slugs ? stack.habit_slugs.length : (stack.habits ? stack.habits.length : 0)} ATOMS
                             </span>
                         </div>
-                        <h3 className="text-xl font-bold mb-2 text-white uppercase tracking-tight relative z-10">{stack.name}</h3>
+                        <h3 className="text-xl font-bold mb-2 text-white uppercase tracking-tight relative z-10">{stack.title || stack.name}</h3>
                         <p className="text-sm text-zinc-500 mb-6 leading-relaxed relative z-10">{stack.description}</p>
                         <button className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded hover:bg-zinc-200 transition-all relative z-10">
                             Load Protocol

@@ -88,6 +88,8 @@ habitRoutes.post('/adopt', async (c) => {
     const body = await c.req.json();
     const supabase = c.get('supabase');
 
+    console.log('📦 Adopt Request:', { user_id: user.id, body });
+
     // Handle Bulk (slugs array) or Single (slug string)
     const slugs = body.slugs || (body.slug ? [body.slug] : []);
 
@@ -105,6 +107,7 @@ habitRoutes.post('/adopt', async (c) => {
         .in('slug', slugs);
 
     if (libError || !libHabits || libHabits.length === 0) {
+        console.error('📚 Library Fetch Error:', libError);
         return c.json({ error: 'Habits not found in library' }, 404);
     }
 
@@ -128,15 +131,17 @@ habitRoutes.post('/adopt', async (c) => {
     }));
 
     // 3. Insert into User Habits
+    // Target table is 'habits' (standard user habits table)
     const { error: insertError } = await supabase
         .from('habits')
         .insert(habitsToInsert);
 
     if (insertError) {
-        console.error('Adopt Habit Error:', insertError);
+        console.error('❌ Adopt Write Error:', insertError);
         return c.json({ error: 'Failed to adopt habits', details: insertError.message }, 500);
     }
 
+    console.log(`✅ Successfully adopted ${habitsToInsert.length} habits for user ${user.id}`);
     return c.json({ message: `Successfully adopted ${habitsToInsert.length} habits` });
 });
 

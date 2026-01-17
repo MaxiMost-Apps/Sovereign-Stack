@@ -21,7 +21,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     useEffect(() => {
         const fetchLibrary = async () => {
             try {
-                // REPAIR ORDER: Fetch from Render API Only
+                // Fetch from Render API Only
                 const response = await fetch('https://sovereign-stack.onrender.com/api/habits/library');
                 if (!response.ok) throw new Error('API Sync Failed');
                 const data = await response.json();
@@ -41,7 +41,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
 
     const handleAdopt = async (habit: Habit) => {
         try {
-            // REPAIR ORDER: Use Absolute URL for Adoption
+            // Use Absolute URL for Adoption
             const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -63,7 +63,8 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     return (
         <div className="space-y-6">
              <div className="flex justify-between items-center mb-6">
-                 <h2 className="text-xl font-bold text-white uppercase tracking-widest">HABIT LIBRARY</h2>
+                 {/* REPAIR ORDER: Rename to ATOM LEDGER */}
+                 <h2 className="text-xl font-bold text-white uppercase tracking-widest">ATOM LEDGER</h2>
                  <span className="text-xs font-mono text-zinc-500">{libraryHabits.length} PROTOCOLS AVAILABLE</span>
               </div>
 
