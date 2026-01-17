@@ -44,9 +44,9 @@ app.use('*', cors({
     if (origin === 'https://www.maximost.com' || origin === 'https://maximost.com') {
       return origin;
     }
-    // 3. Allow Vercel Previews (Regex Match)
-    // Matches: https://maximost-frontend-*.vercel.app
-    if (origin.match(/^https:\/\/maximost-frontend-.*\.vercel\.app$/)) {
+    // 3. Allow Vercel Previews (Broad Regex Match)
+    // Matches any .vercel.app domain to ensure previews work
+    if (origin.match(/\.vercel\.app$/)) {
       return origin;
     }
     // 4. Allow Specific Sovereign Stack Vercel URL
