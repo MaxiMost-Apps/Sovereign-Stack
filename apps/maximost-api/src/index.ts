@@ -35,26 +35,7 @@ const app = new Hono<AppEnv>();
 
 // --- CORS ---
 app.use('*', cors({
-  origin: (origin) => {
-    // 1. Allow Localhost
-    if (!origin || origin.includes('localhost')) {
-      return origin;
-    }
-    // 2. Allow Production
-    if (origin === 'https://www.maximost.com' || origin === 'https://maximost.com') {
-      return origin;
-    }
-    // 3. Allow Vercel Previews (Broad Regex Match)
-    // Matches any .vercel.app domain to ensure previews work
-    if (origin.match(/\.vercel\.app$/)) {
-      return origin;
-    }
-    // 4. Allow Specific Sovereign Stack Vercel URL
-    if (origin === 'https://maximost-juwyfkma4-sovereign-stack.vercel.app') {
-      return origin;
-    }
-    return undefined; // Block others
-  },
+  origin: '*', // REPAIR ORDER: Wildcard origin to bypass preflight blocks
   allowHeaders: ['Authorization', 'Content-Type', 'apikey', 'x-client-info', 'expires', 'x-admin-secret'],
   allowMethods: ['POST', 'GET', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
   credentials: true,
