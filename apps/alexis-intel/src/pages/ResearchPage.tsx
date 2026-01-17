@@ -11,8 +11,18 @@ export const ResearchPage: React.FC = () => {
       <p className="text-white/40 max-w-md">
         Deep dive studies into physiological optimization, telemetry standards, and longevity protocols.
       </p>
-      <div className="mt-8 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-xs font-mono text-white/50">
-        MODULE UNDER CONSTRUCTION
+
+      <div className="mt-12 grid gap-6 w-full max-w-2xl text-left">
+        <a href="/research/whoop-vs-oura" className="group block glass-panel p-6 rounded-xl hover:bg-white/5 transition-all">
+          <div className="flex justify-between items-start mb-2">
+            <span className="text-xs font-mono text-amethyst tracking-widest">REPORT 2026-A</span>
+            <span className="text-xs text-white/30 group-hover:text-white transition-colors">Read Now →</span>
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2 group-hover:text-neon-teal transition-colors">Whoop vs. Oura: The 2026 Sleep Accuracy Report</h3>
+          <p className="text-sm text-white/50">
+            A 90-day concurrent telemetry stream analysis of the two leading biometric sensors.
+          </p>
+        </a>
       </div>
     </div>
   );

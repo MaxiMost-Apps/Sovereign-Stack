@@ -1,6 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { AreaChart, Area, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { Activity, Moon, Footprints, Droplets, ArrowUpRight } from 'lucide-react';
+import { Activity, Moon, Footprints, Droplets, ArrowUpRight, Calculator } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Mock Data
@@ -67,11 +68,20 @@ export const IntelDashboard: React.FC = () => {
     <div className="space-y-8">
 
       {/* HEADER */}
-      <div>
-        <h2 className="text-3xl font-light text-white mb-2">Biometric <span className="font-bold text-amethyst text-glow">Pulse</span></h2>
-        <p className="text-white/40 max-w-2xl">
-          Live ingestion stream for physiological telemetry. Connect sources to establish baseline.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-3xl font-light text-white mb-2">Biometric <span className="font-bold text-amethyst text-glow">Pulse</span></h2>
+          <p className="text-white/40 max-w-2xl">
+            Live ingestion stream for physiological telemetry. Connect sources to establish baseline.
+          </p>
+        </div>
+        <Link
+          to="/tools/zone2"
+          className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm text-white transition-colors"
+        >
+          <Calculator className="w-4 h-4 text-amethyst" />
+          <span>Zone 2 Calculator</span>
+        </Link>
       </div>
 
       {/* METRICS GRID */}
