@@ -35,7 +35,7 @@ const app = new Hono<AppEnv>();
 
 // --- CORS ---
 app.use('*', cors({
-  origin: '*', // REPAIR ORDER: Wildcard origin to bypass preflight blocks
+  origin: '*', // REPAIR ORDER: Wildcard origin
   allowHeaders: ['Authorization', 'Content-Type', 'apikey', 'x-client-info', 'expires', 'x-admin-secret'],
   allowMethods: ['POST', 'GET', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
   credentials: true,
@@ -44,12 +44,13 @@ app.use('*', cors({
 
 // --- Public Routes (Bypass Auth) ---
 // REPAIR ORDER: Define Public Library Route Directly
-// This avoids auth middleware and context issues
+// This GUARANTEES /api/habits/library is handled before Auth
 app.get('/api/habits/library', async (c) => {
+    console.log('📚 Public Library Access Request');
     try {
         const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
-        // REPAIR ORDER: Query maximost_library_habits instead of library_habits
+        // REPAIR ORDER: Query maximost_library_habits
         const { data, error } = await supabaseAdmin
             .from('maximost_library_habits')
             .select('*')
@@ -60,55 +61,25 @@ app.get('/api/habits/library', async (c) => {
             return c.json({ error: 'Failed to fetch library habits' }, 500);
         }
 
+        console.log(`✅ Library Fetched: ${data?.length} items`);
         return c.json(data);
     } catch (err: any) {
-        console.error("Library Route Error:", err);
+        console.error("Library Route Critical Error:", err);
         return c.json({ error: "Internal Server Error" }, 500);
     }
 });
 
 // --- Global Admin Bypass Middleware ---
 app.use('*', async (c, next) => {
-    // Skip if already handled (public routes)
-    if (c.req.path === '/api/habits/library') {
-        return next();
-    }
-
-    const adminSecret = c.req.header('x-admin-secret');
-    const isIngest = c.req.path.includes('/ingest');
-
-    // NUCLEAR OPTION: Unconditionally allow Ingest OR Secret Key Match
-    if (isIngest || adminSecret === 'phoenix-protocol-v6-override') {
-        console.log('⚡ AUTH BYPASS ACTIVATED');
-        const mockUser = {
-            id: 'admin-bypass',
-            email: 'admin@maximost.com',
-            app_metadata: {},
-            user_metadata: {},
-            aud: 'authenticated',
-            created_at: new Date().toISOString(),
-        };
-
-        const enrichedUser: EnrichedUser = {
-            ...mockUser,
-            profile: {
-                role: 'admin',
-                membership_tier: 'architect',
-                neural_config: null
-            }
-        };
-
-        // Give full admin power
-        const adminSupabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
-        c.set('user', enrichedUser);
-        c.set('supabase', adminSupabase);
-    }
+    // Skip if already handled (public routes) - Hono might not skip if route matched but next() not called?
+    // Actually, app.get() above terminates the request if it matches.
+    // So we don't strictly need this check if the above handler returns response.
     await next();
 });
 
 // --- Auth Middleware ---
 app.use('/api/*', async (c, next) => {
-    // 0. BYPASS for Public Library (Double safety)
+    // 0. BYPASS for Public Library (Redundant Safety)
     if (c.req.path === '/api/habits/library') {
         return next();
     }
@@ -151,8 +122,6 @@ app.use('/api/*', async (c, next) => {
             .eq('id', user.id)
             .single();
 
-        // Admin Logic: Trust the Database Role (Source of Truth)
-        // We do NOT override with hardcoded checks anymore to allow proper ROOT_ADMIN propagation.
         const dbRole = profile?.role;
         const finalRole = (dbRole === 'ROOT_ADMIN' || dbRole === 'admin') ? dbRole : 'user';
 
@@ -170,7 +139,6 @@ app.use('/api/*', async (c, next) => {
         };
 
         // User Context Client: Used for downstream requests (Respects RLS)
-        // We pass the global headers (including Authorization) to forward the user's JWT.
         const userSupabase = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY, {
             global: {
                 headers: {
@@ -195,13 +163,7 @@ app.get('/', (c) => c.text('MaxiMost API is running (Phoenix Protocol Active)'))
 app.route('/api/protocols', protocolRoutes);
 app.route('/api/profiles', profileRoutes);
 app.route('/api/support', supportRoutes);
-// app.route('/api/habits', habitRoutes); // Mounted specifically above or part of standard flow?
-// Be careful: mounting /api/habits/library above handles that specific path.
-// But we still need /api/habits/* for other protected routes.
-// Hono routing order matters. The specific route above wins for /library.
-// This generic mount handles the rest (authenticated).
 app.route('/api/habits', habitRoutes);
-
 app.route('/api/ai', aiRoutes);
 app.route('/api/admin', adminRoutes);
 app.route('/api/journal', journalRoutes);
