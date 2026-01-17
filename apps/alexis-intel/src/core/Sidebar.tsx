@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Activity, Database, Lock, User } from 'lucide-react';
+import { Database, Lock, User, Microscope, Watch, LayoutDashboard } from 'lucide-react';
 
 // Mock User Data for Identity Section
 const MOCK_USER = {
@@ -24,8 +24,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         </h1>
       </div>
 
-      {/* NAVIGATION */}
+      {/* NAVIGATION - INDEPENDENT AUTHORITY */}
       <nav className="flex-1 py-6 px-3 space-y-1">
+
+        {/* RESEARCH */}
+        <NavLink
+          to="/research"
+          className={({ isActive }) => cn(
+            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
+            isActive
+              ? "bg-amethyst/10 text-amethyst border border-amethyst/20"
+              : "text-white/60 hover:bg-white/5 hover:text-white"
+          )}
+        >
+          <Microscope className="w-4 h-4" />
+          RESEARCH
+        </NavLink>
+
+        {/* METRICS (Dashboard) */}
         <NavLink
           to="/dashboard"
           className={({ isActive }) => cn(
@@ -35,10 +51,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               : "text-white/60 hover:bg-white/5 hover:text-white"
           )}
         >
-          <Activity className="w-4 h-4" />
-          INTEL DASHBOARD
+          <LayoutDashboard className="w-4 h-4" />
+          METRICS
         </NavLink>
 
+        {/* WEARABLES */}
+        <NavLink
+          to="/wearables"
+          className={({ isActive }) => cn(
+            "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200",
+            isActive
+              ? "bg-amethyst/10 text-amethyst border border-amethyst/20"
+              : "text-white/60 hover:bg-white/5 hover:text-white"
+          )}
+        >
+          <Watch className="w-4 h-4" />
+          WEARABLES
+        </NavLink>
+
+        {/* THE DESK (Vault) */}
         <NavLink
           to="/vault"
           className={({ isActive }) => cn(
@@ -54,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               <Lock className="w-3 h-3 absolute -top-1 -right-1 text-neon-red opacity-80" />
             )}
           </div>
-          IMPERIAL VAULT
+          THE DESK
         </NavLink>
       </nav>
 

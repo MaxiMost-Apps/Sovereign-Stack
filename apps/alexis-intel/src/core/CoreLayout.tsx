@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sidebar } from './Sidebar';
-import { SharedLabsFooter } from './SharedLabsFooter';
+import { Footer } from './Footer';
 
 interface CoreLayoutProps {
   children: React.ReactNode;
@@ -25,7 +25,7 @@ export const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
         </main>
 
         {/* Footer */}
-        <SharedLabsFooter />
+        <Footer />
 
       </div>
     </div>
