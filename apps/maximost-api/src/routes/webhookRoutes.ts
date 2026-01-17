@@ -2,8 +2,42 @@ import { Hono } from 'hono';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../config';
+import { v4 as uuidv4 } from 'uuid';
 
 const webhookRoutes = new Hono();
+
+// Helper to generate key codes
+function generateKeyCode() {
+    // Generate a code like SOV-XXXX-XXXX
+    const segment = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `SOV-${segment()}-${segment()}`;
+}
+
+// Helper to mint keys
+async function mintSovereignKeys(supabase: any, userId: string, tier: string) {
+    // Logic: Vanguard = 1 key, Sovereign (Architect) = 5 keys
+    let keysToMint = 1;
+    if (tier === 'sovereign') {
+        keysToMint = 5;
+    }
+
+    const keys = [];
+    for (let i = 0; i < keysToMint; i++) {
+        keys.push({
+            creator_id: userId,
+            key_code: generateKeyCode(),
+            status: 'AVAILABLE'
+        });
+    }
+
+    const { error } = await supabase.from('sovereign_keys').insert(keys);
+
+    if (error) {
+        console.error(`Error minting ${keysToMint} keys for user ${userId}:`, error);
+    } else {
+        console.log(`Successfully minted ${keysToMint} sovereign keys for user ${userId}`);
+    }
+}
 
 // Initialize Stripe
 // @ts-ignore: Version mismatch with types, ignoring to use latest known or fallback
@@ -79,7 +113,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
         // Determine Tier based on Price ID (Assuming config holds these IDs)
         // Note: Prices: Monthly $14.99, Yearly $149.99, Vanguard $199, Sovereign $499
-        if (priceId === config.STRIPE_PRICE_ID_MONTHLY || priceId === config.STRIPE_PRICE_ID_YEARLY) {
+        // Using OPERATOR for Monthly/Yearly as seen in config.ts
+        if (priceId === config.STRIPE_PRICE_ID_OPERATOR) {
             newTier = 'operator';
         } else if (priceId === config.STRIPE_PRICE_ID_VANGUARD) {
             newTier = 'vanguard';
@@ -108,16 +143,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                  console.log(`Updated user ${userId} to tier ${newTier}`);
 
                  // Scholarship Logic for Vanguard and Sovereign ($199 or $499)
+                 // REVISED: Mint Sovereign Keys
                  if (isVanguard) {
-                     // Create a scholarship row
-                     const { error: scholarError } = await supabase.from('scholarships').insert({
-                         status: 'available',
-                         source_purchase_id: session.id,
-                         sponsor_id: userId, // Optional, linking back to purchaser
-                         // granted_to_user_id will be filled when assigned
-                     });
-
-                     if (scholarError) console.error('Error creating scholarship:', scholarError);
+                    await mintSovereignKeys(supabase, userId, newTier);
                  }
              }
         }
