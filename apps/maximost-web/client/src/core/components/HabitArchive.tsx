@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/core/supabase'; // Adjust based on your setup
 import { HabitCard } from './HabitCard';
 import { Habit } from '@/types/habit';
 import { Loader2 } from 'lucide-react';
@@ -21,17 +20,16 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     useEffect(() => {
         const fetchLibrary = async () => {
             try {
-                // Fetch from API
-                const response = await fetch('/api/habits/library'); // Using the new endpoint
+                // REPAIR ORDER: Fetch from Render API Only
+                const response = await fetch('https://sovereign-stack.onrender.com/api/habits/library');
                 if (!response.ok) throw new Error('API Sync Failed');
                 const data = await response.json();
 
                 setLibraryHabits(data || []);
             } catch (error) {
                 console.error("Archive Load Error:", error);
-                // Fallback to direct supabase if API fails (Dev/Staging)
-                const { data } = await supabase.from('library_habits').select('*').order('title');
-                setLibraryHabits(data || []);
+                toast.error("Failed to load archive. Check connection.");
+                setLibraryHabits([]); // Fail safe
             } finally {
                 setLoading(false);
             }
@@ -41,8 +39,6 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     }, []);
 
     const handleAdopt = async (habit: Habit) => {
-        // Optimistic UI updates handled by parent (onImport)
-        // Here we just trigger the backend adoption
         try {
             const response = await fetch('/api/habits/adopt', {
                 method: 'POST',
@@ -73,10 +69,11 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
                  {libraryHabits.map((t: any) => {
                     const isActive = activeHabitSlugs.has(t.slug);
 
+                    // REPAIR ORDER: Ensure mapping uses metadata.tactical or direct fields
                     const mappedHabit: Habit = {
                         id: t.slug, // Use slug as ID for library display
                         title: t.title,
-                        description: t.description,
+                        description: t.metadata?.tactical?.description || t.description || "No description available",
                         category: t.category, // Pass through new categories
                         metadata: t.metadata,
                         type: t.type,

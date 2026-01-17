@@ -1,4 +1,6 @@
 import { Hono } from 'hono';
+import { createClient } from '@supabase/supabase-js'; // Import CreateClient
+import { config } from '../config'; // Import Config
 import type { AppEnv } from '../hono';
 
 const habitRoutes = new Hono<AppEnv>();
@@ -23,9 +25,12 @@ habitRoutes.get('/stats', async (c) => {
 
 // GET /api/habits/library - Fetch all habits from the archive
 habitRoutes.get('/library', async (c) => {
-    const supabase = c.get('supabase');
-    const { data, error } = await supabase
-        .from('library_habits')
+    // REPAIR ORDER: Use Service Role to bypass RLS
+    const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+
+    // REPAIR ORDER: Query maximost_library_habits instead of library_habits
+    const { data, error } = await supabaseAdmin
+        .from('maximost_library_habits')
         .select('*')
         .order('title');
 
@@ -104,9 +109,12 @@ habitRoutes.post('/adopt', async (c) => {
 
     if (!slug) return c.json({ error: 'Slug is required' }, 400);
 
-    // 1. Fetch from Library
-    const { data: libHabit, error: libError } = await supabase
-        .from('library_habits')
+    // 1. Fetch from Library (Using Admin Client for Safety/Completeness if needed, but context user works if RLS allows public read)
+    // REPAIR ORDER: Use Admin client here too to ensure we can read from maximost_library_habits
+    const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+
+    const { data: libHabit, error: libError } = await supabaseAdmin
+        .from('maximost_library_habits') // Updated Table
         .select('*')
         .eq('slug', slug)
         .single();

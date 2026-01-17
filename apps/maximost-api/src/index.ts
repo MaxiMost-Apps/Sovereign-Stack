@@ -61,8 +61,18 @@ app.use('*', cors({
   maxAge: 600,
 }));
 
+// --- Public Routes (Bypass Auth) ---
+// REPAIR ORDER: Mount public library route BEFORE auth middleware
+app.route('/api/habits/library', habitRoutes);
+
 // --- Global Admin Bypass Middleware ---
 app.use('*', async (c, next) => {
+    // Skip if already handled (e.g. public routes that might overlap, though strict routing usually wins)
+    // But for safety, check path
+    if (c.req.path === '/api/habits/library') {
+        return next();
+    }
+
     const adminSecret = c.req.header('x-admin-secret');
     const isIngest = c.req.path.includes('/ingest');
 
@@ -97,6 +107,11 @@ app.use('*', async (c, next) => {
 
 // --- Auth Middleware ---
 app.use('/api/*', async (c, next) => {
+    // 0. BYPASS for Public Library (Double safety)
+    if (c.req.path === '/api/habits/library') {
+        return next();
+    }
+
     // 1. Bypass if User is already set (by Skeleton Key)
     if (c.get('user')) {
         await next();
@@ -179,7 +194,13 @@ app.get('/', (c) => c.text('MaxiMost API is running (Phoenix Protocol Active)'))
 app.route('/api/protocols', protocolRoutes);
 app.route('/api/profiles', profileRoutes);
 app.route('/api/support', supportRoutes);
+// app.route('/api/habits', habitRoutes); // Mounted specifically above or part of standard flow?
+// Be careful: mounting /api/habits/library above handles that specific path.
+// But we still need /api/habits/* for other protected routes.
+// Hono routing order matters. The specific route above wins for /library.
+// This generic mount handles the rest (authenticated).
 app.route('/api/habits', habitRoutes);
+
 app.route('/api/ai', aiRoutes);
 app.route('/api/admin', adminRoutes);
 app.route('/api/journal', journalRoutes);
