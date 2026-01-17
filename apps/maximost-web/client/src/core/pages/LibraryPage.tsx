@@ -16,6 +16,13 @@ export default function LibraryPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // REPAIR ORDER: Check URL Search Params for Tab Default
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'protocols' || tabParam === 'stacks') {
+        setActiveTab('stacks');
+    }
+
     const fetchLibrary = async () => {
       try {
         setLoading(true);
@@ -114,7 +121,8 @@ export default function LibraryPage() {
           <div>
             <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter flex items-center gap-3">
               <ArchiveIcon className="text-zinc-500 w-8 h-8" />
-              The Archive
+              {/* REPAIR ORDER: ATOM LEDGER */}
+              ATOM LEDGER
             </h1>
             <p className="text-zinc-500 mt-1 font-mono text-xs uppercase tracking-widest">The Armory. Equip habits and load protocol stacks.</p>
           </div>
