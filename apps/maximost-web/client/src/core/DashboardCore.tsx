@@ -117,18 +117,22 @@ export default function DashboardCore() {
      try {
          const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
              method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
+             headers: {
+                 'Content-Type': 'application/json',
+                 // REPAIR ORDER: Ensure Auth Header is passed for Bulk Adopt
+                 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+             },
              body: JSON.stringify({ slugs: coreSlugs })
          });
 
          if (!response.ok) throw new Error('Bulk Adoption Failed');
 
          toast.success("Core Protocols Deployed");
-         fetchData(); // Refresh UI
+         // REPAIR ORDER: Reload to snap view
+         window.location.reload();
      } catch (error: any) {
          toast.error(error.message);
-     } finally {
-         setLoading(false);
+         setLoading(false); // Only unset loading on error, reload handles success
      }
   };
 
@@ -239,7 +243,11 @@ export default function DashboardCore() {
 
         const response = await fetch('/api/completions/toggle', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                // Ensure auth token is present for toggle as well
+                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            },
             body: JSON.stringify(payload)
         });
 
