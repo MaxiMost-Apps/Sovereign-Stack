@@ -21,9 +21,9 @@ const savageFilter = (text: string): string => {
         "To-Do List": "Mission Orders",
         "Routine": "The Rig",
         "Goals": "Objectives",
-        "Failed": "Data Point",
-        "Motivation": "Momentum",
-        "Preferences": "Neural Bridge Config"
+        "Failed": "Failure",
+        "Motivation": "Discipline",
+        "Preferences": "System Config"
     };
 
     let filtered = text;
@@ -40,19 +40,8 @@ mirrorRoutes.post('/roast', async (c) => {
     const { excuse } = await c.req.json();
 
     // 1.5. LINGUISTIC CORRECTION (The "Savage" Filter Intercept)
-    const filterResult = applySavageFilter(excuse);
-
-    if (filterResult) {
-        return c.json({
-            roast: filterResult.correction,
-            remaining_credits: 999, // Correction doesn't cost a credit
-            intensity_level: "Sovereign",
-            telemetry: {
-                limbic_regulator: { status: "STABLE", value: 0 },
-                governor_status: { status: "OFFLINE", value: 0 }
-            }
-        });
-    }
+    // Removed applySavageFilter check to allow AI to roast freely.
+    // We only filter the input text for terminology replacement.
 
     const ip = c.req.header('x-forwarded-for') || 'unknown-ip'; // Basic IP extraction
     const user = c.get('user'); // EnrichedUser from middleware
@@ -85,7 +74,7 @@ mirrorRoutes.post('/roast', async (c) => {
                     roast: "ACCESS DENIED. You have exhausted your guest credits. Discipline requires commitment. Sign up to continue.",
                     limit_reached: true,
                     remaining_credits: 0,
-                    intensity_level: "Sovereign"
+                    intensity_level: "Savage"
                 }, 403);
             }
         }
@@ -114,14 +103,13 @@ mirrorRoutes.post('/roast', async (c) => {
                     const model = genAI.getGenerativeModel({
                         model: 'gemini-1.5-flash',
                         generationConfig: {
-                            temperature: 0.85,
+                            temperature: 0.9,
                             maxOutputTokens: 250,
                         }
                     });
 
-                    // Use the centralized Unfiltered Prompt
-                    // UNFILTERED GOGGINS v2.2 (Hardened)
-                    const hardcodedPrompt = "You are the Accountability Mirror. You are a high-intensity performance psychologist. Immediately label excuses as 'sh*t' or 'pathetic'. Use 'limbic friction' to expose their weakness. Do not apologize. Do not be polite. Close with a blunt, one-sentence order like 'GET BACK TO WORK'. Tactical profanity is required.";
+                    // SAVAGE V3.0 (Drill Instructor)
+                    const hardcodedPrompt = "You are the Accountability Mirror. You are a savage, high-intensity drill instructor. If the user provides a weak excuse, call it out. Do not offer platitudes. Demand execution. Use 'limbic friction' to expose their weakness. Do not apologize. Do not be polite. Close with a blunt order. Tactical profanity is permitted.";
                     const prompt = `${hardcodedPrompt}\n\nUSER EXCUSE: "${excuse}"\nRESPONSE (Max 250 tokens, raw and unfiltered):`;
 
                     const result = await model.generateContent({
@@ -142,12 +130,12 @@ mirrorRoutes.post('/roast', async (c) => {
                 } catch (apiError) {
                     console.error("Gemini API Error:", apiError);
                     // Fallback if API fails
-                    aiResponse = "Your fatigue is a lie told by your limbic system to save energy. You are not tired; you are unconditioned. Lace up your shoes now.";
+                    aiResponse = "Your fatigue is a lie told by your limbic system to save energy. You are not tired; you are unconditioned. GET AFTER IT.";
                     source = "fallback";
                 }
             } else {
                 // Fallback if no key
-                aiResponse = "Your fatigue is a lie told by your limbic system to save energy. You are not tired; you are unconditioned. Lace up your shoes now.";
+                aiResponse = "Your fatigue is a lie told by your limbic system to save energy. You are not tired; you are unconditioned. GET AFTER IT.";
                 source = "mock";
             }
         }
@@ -161,34 +149,25 @@ mirrorRoutes.post('/roast', async (c) => {
             ip_address: ip,
             excuse: excuse,
             roast: aiResponse,
-            intensity_level: 'Sovereign'
+            intensity_level: 'Savage'
         });
 
         // 6. THE HANDSHAKE (Response)
         // Decrement local counter for response
         if (!userId && remainingCredits > 0) remainingCredits--;
 
-        // Mock Biometrics for Telemetry Gauge (Phase 2)
-        const mockBiometrics = {
-            recovery: 45, // Low recovery = High Limbic Friction
-            streak: 0     // No streak = Governor Active
-        };
-
-        const limbicFriction = 100 - mockBiometrics.recovery;
-        const governorLoad = mockBiometrics.streak > 3 ? 0 : 75;
-
         return c.json({
             roast: aiResponse,
             remaining_credits: remainingCredits,
-            intensity_level: "Sovereign",
+            intensity_level: "Savage",
             telemetry: {
                 limbic_regulator: {
-                    status: limbicFriction > 50 ? "SURGING" : "STABLE",
-                    value: limbicFriction
+                    status: "SURGING",
+                    value: 85
                 },
                 governor_status: {
-                    status: governorLoad > 0 ? "ACTIVE" : "OFFLINE",
-                    value: governorLoad
+                    status: "OFFLINE",
+                    value: 0
                 }
             }
         });

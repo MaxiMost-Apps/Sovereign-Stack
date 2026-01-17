@@ -21,6 +21,7 @@ import ConsoleOverlay from './components/ConsoleOverlay';
 import { calculateStreak } from './utils/streakLogic';
 import { useToast } from './components/Toast';
 import { HabitCard } from './components/HabitCard'; // Import new HabitCard
+import { HabitArchive } from './components/HabitArchive'; // Import new HabitArchive
 import { CouncilGhost } from '@/features/ghost/CouncilGhost';
 import { AscensionOverlay } from '@/components/AscensionOverlay';
 
@@ -39,7 +40,6 @@ export default function DashboardCore() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
   const [initialForm, setInitialForm] = useState({});
-  const [templates, setTemplates] = useState([]);
   const [isSystemLocked, setIsSystemLocked] = useState(() => localStorage.getItem('isSystemLocked') === 'true');
   const [isSortMode, setIsSortMode] = useState(false); // Phase 2: Sort Mode Toggle
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -67,13 +67,10 @@ export default function DashboardCore() {
     if (!user) return;
     const { data: h } = await supabase.from('habits').select('*').order('sort_order');
     const { data: l } = await supabase.from('habit_logs').select('*').eq('user_id', user.id);
-    const { data: t } = await supabase.from('library_habits').select('*').order('title');
 
     // Fetch Profile for Settings
     const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
     setUserProfile(p);
-
-    setTemplates(t || []);
 
     const logMap: any = {};
     const weekStart = startOfWeek(new Date(), { weekStartsOn: userProfile?.start_of_week === 'SUNDAY' ? 0 : 1 });
@@ -99,27 +96,9 @@ export default function DashboardCore() {
        streak: calculateStreak(habit, logMap)
     }));
 
-    // Self-Healing: Enriched Habits with Library Metadata (if missing)
-    const enrichedHabits = habitsWithStreak.map((habit: any) => {
-        // If metadata is empty/missing, try to fill from library
-        if (!habit.metadata || !habit.metadata.compiler) {
-            const match = t?.find((lib: any) => lib.title === habit.title || lib.slug === habit.slug);
-            if (match && match.metadata) {
-                // Return merged habit (Visual only, no DB write to avoid race conditions here)
-                return {
-                    ...habit,
-                    metadata: { ...match.metadata, ...habit.metadata },
-                    color: habit.color === 'maximost_blue' && match.metadata.visuals?.theme ? match.metadata.visuals.theme : habit.color,
-                    icon: habit.icon === 'activity' && match.metadata.visuals?.icon ? match.metadata.visuals.icon : habit.icon
-                };
-            }
-        }
-        return habit;
-    });
-
     // Split Active vs Inactive
-    setHabits(enrichedHabits.filter((x: any) => x && x.id && x.is_active !== false));
-    setDecommissionedRigs(enrichedHabits.filter((x: any) => x && x.id && x.is_active === false));
+    setHabits(habitsWithStreak.filter((x: any) => x && x.id && x.is_active !== false));
+    setDecommissionedRigs(habitsWithStreak.filter((x: any) => x && x.id && x.is_active === false));
   };
 
   useEffect(() => { fetchData(); }, [user]);
@@ -270,34 +249,23 @@ export default function DashboardCore() {
      setLogs(newLogs);
      localStorage.setItem('habit_logs_cache', JSON.stringify(newLogs));
 
-     // PERSISTENCE LOCKDOWN: Direct Supabase UPSERT
+     // PERSISTENCE: Unified API Logic
      try {
-        if (newVal === 0) {
-            // Delete
-            const { error } = await supabase
-                .from('habit_logs')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('habit_id', habitId)
-                .eq('completed_at', dateStr);
+        const payload = {
+            habit_id: habitId,
+            target_date: dateStr,
+            value: newVal // Send explicit value (0 = delete, 1 = completed)
+        };
 
-            if (error) throw error;
-        } else {
-            // Upsert
-            const { error } = await supabase
-                .from('habit_logs')
-                .upsert({
-                    user_id: user.id,
-                    habit_id: habitId,
-                    completed_at: dateStr,
-                    value: newVal
-                }, { onConflict: 'user_id, habit_id, completed_at' });
+        const response = await fetch('/api/completions/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-            if (error) throw error;
-        }
+        if (!response.ok) throw new Error('API Toggle Failed');
 
-        // Trigger Kinetic Feedback if Success
-        // (Visual Spark handled by UI component based on state change, here we just ensure data safety)
+        // Success - Visual Spark handled by UI component based on state change
 
      } catch (error: any) {
         console.error("Persistence Failure:", error.message);
@@ -443,13 +411,6 @@ export default function DashboardCore() {
            </div>
         </div>
 
-        {/* GHOST INTELLIGENCE MOCKUP (Dev Only) */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <CouncilGhost isDrifting={true} variant="subtle" message="Subtle Drift Detected" />
-            <CouncilGhost isDrifting={true} variant="glass" message="Glass Drift Detected" />
-            <CouncilGhost isDrifting={true} variant="pulse" message="CRITICAL DRIFT DETECTED" />
-        </div> */}
-
         {safeHabits.length === 0 && !authLoading ? (
             <div className="max-w-4xl mx-auto mt-12 px-4">
 
@@ -558,27 +519,21 @@ export default function DashboardCore() {
                     {/* However, since DndContext wraps everything, it's fine. */}
                     {viewMode === 'weekly' && (
                         <div className="relative">
-                             {/* GARNISH PROTOCOL: Blur for Initiates */}
-                             {userProfile?.tier_name === 'INITIATE' && <AscensionOverlay />}
-                             <div style={userProfile?.tier_name === 'INITIATE' ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
-                                 <WeeklyMatrix
-                                   habits={safeHabits} currentDate={selectedDate} logs={logs}
-                                   onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete}
-                                   isSystemLocked={isSystemLocked}
-                                   isSortMode={isSortMode}
-                                   startOfWeek={startOfWeekVal}
-                                   adjustedToday={adjustedToday}
-                                 />
-                             </div>
+                             {/* GARNISH PROTOCOL: Blur for Initiates - REMOVED GATING */}
+                             <WeeklyMatrix
+                               habits={safeHabits} currentDate={selectedDate} logs={logs}
+                               onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete}
+                               isSystemLocked={isSystemLocked}
+                               isSortMode={isSortMode}
+                               startOfWeek={startOfWeekVal}
+                               adjustedToday={adjustedToday}
+                             />
                         </div>
                     )}
                      {viewMode === 'monthly' && (
                         <div className="relative">
-                             {/* GARNISH PROTOCOL: Blur for Initiates */}
-                             {userProfile?.tier_name === 'INITIATE' && <AscensionOverlay />}
-                             <div style={userProfile?.tier_name === 'INITIATE' ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
-                                <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />
-                             </div>
+                             {/* GARNISH PROTOCOL: Blur for Initiates - REMOVED GATING */}
+                             <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />
                         </div>
                      )}
                 </DndContext>
@@ -623,27 +578,21 @@ export default function DashboardCore() {
 
                     {viewMode === 'weekly' && (
                         <div className="relative">
-                             {/* GARNISH PROTOCOL: Blur for Initiates */}
-                             {userProfile?.tier_name === 'INITIATE' && <AscensionOverlay />}
-                             <div style={userProfile?.tier_name === 'INITIATE' ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
-                                 <WeeklyMatrix
-                                   habits={safeHabits} currentDate={selectedDate} logs={logs}
-                                   onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete}
-                                   isSystemLocked={isSystemLocked}
-                                   isSortMode={isSortMode}
-                                   startOfWeek={startOfWeekVal}
-                                   adjustedToday={adjustedToday}
-                                 />
-                             </div>
+                             {/* GARNISH PROTOCOL: Blur for Initiates - REMOVED GATING */}
+                             <WeeklyMatrix
+                               habits={safeHabits} currentDate={selectedDate} logs={logs}
+                               onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete}
+                               isSystemLocked={isSystemLocked}
+                               isSortMode={isSortMode}
+                               startOfWeek={startOfWeekVal}
+                               adjustedToday={adjustedToday}
+                             />
                         </div>
                     )}
                      {viewMode === 'monthly' && (
                         <div className="relative">
-                             {/* GARNISH PROTOCOL: Blur for Initiates */}
-                             {userProfile?.tier_name === 'INITIATE' && <AscensionOverlay />}
-                             <div style={userProfile?.tier_name === 'INITIATE' ? { filter: 'blur(12px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
-                                <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />
-                             </div>
+                             {/* GARNISH PROTOCOL: Blur for Initiates - REMOVED GATING */}
+                             <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />
                         </div>
                      )}
                 </>
@@ -707,30 +656,11 @@ export default function DashboardCore() {
 
         {viewMode === 'daily' && (
            <div className="mt-12 pt-8 border-t border-gray-800">
-              <div className="flex justify-between items-center mb-6">
-                 <h2 className="text-xl font-bold text-white">Habit Archive</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                 {templates.map((t: any) => {
-                    const mappedHabit = {
-                        id: t.id || t.slug, // ensure string id
-                        title: t.title,
-                        description: t.description,
-                        category: t.category,
-                        metadata: t.metadata,
-                        completed: false // not applicable for template
-                    };
-
-                    return (
-                        <HabitCard
-                           key={mappedHabit.id}
-                           habit={mappedHabit as any}
-                           mode="archive"
-                           onQuickImport={(habit) => handleLibraryClick(habit)} // Map import to the modal opener
-                        />
-                    );
-                 })}
-              </div>
+               {/* REPLACED: Old direct fetch rendering with new HabitArchive component */}
+               <HabitArchive
+                    onImport={(habit) => handleLibraryClick(habit)}
+                    userHabits={safeHabits}
+               />
            </div>
         )}
 

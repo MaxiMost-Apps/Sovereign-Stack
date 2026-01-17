@@ -15,12 +15,17 @@ interface HabitCardProps {
 export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, onEdit }: HabitCardProps) => {
   const [showIntel, setShowIntel] = useState(false);
 
-  // COLOR LOGIC (Restored)
+  // COLOR LOGIC (Restored & Enhanced)
   const getStyles = (cat: string) => {
     const c = cat?.toLowerCase() || '';
-    if (c.includes('kinetic')) return 'border-emerald-500/50 text-emerald-500 hover:bg-emerald-950/20';
-    if (c.includes('creation')) return 'border-violet-500/50 text-violet-500 hover:bg-violet-950/20';
-    if (c.includes('iron')) return 'border-blue-500/50 text-blue-500 hover:bg-blue-950/20';
+    if (c.includes('kinetic') || c.includes('bio')) return 'border-emerald-500/50 text-emerald-500 hover:bg-emerald-950/20';
+    if (c.includes('cognitive') || c.includes('creation') || c.includes('neural')) return 'border-violet-500/50 text-violet-500 hover:bg-violet-950/20';
+    if (c.includes('tactical') || c.includes('iron') || c.includes('combat')) return 'border-blue-500/50 text-blue-500 hover:bg-blue-950/20'; // Blue or Red? 'combat' usually red, but 'tactical' often blue/steel. Let's use Blue for standard, maybe Red for specific themes.
+    // Fallback based on specific theme if available
+    const theme = habit.metadata?.visuals?.theme || habit.theme || '';
+    if (theme.includes('red') || theme.includes('combat')) return 'border-red-500/50 text-red-500 hover:bg-red-950/20';
+    if (theme.includes('steel') || theme.includes('slate')) return 'border-slate-500/50 text-slate-400 hover:bg-slate-900';
+
     return 'border-zinc-800 text-zinc-400 hover:bg-zinc-900';
   };
 
@@ -95,7 +100,7 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
             showIntel ? "text-emerald-400" : "text-zinc-600"
           )}>
             {showIntel
-              ? (habit.metadata?.intel?.why || "Data Unavailable")
+              ? (habit.metadata?.intel?.why || habit.metadata?.compiler?.why || "Data Unavailable")
               : (habit.metadata?.tactical?.description || habit.description || "No tactical data")}
           </span>
         </div>
@@ -130,9 +135,9 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
 
         {/* CATEGORY ICON */}
         <div className="opacity-20 group-hover:opacity-100 transition-opacity">
-            {habit.category === 'Kinetic' && <Activity className="w-5 h-5" />}
-            {habit.category === 'Creation' && <Zap className="w-5 h-5" />}
-            {habit.category === 'Iron Mind' && <Brain className="w-5 h-5" />}
+            {(habit.category === 'Kinetic' || habit.category?.includes('bio')) && <Activity className="w-5 h-5" />}
+            {(habit.category === 'Cognitive' || habit.category?.includes('black_box')) && <Zap className="w-5 h-5" />}
+            {(habit.category === 'Tactical' || habit.category?.includes('armor')) && <Brain className="w-5 h-5" />}
         </div>
       </div>
     </div>

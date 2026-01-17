@@ -34,12 +34,13 @@ const AICoachPage: React.FC = () => {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
 
   // Scroll to bottom when new messages are added
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isTyping]);
 
   // Initial greeting from the coach when selected or when component mounts with a default coach
   useEffect(() => {
@@ -55,7 +56,7 @@ const AICoachPage: React.FC = () => {
   }, [selectedCoachId, currentCoach]);
 
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentMessage.trim()) return;
 
@@ -68,24 +69,41 @@ const AICoachPage: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     const messageToSend = currentMessage;
     setCurrentMessage('');
+    setIsTyping(true);
 
-    setTimeout(() => {
-      let aiResponseText = "I'm listening. Tell me more."; // Default fallback
-      if (currentCoach && currentCoach.cannedResponses && currentCoach.cannedResponses.length > 0) {
-        const cannedResponses = currentCoach.cannedResponses;
-        aiResponseText = messageToSend.length < 10 && cannedResponses.length > 1
-          ? cannedResponses[1]
-          : cannedResponses[Math.floor(Math.random() * cannedResponses.length)];
-      }
+    try {
+        // SAVAGE PROTOCOL: Use Real Mirror API
+        const response = await fetch('/api/mirror/roast', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ excuse: messageToSend })
+        });
 
-      const aiMessage: Message = {
-        id: `ai-${Date.now()}`,
-        text: aiResponseText,
-        sender: 'ai',
-        timestamp: new Date().toLocaleTimeString(),
-      };
-      setMessages(prev => [...prev, aiMessage]);
-    }, 1000 + Math.random() * 500);
+        const data = await response.json();
+
+        // Handle API success or fallback
+        const aiResponseText = data.roast || "System Malfunction. Re-engage.";
+
+        const aiMessage: Message = {
+            id: `ai-${Date.now()}`,
+            text: aiResponseText,
+            sender: 'ai',
+            timestamp: new Date().toLocaleTimeString(),
+        };
+        setMessages(prev => [...prev, aiMessage]);
+
+    } catch (error) {
+        // Fallback for offline/error
+        const aiMessage: Message = {
+            id: `ai-${Date.now()}`,
+            text: "Connection Lost. The Mirror is offline, but the standard remains. Get after it.",
+            sender: 'ai',
+            timestamp: new Date().toLocaleTimeString(),
+        };
+        setMessages(prev => [...prev, aiMessage]);
+    } finally {
+        setIsTyping(false);
+    }
   };
 
   // Fallback UI if currentCoach is somehow still not resolved (should not happen with the stub)
@@ -137,6 +155,7 @@ const AICoachPage: React.FC = () => {
             aiTheme={msg.sender === 'ai' ? currentCoach.theme : undefined}
           />
         ))}
+        {isTyping && <div className="text-zinc-500 text-xs italic p-2">Computing Response...</div>}
         <div ref={messagesEndRef} /> {/* For auto-scrolling */}
       </div>
 
@@ -144,12 +163,12 @@ const AICoachPage: React.FC = () => {
         <form className="flex gap-2" onSubmit={handleSendMessage}>
           <Input
             type="text"
-            placeholder="Type your message..."
+            placeholder="What's your problem? Spit it out."
             value={currentMessage}
             onChange={(e) => setCurrentMessage(e.target.value)}
             className="flex-grow bg-neutral-700 border-neutral-600 text-neutral-100 placeholder:text-neutral-400 focus:ring-blue-500 focus:border-blue-500"
           />
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={isTyping}>
             <Send className="h-4 w-4" />
             <span className="sr-only">Send message</span>
           </Button>

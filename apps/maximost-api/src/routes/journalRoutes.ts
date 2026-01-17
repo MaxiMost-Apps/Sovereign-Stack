@@ -8,26 +8,11 @@ journalRoutes.get('/', async (c) => {
   const user = c.get('user');
   const supabase = c.get('supabase');
 
-  // Garnish Protocol: If not Vanguard, limit history to 7 days
-  // Fix: Check 'tier_name' or legacy 'membership_tier' and handle potential missing 'is_vanguard' in type
-  const profile = user.profile as any; // Cast to any to avoid strict type error during build if interface outdated
-  const isVanguard = profile.is_vanguard === true ||
-                     ['VANGUARD', 'SOVEREIGN', 'ARCHITECT'].includes(profile.tier_name?.toUpperCase()) ||
-                     ['vanguard', 'sovereign'].includes(profile.membership_tier);
-
-  let query = supabase
+  // NO GATING: Garnish Protocol Deactivated. Full history open.
+  const query = supabase
     .from('journal_entries')
     .select('*')
     .eq('user_id', user.id);
-
-  if (!isVanguard) {
-      // 7 Day Rolling Window Logic
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      query = query.gte('date', sevenDaysAgo.toISOString().split('T')[0]);
-      // Assuming 'date' column is YYYY-MM-DD or ISO timestamp.
-      // If 'date' is just the date string, we compare string format.
-  }
 
   const { data, error } = await query;
 

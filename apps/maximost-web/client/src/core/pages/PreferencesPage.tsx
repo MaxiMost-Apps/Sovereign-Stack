@@ -151,7 +151,7 @@ export default function PreferencesPage() {
       "UTC", "America/New_York", "America/Los_Angeles", "America/Chicago", "Europe/London", "Europe/Paris", "Asia/Tokyo", "Australia/Sydney"
   ];
 
-  const isInitiate = tierName === 'INITIATE';
+  // const isInitiate = tierName === 'INITIATE'; // REMOVED GATING
 
   return (
     <div className="space-y-8 p-6 max-w-2xl mx-auto pb-40 relative">
@@ -161,10 +161,10 @@ export default function PreferencesPage() {
         <p className="text-zinc-500 font-mono text-xs">ANCHOR THE MACHINE.</p>
       </div>
 
-      {isInitiate && <AscensionOverlay />}
+      {/* {isInitiate && <AscensionOverlay />} */}
 
       {/* GLOBAL PARAMETERS */}
-      <div className="grid grid-cols-2 gap-6" style={isInitiate ? { filter: 'blur(8px)', pointerEvents: 'none', userSelect: 'none' } : {}}>
+      <div className="grid grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Operational Timezone</label>
           <select

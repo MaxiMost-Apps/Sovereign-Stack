@@ -21,6 +21,22 @@ habitRoutes.get('/stats', async (c) => {
     return c.json(data);
 });
 
+// GET /api/habits/library - Fetch all habits from the archive
+habitRoutes.get('/library', async (c) => {
+    const supabase = c.get('supabase');
+    const { data, error } = await supabase
+        .from('library_habits')
+        .select('*')
+        .order('title');
+
+    if (error) {
+        console.error('Error fetching library habits:', error.message);
+        return c.json({ error: 'Failed to fetch library habits' }, 500);
+    }
+
+    return c.json(data);
+});
+
 // GET /api/habits - Fetch all habits for the logged-in user
 habitRoutes.get('/', async (c) => {
   const user = c.get('user');
@@ -118,6 +134,7 @@ habitRoutes.post('/adopt', async (c) => {
             type: (libHabit.type === 'metric' || libHabit.type === 'duration') ? 'unit' : 'absolute',
             target_value: libHabit.target_value || 1,
             unit: libHabit.unit,
+            category: libHabit.category, // Pass through category
             // Explicitly copy frequency if it exists (for non-absolute habits)
             frequency: libHabit.frequency || 'daily'
         });
