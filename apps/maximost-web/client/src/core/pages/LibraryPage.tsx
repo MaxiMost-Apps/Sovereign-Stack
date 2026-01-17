@@ -7,6 +7,7 @@ import { Habit } from '@/types/habit';
 import { supabase } from '../supabase';
 import { useToast } from '../components/Toast';
 import { HABIT_ATOMS, PROTOCOL_MOLECULES } from '../config/libraryData';
+import { useNavigate } from 'react-router-dom'; // REPAIR ORDER: Added useNavigate
 
 export default function LibraryPage() {
   const [activeTab, setActiveTab] = useState<'habits' | 'stacks'>('habits');
@@ -14,6 +15,7 @@ export default function LibraryPage() {
   const [libraryStacks, setLibraryStacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate(); // REPAIR ORDER: Init hook
 
   useEffect(() => {
     // REPAIR ORDER: Check URL Search Params for Tab Default
@@ -91,12 +93,41 @@ export default function LibraryPage() {
       try {
           const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                  'Content-Type': 'application/json',
+                  // REPAIR ORDER: Auth header for individual adopt
+                  'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+              },
               body: JSON.stringify({ slug: habit.slug })
           });
 
           if (!response.ok) throw new Error('Adoption Failed');
           toast.success(`Protocol [${habit.title}] Deployed.`);
+      } catch (error: any) {
+          toast.error(error.message);
+      }
+  };
+
+  const handleLoadProtocol = async (stack: any) => {
+      // REPAIR ORDER: Bulk Adopt Protocol
+      const slugs = stack.habit_slugs || stack.habits;
+      if (!slugs || slugs.length === 0) return toast.error("Empty Protocol");
+
+      try {
+          const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+              },
+              body: JSON.stringify({ slugs })
+          });
+
+          if (!response.ok) throw new Error('Protocol Load Failed');
+
+          toast.success(`Protocol [${stack.title || stack.name}] Active.`);
+          // REPAIR ORDER: Mirror Redirect
+          navigate('/dashboard');
       } catch (error: any) {
           toast.error(error.message);
       }
@@ -213,7 +244,10 @@ export default function LibraryPage() {
                         </div>
                         <h3 className="text-xl font-bold mb-2 text-white uppercase tracking-tight relative z-10">{stack.title || stack.name}</h3>
                         <p className="text-sm text-zinc-500 mb-6 leading-relaxed relative z-10">{stack.description}</p>
-                        <button className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded hover:bg-zinc-200 transition-all relative z-10">
+                        <button
+                            onClick={() => handleLoadProtocol(stack)}
+                            className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded hover:bg-zinc-200 transition-all relative z-10"
+                        >
                             Load Protocol
                         </button>
                     </div>
