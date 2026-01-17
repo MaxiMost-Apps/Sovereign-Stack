@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Navbar } from '../components/Navbar';
 import { Footer } from '../components/Footer';
 import { Counter } from '../components/Counter';
+import { StoicGenerator } from '../components/StoicGenerator';
 
 export const Home = () => {
   return (
@@ -51,6 +52,13 @@ export const Home = () => {
           <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-30 z-0">
              <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
              <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-neutral-200/50 rounded-full blur-[120px]" />
+          </div>
+        </section>
+
+        {/* Stoic Generator Section */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <StoicGenerator />
           </div>
         </section>
 
