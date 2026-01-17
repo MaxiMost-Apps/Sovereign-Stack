@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 5 5 5; /* #050505 */
+    --foreground: 255 255 255;
+  }
+
+  body {
+    @apply bg-background text-white antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  }
+
+  .glass-input {
+    @apply bg-transparent border border-white/10 focus:border-amethyst/50 transition-colors duration-300;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+  }
+}
