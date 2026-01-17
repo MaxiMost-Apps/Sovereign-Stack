@@ -1,16 +1,20 @@
 
 import React from 'react';
 import { Shield, Activity, Lock, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-8 font-mono">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-white uppercase">
-          <span className="text-emerald-500">Aegis</span> // Security Command
+      {/* Page Title / Sub-header */}
+      <div className="mb-8 border-b border-emerald-900/30 pb-4">
+        <h1 className="text-2xl font-bold tracking-tight text-white uppercase">
+          Security Command Center
         </h1>
         <p className="text-emerald-500/60 text-sm mt-1">System Status: OPERATIONAL</p>
-      </header>
+      </div>
 
       {/* Status Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -86,13 +90,22 @@ const Dashboard: React.FC = () => {
         <div className="col-span-1 bg-obsidian border border-emerald-900/30 p-6 rounded-sm">
            <h3 className="text-xs uppercase tracking-widest text-emerald-500 mb-4 border-b border-emerald-900/30 pb-2">Quick Actions</h3>
            <div className="space-y-2">
-             <button className="w-full text-left px-4 py-3 bg-emerald-900/10 border border-emerald-900/30 hover:bg-emerald-900/20 hover:border-emerald-500/50 text-emerald-100 text-xs uppercase tracking-wider transition-all">
+             <button
+               onClick={() => console.log('Scanning system...')}
+               className="w-full text-left px-4 py-3 bg-emerald-900/10 border border-emerald-900/30 hover:bg-emerald-900/20 hover:border-emerald-500/50 text-emerald-100 text-xs uppercase tracking-wider transition-all"
+             >
                 Initiate System Scan
              </button>
-             <button className="w-full text-left px-4 py-3 bg-emerald-900/10 border border-emerald-900/30 hover:bg-emerald-900/20 hover:border-emerald-500/50 text-emerald-100 text-xs uppercase tracking-wider transition-all">
+             <button
+               onClick={() => navigate('/audit-logs')}
+               className="w-full text-left px-4 py-3 bg-emerald-900/10 border border-emerald-900/30 hover:bg-emerald-900/20 hover:border-emerald-500/50 text-emerald-100 text-xs uppercase tracking-wider transition-all"
+             >
                 View Audit Logs
              </button>
-             <button className="w-full text-left px-4 py-3 bg-amethyst-900/10 border border-amethyst-900/30 hover:bg-amethyst-900/20 hover:border-amethyst-500/50 text-amethyst-100 text-xs uppercase tracking-wider transition-all">
+             <button
+               onClick={() => console.log('Purging cache...')}
+               className="w-full text-left px-4 py-3 bg-amethyst-900/10 border border-amethyst-900/30 hover:bg-amethyst-900/20 hover:border-amethyst-500/50 text-amethyst-100 text-xs uppercase tracking-wider transition-all"
+             >
                 Purge Cache
              </button>
            </div>
