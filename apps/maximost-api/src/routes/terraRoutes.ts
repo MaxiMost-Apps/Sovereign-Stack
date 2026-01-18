@@ -56,7 +56,7 @@ terraRoutes.post('/', async (c) => {
         // 3. Ghost Log Protocol (Habit Mapping)
         const { data: activeHabits } = await supabase
             .from('habits')
-            .select('id, name, library_habits!inner(terra_metric)')
+            .select('id, name, atoms!inner(terra_metric)')
             .eq('user_id', userRefId);
 
         if (!activeHabits || activeHabits.length === 0) {
@@ -66,7 +66,7 @@ terraRoutes.post('/', async (c) => {
         // Map terra_metric -> Habit[]
         const metricMap = new Map<string, any[]>();
         activeHabits.forEach((h: any) => {
-            const metric = h.library_habits?.terra_metric;
+            const metric = h.atoms?.terra_metric;
             if (metric) {
                 const list = metricMap.get(metric) || [];
                 list.push(h);

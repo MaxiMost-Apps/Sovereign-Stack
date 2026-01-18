@@ -268,12 +268,12 @@ adminRoutes.post('/seed-protocols', async (c) => {
     const errors: string[] = [];
 
     // 1. Seed Habits
-    for (const habit of ARCHIVE_DATA.library_habits) {
+    for (const habit of ARCHIVE_DATA.atoms) {
         // Map JSON 'title' to DB 'name' column
         const payload = { ...habit, name: habit.title };
 
         const { error } = await supabase
-            .from('library_habits')
+            .from('atoms')
             .upsert(payload, { onConflict: 'slug' });
 
         if (error) errors.push(`Habit ${habit.slug}: ${error.message}`);

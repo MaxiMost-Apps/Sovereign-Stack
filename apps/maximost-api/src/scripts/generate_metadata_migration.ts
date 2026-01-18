@@ -21,12 +21,12 @@ habitsData.forEach((h: any) => {
     // Escape single quotes for SQL
     const metadataJson = JSON.stringify(newMetadata).replace(/'/g, "''");
 
-    sql += `UPDATE public.library_habits SET metadata = '${metadataJson}'::jsonb WHERE slug = '${h.slug}';\n`;
+    sql += `UPDATE public.atoms SET metadata = '${metadataJson}'::jsonb WHERE slug = '${h.slug}';\n`;
 });
 
 // Also force update target_value/unit/type if they differ from master (Schema Healing)
 habitsData.forEach((h: any) => {
-    sql += `UPDATE public.library_habits SET target_value = ${h.target_value}, unit = '${h.unit}', type = '${h.type}' WHERE slug = '${h.slug}';\n`;
+    sql += `UPDATE public.atoms SET target_value = ${h.target_value}, unit = '${h.unit}', type = '${h.type}' WHERE slug = '${h.slug}';\n`;
 });
 
 fs.writeFileSync(path.resolve(__dirname, '../../migrations_metadata_master_load.sql'), sql);

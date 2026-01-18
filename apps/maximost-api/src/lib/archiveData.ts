@@ -1,6 +1,6 @@
 export const ARCHIVE_DATA = {
   "archive_version": "6.0",
-  "library_habits": [
+  "atoms": [
     // KINETIC (Biological Hardware & Movement)
     {"slug": "morning_sun", "title": "Morning Sun", "theme": "bio_emerald", "icon": "Sun", "category": "Kinetic", "type": "absolute", "target_value": 15, "unit": "minutes", "description": "Anchor your circadian clock with outdoor light.", "how_instruction": "THE ATOM: Photon Anchoring. THE STEP: View outdoor light within 30m of waking. No sunglasses.", "why_instruction": "Resets the central clock (SCN), triggers morning cortisol, and sets the sleep timer. [Panda]"},
     {"slug": "fasting", "title": "Intermittent Fasting", "theme": "asset_lime", "icon": "Timer", "category": "Kinetic", "type": "frequency", "target_value": 16, "unit": "hours", "description": "Trigger cellular repair and stabilize energy.", "how_instruction": "THE ATOM: Metabolic Switching. THE STEP: 16-hour fast. Water and black coffee only.", "why_instruction": "Triggers autophagy (cellular cleaning) and stabilizes insulin sensitivity. [Attia]"},

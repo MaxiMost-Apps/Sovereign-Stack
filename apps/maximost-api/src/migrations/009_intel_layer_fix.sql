@@ -10,7 +10,7 @@ SET metadata = jsonb_set(
 )
 WHERE title ILIKE '%Cold Plunge%';
 
-UPDATE library_habits
+UPDATE atoms
 SET metadata = jsonb_set(
     COALESCE(metadata, '{}'::jsonb),
     '{intel}',
@@ -28,7 +28,7 @@ SET metadata = jsonb_set(
 )
 WHERE title ILIKE '%Intermittent Fasting%';
 
-UPDATE library_habits
+UPDATE atoms
 SET metadata = jsonb_set(
     COALESCE(metadata, '{}'::jsonb),
     '{intel}',
@@ -46,7 +46,7 @@ SET metadata = jsonb_set(
 )
 WHERE title ILIKE '%Zone 2 Cardio%';
 
-UPDATE library_habits
+UPDATE atoms
 SET metadata = jsonb_set(
     COALESCE(metadata, '{}'::jsonb),
     '{intel}',
@@ -64,7 +64,7 @@ SET metadata = jsonb_set(
 )
 WHERE title ILIKE '%Heavy Lifting%';
 
-UPDATE library_habits
+UPDATE atoms
 SET metadata = jsonb_set(
     COALESCE(metadata, '{}'::jsonb),
     '{intel}',
@@ -82,7 +82,7 @@ SET metadata = jsonb_set(
 )
 WHERE title ILIKE '%Sauna%';
 
-UPDATE library_habits
+UPDATE atoms
 SET metadata = jsonb_set(
     COALESCE(metadata, '{}'::jsonb),
     '{intel}',

@@ -2,10 +2,10 @@
 -- Hard-flushing and reseeding the Library Habits to correct the '22-Atom' glitch.
 
 -- 1. Truncate Library
-TRUNCATE TABLE library_habits CASCADE;
+TRUNCATE TABLE atoms CASCADE;
 
 -- 2. Insert 42 Atoms
-INSERT INTO library_habits (slug, name, category, type, target_value, unit, icon, theme, description, metadata, how_instruction, why_instruction) VALUES
+INSERT INTO atoms (slug, name, category, type, target_value, unit, icon, theme, description, metadata, how_instruction, why_instruction) VALUES
 ('daily_steps', 'Daily Steps', 'bio_rig', 'metric', 10000, 'steps', 'Footprints', 'bio_emerald', 'Biological engine maintenance.', '{"visuals": {"icon": "Footprints", "theme": "bio_emerald", "is_ring": true}, "compiler": {"atom": "Movement Baseline", "step": "Incidental movement", "why": "Biological engine maintenance. [Universal]", "expert": "Universal"}, "telemetry": {"auto_verify": true, "terra_metric": "activity.steps", "window": "flexible"}}', 'Incidental movement', 'Biological engine maintenance. [Universal]'),
 ('morning_sun', 'Morning Sun', 'bio_rig', 'duration', 15, 'minutes', 'Sun', 'bio_emerald', 'Resets the central clock and sleep timer. [Panda]', '{"visuals": {"icon": "Sun", "theme": "bio_emerald"}, "compiler": {"atom": "Photon Anchoring", "step": "Outdoor light within 30m of wake", "why": "Resets the central clock and sleep timer. [Panda]", "canon_ref": "The Circadian Code"}, "telemetry": {"auto_verify": false, "window": "morning"}}', 'Outdoor light within 30m of wake', 'Resets the central clock and sleep timer. [Panda]'),
 ('fasting', 'Intermittent Fasting', 'bio_rig', 'duration', 16, 'hours', 'Timer', 'asset_lime', 'Triggers autophagy and insulin stability. [Attia]', '{"visuals": {"icon": "Timer", "theme": "asset_lime"}, "compiler": {"atom": "Metabolic Switch", "step": "16-hour fast. Water/Black Coffee only.", "why": "Triggers autophagy and insulin stability. [Attia]", "canon_ref": "Outlive"}}', '16-hour fast. Water/Black Coffee only.', 'Triggers autophagy and insulin stability. [Attia]'),

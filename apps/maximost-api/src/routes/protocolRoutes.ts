@@ -53,7 +53,7 @@ app.post('/ingest', async (c) => {
 
     // 4. Upsert Habits
     const { error: habitsError } = await adminSupabase
-        .from('library_habits')
+        .from('atoms')
         .upsert(habits, { onConflict: 'slug' });
 
     if (habitsError) {
@@ -113,11 +113,11 @@ app.post('/deploy', async (c) => {
     }
 
     // 3. Fetch Habits for this Protocol
-    // Protocol has a list of slugs? Or we query library_habits based on protocol?
+    // Protocol has a list of slugs? Or we query atoms based on protocol?
     // Usually protocols have a JSONB 'habits' column with slugs or a relation.
     // Let's assume protocol.habits is an array of slugs or objects.
     // "Copies a protocol's habits into the user's personal habits table."
-    // We need to fetch the full habit data from library_habits for the slugs in the protocol.
+    // We need to fetch the full habit data from atoms for the slugs in the protocol.
 
     // Check protocol structure.
     // Usually: protocol.habits = ["slug1", "slug2"] or similar.
@@ -130,7 +130,7 @@ app.post('/deploy', async (c) => {
 
     // Fetch details from library
     const { data: libraryHabits, error: libError } = await supabase
-        .from('library_habits')
+        .from('atoms')
         .select('*')
         .in('slug', habitSlugs);
 

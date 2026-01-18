@@ -12,7 +12,7 @@ atomRoutes.get('/', async (c) => {
         const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
         const { data, error } = await supabaseAdmin
-            .from('library_habits')
+            .from('atoms')
             .select('*')
             .order('title');
 

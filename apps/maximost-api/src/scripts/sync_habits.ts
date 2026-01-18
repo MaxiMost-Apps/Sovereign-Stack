@@ -98,10 +98,10 @@ async function syncHabits() {
         };
     });
 
-    console.log("Upserting to library_habits...");
+    console.log("Upserting to atoms...");
 
     const { data, error } = await supabase
-        .from('library_habits')
+        .from('atoms')
         .upsert(updates, { onConflict: 'slug' })
         .select();
 

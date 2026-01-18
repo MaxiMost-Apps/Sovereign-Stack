@@ -63,7 +63,7 @@ habitsData.forEach((h: any) => {
     const metadataJson = JSON.stringify(newMetadata).replace(/'/g, "''");
 
     // We only update the metadata column.
-    sql += `UPDATE public.library_habits SET metadata = '${metadataJson}'::jsonb WHERE slug = '${h.slug}';\n`;
+    sql += `UPDATE public.atoms SET metadata = '${metadataJson}'::jsonb WHERE slug = '${h.slug}';\n`;
 });
 
 // Write to file

@@ -40,7 +40,7 @@ async function ingestHabits() {
     }));
 
     const { error } = await supabase
-        .from('library_habits')
+        .from('atoms')
         .upsert(mappedHabits, { onConflict: 'slug' });
 
     if (error) {

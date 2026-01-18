@@ -40,7 +40,7 @@ updates.forEach(u => {
     // Using slug = u.slug OR slug = alternate just in case
     const slugClause = u.slug === 'cold_plunge' ? "slug IN ('cold_plunge', 'cold-plunge')" : `slug = '${u.slug}'`;
 
-    sql += `UPDATE public.library_habits SET metadata = metadata || '{"benefit_milestones": ${milestonesJson}}'::jsonb WHERE ${slugClause};\n`;
+    sql += `UPDATE public.atoms SET metadata = metadata || '{"benefit_milestones": ${milestonesJson}}'::jsonb WHERE ${slugClause};\n`;
 });
 
 sql += '\n';

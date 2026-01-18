@@ -111,7 +111,7 @@ const milestones = [
 milestones.forEach(m => {
     const json = JSON.stringify(m.data).replace(/'/g, "''");
     // Merge logic: ensure metadata exists, then merge key
-    sql += `UPDATE public.library_habits SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"benefit_milestones": ${json}}'::jsonb WHERE slug = '${m.slug}' OR slug = '${m.slug.replace('_','-')}';\n`;
+    sql += `UPDATE public.atoms SET metadata = COALESCE(metadata, '{}'::jsonb) || '{"benefit_milestones": ${json}}'::jsonb WHERE slug = '${m.slug}' OR slug = '${m.slug.replace('_','-')}';\n`;
 });
 sql += '\n';
 

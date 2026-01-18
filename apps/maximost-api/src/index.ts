@@ -74,9 +74,9 @@ app.get('/api/habits/library', async (c) => {
     try {
         const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
-        // REPAIR ORDER: Query library_habits (Corrected from maximost_library_habits)
+        // REPAIR ORDER: Query atoms (Corrected from maximost_atoms)
         const { data, error } = await supabaseAdmin
-            .from('library_habits')
+            .from('atoms')
             .select('*')
             .order('title');
 
@@ -272,7 +272,7 @@ app.get('/api/telemetry/averages', async (c) => {
 app.get('/api/archive/lore', async (c) => {
     const supabase = c.get('supabase');
     const { data, error } = await supabase
-        .from('library_habits')
+        .from('atoms')
         .select('*') // Select ALL columns (including metadata, icon, theme)
         .limit(100);
 

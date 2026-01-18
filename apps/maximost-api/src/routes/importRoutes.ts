@@ -90,7 +90,7 @@ app.post('/upload', async (c) => {
             // If the habit doesn't exist, we can't log to it easily without creating it first.
             // For "Ghost Log" which usually implies logs, not habit definitions, we stick to existing habits.
             // If the file includes *definitions*, that's different.
-            // The prompt says "parse uploaded JSON... into the library_habits or habit_logs tables."
+            // The prompt says "parse uploaded JSON... into the atoms or habit_logs tables."
             // "or add new ones" implies we might need to upsert HABITS too.
             // But this route is `/upload` and seemingly for logs.
             // Let's assume this handles LOGS only for now as per `habit_logs` usage.

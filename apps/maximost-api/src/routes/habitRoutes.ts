@@ -108,7 +108,7 @@ habitRoutes.post('/adopt', async (c) => {
 
     // 1. Fetch from Library (using Admin to ensure read access)
     const { data: libHabits, error: libError } = await supabaseAdmin
-        .from('library_habits')
+        .from('atoms')
         .select('*')
         .in('slug', slugs);
 
