@@ -102,7 +102,11 @@ export default function LibraryPage() {
               body: JSON.stringify({ slug: habit.slug })
           });
 
-          if (!response.ok) throw new Error('Adoption Failed');
+          if (!response.ok) {
+              const err = await response.json().catch(() => ({}));
+              console.error("Adoption Error:", err);
+              throw new Error(err.error || 'Adoption Failed');
+          }
           toast.success(`Protocol [${habit.title}] Deployed.`);
       } catch (error: any) {
           toast.error(error.message);
@@ -115,7 +119,7 @@ export default function LibraryPage() {
       if (!slugs || slugs.length === 0) return toast.error("Empty Protocol");
 
       try {
-          const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+          const response = await fetch('https://maximost-api.onrender.com/api/habits/adopt', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -124,7 +128,11 @@ export default function LibraryPage() {
               body: JSON.stringify({ slugs })
           });
 
-          if (!response.ok) throw new Error('Protocol Load Failed');
+          if (!response.ok) {
+              const err = await response.json().catch(() => ({}));
+              console.error("Protocol Error:", err);
+              throw new Error(err.error || 'Protocol Load Failed');
+          }
 
           toast.success(`Protocol [${stack.title || stack.name}] Active.`);
           // REPAIR ORDER: Mirror Redirect to Dashboard

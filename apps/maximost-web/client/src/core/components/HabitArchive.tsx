@@ -41,13 +41,24 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     const handleAdopt = async (habit: Habit) => {
         try {
             // Use Absolute URL for Adoption
+            // REPAIR ORDER: Added Auth Header to fix 401 Silent Fail
+            const { data: { session } } = await import('../supabase').then(m => m.supabase.auth.getSession());
+            const token = session?.access_token;
+
             const response = await fetch('https://maximost-api.onrender.com/api/habits/adopt', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ slug: habit.slug })
             });
 
-            if (!response.ok) throw new Error('Adoption Failed');
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                console.error("Adoption Error:", err);
+                throw new Error(err.error || 'Adoption Failed');
+            }
 
             toast.success(`Protocol [${habit.title}] Deployed.`);
             onImport(habit); // Trigger parent refresh or modal
