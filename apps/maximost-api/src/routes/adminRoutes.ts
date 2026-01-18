@@ -272,7 +272,7 @@ adminRoutes.post('/sync-bridge', async (c) => {
                 // Return success but note failure (so UI doesn't crash) or error?
                 // Returning 500 might be better if it truly failed.
                 // Constraint: Runtime might not have python3.
-                resolve(c.json({ error: 'Bridge Audit Failed. Check server logs.', details: stderr || error.message }, 500));
+                resolve(c.json({ error: 'Bridge Audit Failed. Check server logs.', details: stderr || error.message }, 500) as any);
                 return;
             }
 
@@ -285,9 +285,9 @@ adminRoutes.post('/sync-bridge', async (c) => {
                 source: 'admin_dashboard'
             });
 
-            resolve(c.json({ message: 'Bridge Audit Executed Successfully', output: stdout }));
+            resolve(c.json({ message: 'Bridge Audit Executed Successfully', output: stdout }) as any);
         });
-    });
+    }) as any;
 });
 
 export default adminRoutes;
