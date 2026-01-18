@@ -15,8 +15,10 @@ export const Navbar = () => {
 
         {/* "Independent Authority" Navigation */}
         <div className="hidden md:flex items-center space-x-8">
+            <Link href="/manifesto">
+              <a className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">Manifesto</a>
+            </Link>
             <a href="#" className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">The Path</a>
-            <a href="#" className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">Stories</a>
             <a href="#" className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">The Foundation</a>
             <a href="#" className="text-sm font-medium text-neutral-600 hover:text-primary transition-colors">The Mirror</a>
         </div>

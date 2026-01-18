@@ -6,7 +6,7 @@ export function Navbar() {
   const [location] = useLocation();
 
   const links = [
-    { name: "Defense", href: "/defense", icon: Shield },
+    { name: "Telemetry", href: "/telemetry", icon: Shield },
     { name: "Protocols", href: "/protocols", icon: Lock },
     { name: "Armory", href: "/armory", icon: Sword },
   ];

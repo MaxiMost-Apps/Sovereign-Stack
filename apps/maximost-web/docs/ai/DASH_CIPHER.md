@@ -1,3 +1,0 @@
-- Atoms: Individual habits.
-- Molecules: Protocol Stacks (Molecular Overrides).
-- The Sequence: Day -> Atom -> Step -> Habit.

@@ -2,6 +2,7 @@ import React from 'react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
+import { Vault } from './pages/Vault';
 import { Route, Switch } from "wouter";
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
       <main className="flex-grow pt-20">
         <Switch>
           <Route path="/" component={Home} />
+          <Route path="/vault" component={Vault} />
           {/* Add more routes here as needed */}
           <Route>404: Signal Lost</Route>
         </Switch>

@@ -1,4 +1,0 @@
-- Initiate: $0 (Free)
-- Operator: $15/mo (Standard)
-- Sovereign: $99 (Lifetime - Founding 500)
-- Architect: $499 (Ultimate Anchor)

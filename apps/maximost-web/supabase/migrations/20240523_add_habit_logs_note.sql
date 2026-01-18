@@ -1,1 +1,0 @@
-ALTER TABLE habit_logs ADD COLUMN IF NOT EXISTS note TEXT;
