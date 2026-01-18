@@ -3,6 +3,7 @@ import { calculateConsistencyIndex } from '../lib/telemetry';
 import { runCombatSim } from '../lib/simulation';
 import type { AppEnv, EnrichedUser } from '../hono';
 import { config } from '../config';
+import { ARCHIVE_DATA } from '../lib/archiveData';
 
 const adminRoutes = new Hono<AppEnv>();
 
@@ -248,6 +249,61 @@ adminRoutes.post('/lexicon', async (c) => {
 
     if (error) return c.json({ error: 'Failed to save term', details: error.message }, 500);
     return c.json(data);
+});
+
+// POST /api/admin/seed-protocols - Self-Healing Manual Trigger
+adminRoutes.post('/seed-protocols', async (c) => {
+    // 1. Role Check
+    const user = c.get('user');
+    if (user.profile.role !== 'admin' && user.profile.role !== 'ROOT_ADMIN') {
+        return c.json({ error: 'Forbidden: Admin Access Required' }, 403);
+    }
+
+    // Use Service Role to bypass RLS for seeding
+    const { createClient } = await import('@supabase/supabase-js');
+    const { config } = await import('../config');
+    const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+
+    console.log("🌱 Seeding Archive v6.0 (Manual Trigger)...");
+    const errors: string[] = [];
+
+    // 1. Seed Habits
+    for (const habit of ARCHIVE_DATA.library_habits) {
+        // Map JSON 'title' to DB 'name' column
+        const payload = { ...habit, name: habit.title };
+
+        const { error } = await supabase
+            .from('library_habits')
+            .upsert(payload, { onConflict: 'slug' });
+
+        if (error) errors.push(`Habit ${habit.slug}: ${error.message}`);
+    }
+
+    // 2. Seed Protocols
+    for (const stack of ARCHIVE_DATA.protocol_stacks) {
+        const payload = {
+            stack_id: stack.id,
+            title: stack.name,
+            description: stack.description,
+            expert_voice: stack.expert_voice,
+            theme_override: stack.theme_override,
+            habit_slugs: stack.habits,
+            overrides: stack.overrides || []
+        };
+
+        const { error } = await supabase
+            .from('library_protocols')
+            .upsert(payload, { onConflict: 'stack_id' });
+
+        if (error) errors.push(`Protocol ${stack.id}: ${error.message}`);
+    }
+
+    if (errors.length > 0) {
+        console.error("Seed Errors:", errors);
+        return c.json({ message: "Seeding Completed with Errors", errors }, 500);
+    }
+
+    return c.json({ message: "Archive Seeding Successful", version: ARCHIVE_DATA.archive_version });
 });
 
 // POST /api/admin/sync-bridge - Manual Trigger for Bridge Audit
