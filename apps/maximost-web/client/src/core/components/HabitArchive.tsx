@@ -22,7 +22,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
         const fetchLibrary = async () => {
             try {
                 // Fetch from Render API Only
-                const response = await fetch('https://sovereign-stack.onrender.com/api/habits/library');
+                const response = await fetch('https://maximost-api.onrender.com/api/habits/library');
                 if (!response.ok) throw new Error('API Sync Failed');
                 const data = await response.json();
 
@@ -42,7 +42,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     const handleAdopt = async (habit: Habit) => {
         try {
             // Use Absolute URL for Adoption
-            const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+            const response = await fetch('https://maximost-api.onrender.com/api/habits/adopt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ slug: habit.slug })
