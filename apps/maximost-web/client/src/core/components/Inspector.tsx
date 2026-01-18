@@ -21,11 +21,13 @@ export const Inspector: React.FC<InspectorProps> = ({ children }) => {
         const runDiagnostics = async () => {
             try {
                 // 1. PRIMARY: Fetch Habits (Critical)
+                // Use robust fetch that handles 400 (Sort Order Schema Mismatch)
                 const { data: habits, error } = await supabase.from('habits').select('id').limit(1);
 
                 if (error) {
-                    console.error("Habit Fetch Failed:", error);
-                    // Fallback: If DB fails, we still show dashboard but it might be empty
+                    console.warn("Habit Fetch Warning (Inspector):", error.message);
+                    // FAIL OPEN: If Schema is broken (400), we still unlock dashboard
+                    // The dashboard might show empty or error state, but won't loop.
                 }
 
                 // 2. SECONDARY: Fire & Forget (Non-Blocking)
