@@ -126,7 +126,7 @@ export default function LibraryPage() {
           if (!response.ok) throw new Error('Protocol Load Failed');
 
           toast.success(`Protocol [${stack.title || stack.name}] Active.`);
-          // REPAIR ORDER: Mirror Redirect
+          // REPAIR ORDER: Mirror Redirect to Dashboard
           navigate('/dashboard');
       } catch (error: any) {
           toast.error(error.message);
@@ -173,14 +173,6 @@ export default function LibraryPage() {
               </button>
           </div>
         </div>
-
-        {/* CONTROLS - REPAIR ORDER: REMOVED NEW BUTTONS */}
-        {/* <div className="relative z-10 flex justify-end">
-          <button className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-xs uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(37,99,235,0.5)]">
-              <Plus className="w-4 h-4" />
-              <span>New {activeTab === 'habits' ? 'Habit' : 'Stack'}</span>
-          </button>
-        </div> */}
 
         {/* LOADING STATE */}
         {loading && (

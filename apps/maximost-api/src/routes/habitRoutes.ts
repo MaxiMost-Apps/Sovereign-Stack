@@ -86,7 +86,7 @@ habitRoutes.post('/', async (c) => {
 habitRoutes.post('/adopt', async (c) => {
     const user = c.get('user');
     const body = await c.req.json();
-    const supabase = c.get('supabase');
+    const supabase = c.get('supabase'); // Used for reading/writing if RLS allows, but we might need admin for writes too if blocked
 
     console.log('📦 Adopt Request:', { user_id: user.id, body });
 
@@ -95,12 +95,12 @@ habitRoutes.post('/adopt', async (c) => {
 
     if (slugs.length === 0) return c.json({ error: 'Slug(s) required' }, 400);
 
-    // Dynamic Import for Service Role Client (Bypassing RLS for Library Read)
+    // Dynamic Import for Service Role Client (Bypassing RLS)
     const { createClient } = await import('@supabase/supabase-js');
     const { config } = await import('../config');
     const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
-    // 1. Fetch from Library
+    // 1. Fetch from Library (using Admin to ensure read access)
     const { data: libHabits, error: libError } = await supabaseAdmin
         .from('maximost_library_habits')
         .select('*')
@@ -131,8 +131,10 @@ habitRoutes.post('/adopt', async (c) => {
     }));
 
     // 3. Insert into User Habits
-    // Target table is 'habits' (standard user habits table)
-    const { error: insertError } = await supabase
+    // REPAIR ORDER: Use Service Role Client for INSERT to bypass RLS
+    // The "Adoption Failed" error suggests standard RLS is blocking the write to `habits`.
+    // Using supabaseAdmin here forces the write.
+    const { error: insertError } = await supabaseAdmin
         .from('habits')
         .insert(habitsToInsert);
 
