@@ -7,7 +7,7 @@ const completionsRoutes = new Hono<AppEnv>();
 completionsRoutes.post('/toggle', async (c) => {
     const user = c.get('user');
     const supabase = c.get('supabase');
-    const { habit_id, target_date, status, value } = await c.req.json();
+    const { habit_id, target_date, status, value, metadata } = await c.req.json();
 
     if (!habit_id || !target_date) {
         return c.json({ error: 'Missing habit_id or target_date' }, 400);
@@ -37,7 +37,8 @@ completionsRoutes.post('/toggle', async (c) => {
                 user_id: user.id,
                 habit_id: habit_id,
                 completed_at: target_date, // Mapped to 'completed_at'
-                value: finalValue
+                value: finalValue,
+                metadata: metadata // New Sovereign Metadata Support
             }, { onConflict: 'user_id, habit_id, completed_at' })
             .select()
             .single();
