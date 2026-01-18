@@ -292,7 +292,7 @@ adminRoutes.post('/seed-protocols', async (c) => {
         };
 
         const { error } = await supabase
-            .from('library_protocols')
+            .from('protocol_stacks')
             .upsert(payload, { onConflict: 'stack_id' });
 
         if (error) errors.push(`Protocol ${stack.id}: ${error.message}`);

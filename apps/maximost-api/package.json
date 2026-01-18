@@ -8,6 +8,8 @@
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "seed:atoms": "tsx src/seed_archive.ts",
+    "seed:protocols": "tsx src/seed_archive.ts",
+    "db:reset": "echo 'WARNING: DB Reset must be done via SQL Editor'",
     "seed:42": "tsx src/scripts/sync_habits.ts"
   },
   "keywords": [],

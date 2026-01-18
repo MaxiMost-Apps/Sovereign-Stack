@@ -67,6 +67,9 @@ app.get('/api/v1/health', (c) => {
 // REPAIR ORDER: Mount atomRoutes explicitly as requested
 app.route('/api/atoms', atomRoutes);
 
+// REPAIR ORDER: Move Protocols public to bypass Auth Gate (Header Missing Fix)
+app.route('/api/protocols', protocolRoutes);
+
 // REPAIR ORDER: Define Public Library Route Directly (Aliased)
 // This GUARANTEES /api/habits/library is handled before Auth
 app.get('/api/habits/library', async (c) => {
@@ -184,7 +187,7 @@ app.use('/api/*', async (c, next) => {
 // --- Routes ---
 app.get('/', (c) => c.text('MaxiMost API is running (Phoenix Protocol Active)'));
 
-app.route('/api/protocols', protocolRoutes);
+// app.route('/api/protocols', protocolRoutes); // Moved up to public
 app.route('/api/profiles', profileRoutes);
 app.route('/api/support', supportRoutes);
 app.route('/api/habits', habitRoutes);

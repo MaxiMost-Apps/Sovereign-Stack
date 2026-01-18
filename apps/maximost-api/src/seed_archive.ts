@@ -132,7 +132,7 @@ async function seed() {
         };
 
         const { error } = await supabase
-            .from('library_protocols')
+            .from('protocol_stacks')
             .upsert(payload, { onConflict: 'stack_id' });
 
         if (error) console.error(`Error seeding protocol ${stack.id}:`, error.message);
