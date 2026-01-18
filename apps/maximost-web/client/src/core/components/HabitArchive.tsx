@@ -3,6 +3,7 @@ import { HabitCard } from './HabitCard';
 import { Habit } from '@/types/habit';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { lexiconStore } from '../../store/lexiconStore'; // REPAIR ORDER: Import Sovereign Store
 
 interface HabitArchiveProps {
     onImport: (habit: Habit) => void;
@@ -19,24 +20,22 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     const activeHabitSlugs = new Set(userHabits.map(h => h.slug));
 
     useEffect(() => {
-        const fetchLibrary = async () => {
-            try {
-                // Fetch from Render API Only
-                const response = await fetch('https://maximost-api.onrender.com/api/habits/library');
-                if (!response.ok) throw new Error('API Sync Failed');
-                const data = await response.json();
+        // REPAIR ORDER: Sovereign Source Loading
+        // We bypass the API fetch completely to guarantee the list appears.
+        const sovereignAtoms = lexiconStore.atoms.map((atom: any) => ({
+            id: atom.title, // Use title as temp ID
+            title: atom.title,
+            description: atom.description || atom.how_instruction,
+            category: atom.category,
+            slug: atom.title.toLowerCase().replace(/\s+/g, '-'),
+            metadata: {
+                tactical: { description: atom.description }
+            },
+            ...atom
+        }));
 
-                setLibraryHabits(data || []);
-            } catch (error) {
-                console.error("Archive Load Error:", error);
-                toast.error("Failed to load archive. Check connection.");
-                setLibraryHabits([]); // Fail safe
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchLibrary();
+        setLibraryHabits(sovereignAtoms);
+        setLoading(false);
     }, []);
 
     const handleAdopt = async (habit: Habit) => {

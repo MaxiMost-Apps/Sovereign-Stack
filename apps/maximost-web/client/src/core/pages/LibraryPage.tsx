@@ -7,6 +7,7 @@ import { Habit } from '@/types/habit';
 import { supabase } from '../supabase';
 import { useToast } from '../components/Toast';
 import { HABIT_ATOMS, PROTOCOL_MOLECULES } from '../config/libraryData';
+import { lexiconStore } from '../../store/lexiconStore'; // REPAIR ORDER: Import Sovereign Store
 import { useNavigate } from 'react-router-dom'; // REPAIR ORDER: Added useNavigate
 
 export default function LibraryPage() {
@@ -28,22 +29,20 @@ export default function LibraryPage() {
     const fetchLibrary = async () => {
       try {
         setLoading(true);
-        // REPAIR ORDER: Fetch from Render API
-        const hResponse = await fetch('https://maximost-api.onrender.com/api/habits/library');
-        const h = hResponse.ok ? await hResponse.json() : [];
 
-        // Fetch Stacks (Direct Supabase or could be API if exposed)
-        const { data: s, error: sError } = await supabase
-          .from('maximost_library_protocols')
-          .select('*')
-          .order('title');
-
-        // Fallback Logic if DB is Empty
-        const habitsSource = (h && h.length > 0) ? h : HABIT_ATOMS.map((atom: any, i: number) => ({
-            id: `atom-${i}`,
+        // REPAIR ORDER: Bypass API for Archive Display (Sovereign Source)
+        // We load directly from the local immutable store to ensure 100% uptime visibility.
+        const habitsSource = lexiconStore.atoms.map((atom: any, i: number) => ({
+            id: `atom-${i}`, // Use index as ID for display if slug missing
             title: atom.title,
-            description: atom.how_instruction,
+            description: atom.description || atom.how_instruction,
             category: atom.category,
+            slug: atom.title.toLowerCase().replace(/\s+/g, '-'), // Generate slug locally if missing
+            theme: atom.theme,
+            icon: atom.icon,
+            type: 'absolute', // Default
+            target_value: 1,
+            unit: 'rep',
             metadata: {
                 intel: { why: atom.why_instruction, impact: "Bio-Optimization" },
                 tactical: { instruction: atom.how_instruction },
@@ -51,7 +50,9 @@ export default function LibraryPage() {
             }
         }));
 
-        const stacksSource = (s && s.length > 0) ? s : PROTOCOL_MOLECULES.map((mol: any, i: number) => ({
+        // Fetch Stacks (Direct Supabase or could be API if exposed) -> Keep this or fallback to local
+        // For "Immediate Restoration", we use local molecules too.
+        const stacksSource = lexiconStore.molecules.map((mol: any, i: number) => ({
             id: `mol-${i}`,
             name: mol.title,
             description: mol.description,
