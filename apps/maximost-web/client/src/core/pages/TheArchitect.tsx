@@ -117,7 +117,7 @@ export default function TheArchitect() {
         <div>
           <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
             <PencilRuler className="text-purple-500 w-8 h-8" />
-            The Architect
+            BLUEPRINTS
           </h1>
           <p className="text-zinc-500 mt-1 font-mono text-xs uppercase tracking-widest">Design the machine. Engineer the outcome.</p>
         </div>
@@ -207,7 +207,7 @@ export default function TheArchitect() {
                                     <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Who do you wish to become?</label>
                                     <input
                                         type="text"
-                                        placeholder="I am the type of person who..."
+                                        placeholder="e.g., A Sovereign Founder, A Disciplined Father..."
                                         className="w-full bg-zinc-900 border border-zinc-800 rounded p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors font-mono"
                                     />
                                 </div>
@@ -251,7 +251,7 @@ export default function TheArchitect() {
           <div className="hidden lg:block sticky top-8 h-[calc(100vh-100px)] overflow-hidden flex flex-col bg-zinc-950/50 border border-zinc-800 rounded-xl backdrop-blur-sm">
               <div className="p-4 border-b border-zinc-800 bg-zinc-900/80">
                   <h3 className="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                      <Database className="w-4 h-4 text-blue-500" /> 42-Atom Ledger
+                      <Database className="w-4 h-4 text-blue-500" /> Atom Ledger
                   </h3>
               </div>
               <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-hide">

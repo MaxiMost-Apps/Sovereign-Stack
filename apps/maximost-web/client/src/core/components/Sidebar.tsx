@@ -24,7 +24,7 @@ export const Sidebar = () => {
     { section: 'TOOLS', items: [
       { name: 'AI COACH', icon: MessageSquare, path: '/coach' },
       { name: 'THE MIRROR', icon: ShieldAlert, path: '/mirror' },
-      { name: 'THE ARCHITECT', icon: Ruler, path: '/architect?tab=blueprints' },
+      { name: 'BLUEPRINTS', icon: Ruler, path: '/architect?tab=blueprints' },
       { name: 'MASTER TOOLBELT', icon: Wrench, path: '/architect?tab=toolbelt' },
       { name: 'THE LEXICON', icon: BookText, path: '/tools/lexicon' },
     ]},
