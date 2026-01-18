@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Activity, ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export const ZoneTwoCalculator: React.FC = () => {
   const [age, setAge] = useState<string>('');
-  const [maxHR, setMaxHR] = useState<number | null>(null);
+  const [, setMaxHR] = useState<number | null>(null);
   const [zone2, setZone2] = useState<{ min: number; max: number } | null>(null);
 
   const calculate = () => {
