@@ -133,7 +133,7 @@ export default function TheArchitect() {
         <div>
           <h1 className="text-3xl font-black uppercase tracking-tighter flex items-center gap-3">
             <PencilRuler className="text-purple-500 w-8 h-8" />
-            BLUEPRINTS
+            BLUEPRINTS <span className="text-xs bg-purple-500 text-white px-2 py-1 rounded ml-2">BETA</span>
           </h1>
           <p className="text-zinc-500 mt-1 font-mono text-xs uppercase tracking-widest">Design the machine. Engineer the outcome.</p>
         </div>
