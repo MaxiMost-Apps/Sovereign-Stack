@@ -7,6 +7,7 @@
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "build": "tsc",
     "dev": "tsx src/index.ts",
+    "seed:atoms": "tsx src/seed_archive.ts",
     "seed:42": "tsx src/scripts/sync_habits.ts"
   },
   "keywords": [],

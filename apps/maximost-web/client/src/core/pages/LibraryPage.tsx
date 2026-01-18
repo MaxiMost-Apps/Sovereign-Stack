@@ -37,7 +37,8 @@ export default function LibraryPage() {
             title: atom.title,
             description: atom.description || atom.how_instruction,
             category: atom.category,
-            slug: atom.title.toLowerCase().replace(/\s+/g, '-'), // Generate slug locally if missing
+            // REPAIR ORDER: Use explicit slug from store to match backend (underscores)
+            slug: atom.slug || atom.title.toLowerCase().replace(/\s+/g, '_'),
             theme: atom.theme,
             icon: atom.icon,
             type: 'absolute', // Default

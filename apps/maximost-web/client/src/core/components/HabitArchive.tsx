@@ -27,7 +27,8 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
             title: atom.title,
             description: atom.description || atom.how_instruction,
             category: atom.category,
-            slug: atom.title.toLowerCase().replace(/\s+/g, '-'),
+            // REPAIR ORDER: Use explicit slug from store to match backend (underscores), fallback to underscore gen
+            slug: atom.slug || atom.title.toLowerCase().replace(/\s+/g, '_'),
             metadata: {
                 tactical: { description: atom.description }
             },
