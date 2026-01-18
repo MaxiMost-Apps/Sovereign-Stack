@@ -105,6 +105,7 @@ export default function DashboardCore() {
   useEffect(() => { fetchData(); }, [user]);
 
   const handleLoadDemo = async () => {
+     if (loading) return; // REPAIR ORDER: Loading Lock (Debounce)
      setLoading(true);
 
      // REPAIR ORDER: Bulk Adoption of 5 Core Habits

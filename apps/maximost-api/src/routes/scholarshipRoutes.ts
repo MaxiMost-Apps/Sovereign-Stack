@@ -51,4 +51,25 @@ app.post('/redeem', async (c) => {
     });
 });
 
+// GET /api/scholarship/founding-status - Safety Net Route
+app.get('/founding-status', async (c) => {
+    try {
+        const adminSupabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+        // Try to count founding members (e.g. Sovereign Tier)
+        // If table or column doesn't exist, this might throw.
+        const { count, error } = await adminSupabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('membership_tier', 'sovereign');
+
+        if (error) throw error;
+
+        return c.json({ is_founding: (count || 0) < 500, count: count || 0 });
+    } catch (error) {
+        console.error("Founding Status Check Failed (Safety Net Active):", error);
+        // Return 200 with fallback to prevent Frontend Crash
+        return c.json({ is_founding: false, count: 0 }, 200);
+    }
+});
+
 export default app;
