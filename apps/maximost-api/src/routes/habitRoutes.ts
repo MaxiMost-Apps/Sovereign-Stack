@@ -98,6 +98,12 @@ habitRoutes.post('/adopt', async (c) => {
     // Dynamic Import for Service Role Client (Bypassing RLS)
     const { createClient } = await import('@supabase/supabase-js');
     const { config } = await import('../config');
+
+    // DEBUG: Log Auth Status (Masked)
+    const key = config.SUPABASE_SERVICE_ROLE_KEY;
+    const keyStatus = key && key.length > 10 ? `Present (Starts with ${key.substring(0, 5)}...)` : 'MISSING/INVALID';
+    console.log(`🔐 Service Role Key Status: ${keyStatus}`);
+
     const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
     // 1. Fetch from Library (using Admin to ensure read access)
