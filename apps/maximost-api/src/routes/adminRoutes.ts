@@ -324,8 +324,8 @@ adminRoutes.post('/force-deploy-core', async (c) => {
 
     console.log(`🚀 Force Deploying Core Stack to ${deployUserId}...`);
 
-    // 3. Define Core Slugs
-    const coreSlugs = ['morning_sun', 'deep_work', 'fasted_walk', 'shadow_audit', 'digital_sunset'];
+    // 3. Define Core Slugs (Hyphenated)
+    const coreSlugs = ['morning-sunlight', 'deep-work', 'fasted-walk', 'shadow-audit', 'digital-sunset'];
 
     // 4. Fetch Habit Definitions (Atoms)
     const { data: atoms, error: atomError } = await supabase

@@ -3,6 +3,7 @@ import { HabitCard } from './HabitCard';
 import { Habit } from '@/types/habit';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { useNavigate } from 'react-router-dom'; // REPAIR ORDER: Added useNavigate
 import { lexiconStore } from '../../store/lexiconStore'; // REPAIR ORDER: Import Sovereign Store
 
 interface HabitArchiveProps {
@@ -15,6 +16,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
     const [libraryHabits, setLibraryHabits] = useState<Habit[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
+    const navigate = useNavigate(); // REPAIR ORDER: Init hook
 
     // Mapping user active habits for quick lookup
     const activeHabitSlugs = new Set(userHabits.map(h => h.slug));
@@ -63,6 +65,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
 
             toast.success(`Protocol [${habit.title}] Deployed.`);
             onImport(habit); // Trigger parent refresh or modal
+            navigate('/dashboard'); // REPAIR ORDER: Enforce Redirect
 
         } catch (error: any) {
             toast.error(error.message);
