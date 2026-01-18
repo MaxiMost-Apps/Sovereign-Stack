@@ -24,6 +24,22 @@ export default function TheArchitect() {
   // Kinetic State
   const [isSaving, setIsSaving] = useState(false);
 
+  // Dynamic Placeholder State
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const placeholders = [
+      "e.g., A Sovereign Founder...",
+      "e.g., A Disciplined Father...",
+      "e.g., A Kinetic Athlete...",
+      "e.g., A Stoic Leader..."
+  ];
+
+  useEffect(() => {
+      const interval = setInterval(() => {
+          setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+      }, 3000);
+      return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
       if (tabParam === 'toolbelt') setActiveTab('toolbelt');
       else setActiveTab('blueprints');
@@ -207,8 +223,8 @@ export default function TheArchitect() {
                                     <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Who do you wish to become?</label>
                                     <input
                                         type="text"
-                                        placeholder="e.g., A Sovereign Founder, A Disciplined Father..."
-                                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors font-mono"
+                                        placeholder={placeholders[placeholderIndex]}
+                                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors font-mono transition-all duration-500"
                                     />
                                 </div>
                             </div>
