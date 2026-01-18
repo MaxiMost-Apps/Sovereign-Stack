@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../config';
+import { driveService } from '../services/driveService';
 
 const webhookRoutes = new Hono();
 
@@ -168,6 +169,22 @@ webhookRoutes.post('/sentry', async (c) => {
     }
 
     return c.json({ received: true });
+});
+
+// POST /api/webhooks/telemetry - Telemetry Bridge (Oura/HealthConnect)
+webhookRoutes.post('/telemetry', async (c) => {
+    // 1. Ingest JSON
+    const body = await c.req.json();
+    const source = c.req.header('x-telemetry-source') || 'unknown';
+
+    // 2. Dump to Drive (Sovereign_Stack/Telemetry)
+    try {
+        const result = await driveService.uploadTelemetry(source, body);
+        return c.json({ success: true, fileId: result.fileId });
+    } catch (error: any) {
+        console.error('Telemetry Upload Failed:', error);
+        return c.json({ error: 'Bridge Collapse', details: error.message }, 500);
+    }
 });
 
 export default webhookRoutes;

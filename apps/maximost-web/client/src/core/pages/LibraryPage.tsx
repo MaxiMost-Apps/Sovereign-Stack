@@ -10,12 +10,14 @@ import { HABIT_ATOMS, PROTOCOL_MOLECULES } from '../config/libraryData';
 import { lexiconStore } from '../../store/lexiconStore'; // REPAIR ORDER: Import Sovereign Store
 import { useNavigate } from 'react-router-dom'; // REPAIR ORDER: Added useNavigate
 import { getApiUrl } from '../../config'; // REPAIR ORDER: Centralized Config
+import { X, Check } from 'lucide-react';
 
 export default function LibraryPage() {
   const [activeTab, setActiveTab] = useState<'habits' | 'stacks'>('habits');
   const [libraryHabits, setLibraryHabits] = useState<any[]>([]);
   const [libraryStacks, setLibraryStacks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewStack, setPreviewStack] = useState<any>(null); // REPAIR ORDER: Preview State
   const { toast } = useToast();
   const navigate = useNavigate(); // REPAIR ORDER: Init hook
 
@@ -115,7 +117,13 @@ export default function LibraryPage() {
       }
   };
 
-  const handleLoadProtocol = async (stack: any) => {
+  const handlePreviewProtocol = (stack: any) => {
+      setPreviewStack(stack);
+  };
+
+  const handleConfirmProtocol = async () => {
+      if (!previewStack) return;
+      const stack = previewStack;
       // REPAIR ORDER: Bulk Adopt Protocol
       const slugs = stack.habit_slugs || stack.habits;
       if (!slugs || slugs.length === 0) return toast.error("Empty Protocol");
@@ -248,10 +256,10 @@ export default function LibraryPage() {
                         <h3 className="text-xl font-bold mb-2 text-white uppercase tracking-tight relative z-10">{stack.title || stack.name}</h3>
                         <p className="text-sm text-zinc-500 mb-6 leading-relaxed relative z-10">{stack.description}</p>
                         <button
-                            onClick={() => handleLoadProtocol(stack)}
+                            onClick={() => handlePreviewProtocol(stack)}
                             className="w-full py-3 bg-white text-black font-bold uppercase tracking-widest text-xs rounded hover:bg-zinc-200 transition-all relative z-10"
                         >
-                            Load Protocol
+                            Preview Protocol
                         </button>
                     </div>
                   );
@@ -262,6 +270,40 @@ export default function LibraryPage() {
                   </div>
               )}
           </div>
+        )}
+
+        {/* SLIDE-OUT PREVIEW MODAL */}
+        {previewStack && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                <div className="bg-zinc-950 border border-zinc-800 rounded-xl w-full max-w-md overflow-hidden shadow-2xl relative">
+                    <div className="p-6 border-b border-zinc-800 flex justify-between items-center bg-zinc-900/50">
+                        <div>
+                            <h3 className="text-lg font-bold text-white uppercase tracking-tight">{previewStack.title || previewStack.name}</h3>
+                            <p className="text-xs text-zinc-500 font-mono">{previewStack.description}</p>
+                        </div>
+                        <button onClick={() => setPreviewStack(null)} className="text-zinc-500 hover:text-white transition-colors">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    <div className="p-6 max-h-[60vh] overflow-y-auto space-y-2">
+                        <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mb-2">Protocol Contents</div>
+                        {(previewStack.habit_slugs || previewStack.habits).map((slug: string) => (
+                            <div key={slug} className="flex items-center gap-3 p-3 rounded bg-black border border-zinc-800/50">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                <span className="text-sm font-mono text-zinc-300">{slug.replace(/-/g, ' ').toUpperCase()}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="p-6 border-t border-zinc-800 bg-zinc-900/50 flex gap-4">
+                        <button onClick={() => setPreviewStack(null)} className="flex-1 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">
+                            Cancel
+                        </button>
+                        <button onClick={handleConfirmProtocol} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all">
+                            <Check className="w-4 h-4" /> Equip Protocol
+                        </button>
+                    </div>
+                </div>
+            </div>
         )}
       </div>
 

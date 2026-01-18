@@ -47,7 +47,8 @@ completionsRoutes.post('/toggle', async (c) => {
 
     if (error) {
         console.error('Toggle Error:', error);
-        return c.json({ error: 'Persistence Failure' }, 500);
+        // Return details for debugging (e.g. FK violation)
+        return c.json({ error: 'Persistence Failure', details: error.message }, 500);
     }
 
     return c.json(data || { success: true });

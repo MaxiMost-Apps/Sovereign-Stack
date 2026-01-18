@@ -11,10 +11,14 @@ import CheckCircle from './ui/CheckCircle';
 import { supabase } from '../supabase';
 import { useAuth } from '../AuthSystem';
 import { useToast } from './Toast';
+import { useLens } from '../context/LensContext';
+import { HABIT_ATOMS } from '../../store/lexiconStore';
 
 export default function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelete, isSystemLocked, isSortMode, allLogs, isFuture, date, weeklyProgress, dragAttributes, dragListeners }: any) {
   const { toast } = useToast();
+  const { currentLens, lensTheme } = useLens();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // REPAIR ORDER: Loading State
   const [val, setVal] = useState(logEntry?.value || 0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -38,6 +42,18 @@ export default function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, 
   const theme = getThemeStyles(habit.metadata?.visuals?.theme ?? habit.color);
   const iconName = habit.metadata?.visuals?.icon ?? habit.icon ?? 'Activity';
   const IconComponent = (LucideIcons as any)[iconName] || LucideIcons.Activity;
+
+  // Hydrate Atom Data for Lens Perspectives
+  // We match by slug (preferred) or title.
+  // The DB habit might not have the full JSON yet, so we pull from the Sovereign Store.
+  const atomData = HABIT_ATOMS.find(a =>
+      (habit.slug && a.slug === habit.slug) ||
+      (habit.atom_id && a.atom_id === habit.atom_id) ||
+      a.title === habit.title
+  );
+
+  const perspectiveText = atomData?.perspectives?.[currentLens];
+  const LensIcon = lensTheme.icon;
 
   // Auto-Save Note Logic (Sump Pump)
   const handleSaveNote = async (content: string) => {
@@ -103,9 +119,15 @@ export default function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, 
      onToggle(habit.id, date, 0);
   };
 
-  const handleCheck = (e: any) => {
+  const handleCheck = async (e: any) => {
     e.stopPropagation();
-    onToggle(habit.id);
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+        await onToggle(habit.id);
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -262,13 +284,17 @@ export default function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, 
              ) : (
                 // BOOLEAN STATE
                 <div className="flex items-center justify-center w-12 h-12 flex-shrink-0">
-                    <CheckCircle
-                        checked={isDone}
-                        color={theme.hex}
-                        disabled={isFuture}
-                        size="lg"
-                        onClick={(e: any) => { e.stopPropagation(); onToggle(habit.id); }}
-                    />
+                    {isLoading ? (
+                        <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: theme.hex, borderTopColor: 'transparent' }} />
+                    ) : (
+                        <CheckCircle
+                            checked={isDone}
+                            color={theme.hex}
+                            disabled={isFuture}
+                            size="lg"
+                            onClick={handleCheck} // Use wrapped handler
+                        />
+                    )}
                 </div>
              )}
            </>
@@ -287,17 +313,38 @@ export default function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, 
                 {/* CONTINUOUS BORDER STRIP */}
                 <div className="absolute top-0 bottom-0 left-0 w-1 bg-inherit z-10" style={{ backgroundColor: theme.hex }} />
 
-                <div className="p-4 pl-[70px] md:pl-[90px] grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 pt-8">
+                <div className="p-4 pl-[70px] md:pl-[90px] grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8 pt-8 relative">
+
+                    {/* LENS HEADER BACKGROUND */}
+                    {perspectiveText && (
+                         <div className="absolute top-0 left-0 right-0 h-1 md:left-[70px] bg-gradient-to-r from-transparent via-white/5 to-transparent" style={{ backgroundColor: lensTheme.hex, opacity: 0.1 }} />
+                    )}
+
                     <div className="space-y-1">
                         <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tactical (How)</h4>
-                        <p className="text-sm text-slate-300 leading-relaxed">
-                            {(typeof habit.metadata?.tactical === 'string' ? habit.metadata.tactical : habit.metadata?.tactical?.description) || habit.metadata?.compiler?.step || habit.how_instruction || habit.description || "Hydration Required."}
-                        </p>
+                        <ul className="text-sm text-slate-300 leading-relaxed list-disc pl-4 space-y-1">
+                            {/* Check for Protocol Array First */}
+                            {atomData?.protocol && Array.isArray(atomData.protocol) ? (
+                                atomData.protocol.map((step: string, i: number) => <li key={i}>{step}</li>)
+                            ) : (
+                                <li>
+                                {(typeof habit.metadata?.tactical === 'string' ? habit.metadata.tactical : habit.metadata?.tactical?.description) || habit.metadata?.compiler?.step || habit.how_instruction || habit.description || "Hydration Required."}
+                                </li>
+                            )}
+                        </ul>
                     </div>
+
                     <div className="space-y-1">
-                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Identity (Why)</h4>
-                        <p className="text-sm text-slate-300 leading-relaxed">
-                             {(typeof habit.metadata?.identity === 'string' ? habit.metadata.identity : habit.metadata?.identity?.motivation) || habit.metadata?.compiler?.why || habit.why_instruction || "Hydration Required."}
+                         {/* DYNAMIC LENS HEADER */}
+                         <div className="flex items-center gap-2 mb-1">
+                             <LensIcon className="w-3 h-3" style={{ color: lensTheme.hex }} />
+                             <h4 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: lensTheme.hex }}>
+                                 {lensTheme.label} PERSPECTIVE
+                             </h4>
+                         </div>
+
+                        <p className="text-sm text-slate-300 leading-relaxed border-l-2 pl-3 py-1" style={{ borderColor: lensTheme.hex }}>
+                             {perspectiveText || (typeof habit.metadata?.identity === 'string' ? habit.metadata.identity : habit.metadata?.identity?.motivation) || habit.metadata?.compiler?.why || habit.why_instruction || "Hydration Required."}
                         </p>
                         {habit.metadata?.compiler?.expert && (
                             <span className="text-[10px] text-blue-500 uppercase font-bold tracking-wider block mt-1">

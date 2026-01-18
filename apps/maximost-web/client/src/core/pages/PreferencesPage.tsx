@@ -18,6 +18,7 @@ export default function PreferencesPage() {
 
   // -- STATE --
   const [activeCoach, setActiveCoach] = useState('stoic');
+  const [activeLens, setActiveLens] = useState('fortitude'); // Default Lens
   const [dayEndOffset, setDayEndOffset] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [startOfWeek, setStartOfWeek] = useState('MONDAY');
@@ -52,6 +53,7 @@ export default function PreferencesPage() {
       if (profile) {
         setTierName(profile.tier_name || 'INITIATE');
         setActiveCoach(profile.coach_preference || 'stoic');
+        setActiveLens(profile.neural_config?.lens || 'fortitude'); // Load Lens
         setDayEndOffset(profile.day_end_offset || 0);
         setReducedMotion(profile.reduced_motion || false);
         setStartOfWeek(profile.start_of_week || 'MONDAY');
@@ -87,6 +89,7 @@ export default function PreferencesPage() {
       const updates = {
             id: user.id,
             coach_preference: activeCoach,
+            neural_config: { lens: activeLens }, // Persist Lens
             day_end_offset: dayEndOffset,
             reduced_motion: reducedMotion,
             start_of_week: startOfWeek,
@@ -119,6 +122,7 @@ export default function PreferencesPage() {
 
       // Local Sync
       localStorage.setItem('activeCoach', activeCoach);
+      localStorage.setItem('activeLens', activeLens);
       window.dispatchEvent(new Event('storage'));
 
       setOriginalSettings({
@@ -147,6 +151,13 @@ export default function PreferencesPage() {
     { id: 'ally', name: 'The Ally', color: 'purple', img: 'NurturerCC1', desc: 'Support, Systems, Patience', icon: Heart }
   ];
 
+  const lenses = [
+      { id: 'fortitude', name: 'Fortitude', color: 'bg-amber-500', desc: 'Resilience & Grit' },
+      { id: 'reason', name: 'Reason', color: 'bg-blue-500', desc: 'Logic & Analysis' },
+      { id: 'visionary', name: 'Visionary', color: 'bg-purple-500', desc: 'Future & Strategy' },
+      { id: 'analytical', name: 'Analytical', color: 'bg-emerald-500', desc: 'Data & Precision' }
+  ];
+
   const timezones = [
       "UTC", "America/New_York", "America/Los_Angeles", "America/Chicago", "Europe/London", "Europe/Paris", "Asia/Tokyo", "Australia/Sydney"
   ];
@@ -164,7 +175,40 @@ export default function PreferencesPage() {
       {/* {isInitiate && <AscensionOverlay />} */}
 
       {/* GLOBAL PARAMETERS */}
-      <div className="grid grid-cols-2 gap-6">
+
+      {/* LENSES & TONES */}
+      <div className="space-y-4">
+          <h2 className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Neural Lens (Theme)</h2>
+          <div className="grid grid-cols-2 gap-4">
+              {lenses.map(lens => (
+                  <button
+                      key={lens.id}
+                      onClick={() => setActiveLens(lens.id)}
+                      className={`p-4 rounded border text-left transition-all ${activeLens === lens.id ? 'bg-zinc-900 border-white/20' : 'bg-black border-zinc-800 opacity-50 hover:opacity-100'}`}
+                  >
+                      <div className={`w-3 h-3 rounded-full mb-2 ${lens.color}`} />
+                      <div className="text-xs font-bold text-white uppercase">{lens.name}</div>
+                      <div className="text-[10px] text-zinc-500">{lens.desc}</div>
+                  </button>
+              ))}
+          </div>
+
+          <h2 className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest mt-6">Voice Protocol (Tone)</h2>
+          <div className="grid grid-cols-3 gap-4">
+              {coaches.map(coach => (
+                  <button
+                      key={coach.id}
+                      onClick={() => setActiveCoach(coach.id)}
+                      className={`p-4 rounded border text-center transition-all ${activeCoach === coach.id ? `bg-${coach.color}-900/10 border-${coach.color}-500/50` : 'bg-black border-zinc-800 opacity-50 hover:opacity-100'}`}
+                  >
+                      <coach.icon className={`w-6 h-6 mx-auto mb-2 text-${coach.color}-500`} />
+                      <div className="text-[10px] font-bold text-white uppercase">{coach.name}</div>
+                  </button>
+              ))}
+          </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6 pt-6 border-t border-zinc-900">
         <div className="space-y-2">
           <label className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Operational Timezone</label>
           <select

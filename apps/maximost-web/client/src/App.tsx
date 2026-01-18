@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { AuthProvider, useAuth } from './core/AuthSystem';
 import { ToastProvider } from './core/components/Toast';
 import { AIProvider } from './core/context/AIContext';
+import { LensProvider } from './core/context/LensContext';
 import DashboardCore from './core/DashboardCore';
 import LoginCore from './core/LoginCore'; // Mapped from LoginPage
 import AdminConsole from './core/admin/AdminConsoleV2';
@@ -46,6 +47,7 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
+        <LensProvider>
         <AIProvider>
           <Router>
             <Routes>
@@ -97,6 +99,7 @@ function App() {
             </Routes>
           </Router>
         </AIProvider>
+        </LensProvider>
       </AuthProvider>
     </ToastProvider>
   );

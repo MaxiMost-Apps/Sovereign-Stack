@@ -1,5 +1,5 @@
 export type HabitFrequency = 'daily' | 'weekly' | '2x-week' | '3x-week' | '4x-week' | '5x-week' | '6x-week' | 'specific_days';
-export type HabitCategory = 'physical' | 'nutrition' | 'sleep' | 'mental' | 'relationships' | 'financial' | 'health' | 'fitness' | 'mind' | 'social' | 'finance' | 'productivity' | 'general' | 'wisdom' | 'diet' | 'growth';
+export type HabitCategory = 'physical' | 'nutrition' | 'sleep' | 'mental' | 'relationships' | 'financial' | 'health' | 'fitness' | 'mind' | 'social' | 'finance' | 'productivity' | 'general' | 'wisdom' | 'diet' | 'growth' | string; // Relaxed category for string input
 export type HabitType = 'build' | 'quit';
 
 export interface HabitCompletion {
@@ -12,6 +12,8 @@ export interface HabitCompletion {
 
 export interface Habit {
   id: string;
+  atom_id?: string; // New field for standardized ID
+  slug?: string;    // Legacy ID
   user_id?: string; // Supabase field
   title: string;
   description?: string;
@@ -20,6 +22,7 @@ export interface Habit {
   icon: string;
   iconColor?: string;
   color?: string; // New field for general color theme
+  base_color?: string; // From JSON
   category: HabitCategory;
 
   // Scheduling & Logic
@@ -45,6 +48,18 @@ export interface Habit {
   impact?: number; // 1-10
   effort?: number; // 1-10
   timeCommitment?: string;
+
+  // Extended Data (The Architect / Blueprints)
+  logic?: string;
+  protocol?: string[];
+  perspectives?: {
+      fortitude?: string;
+      reason?: string;
+      visionary?: string;
+      analytical?: string;
+      [key: string]: string | undefined;
+  };
+  metadata?: any;
 
   // For UI only (optional)
   completions?: HabitCompletion[];
