@@ -102,7 +102,7 @@ habitRoutes.post('/adopt', async (c) => {
 
     // 1. Fetch from Library (using Admin to ensure read access)
     const { data: libHabits, error: libError } = await supabaseAdmin
-        .from('maximost_library_habits')
+        .from('library_habits')
         .select('*')
         .in('slug', slugs);
 
