@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../config';
-import { v4 as uuidv4 } from 'uuid';
 
 const webhookRoutes = new Hono();
 
