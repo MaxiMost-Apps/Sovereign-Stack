@@ -45,7 +45,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
             const { data: { session } } = await import('../supabase').then(m => m.supabase.auth.getSession());
             const token = session?.access_token;
 
-            const response = await fetch('https://maximost-api.onrender.com/api/habits/adopt', {
+            const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

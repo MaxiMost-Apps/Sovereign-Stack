@@ -37,12 +37,9 @@ const app = new Hono<AppEnv>();
 app.use('*', cors({
   // REPAIR ORDER: Explicit origin reflection for Credentials compatibility
   origin: (origin) => {
-      // Allow Vercel Previews, Production, Localhost, and Render
-      if (!origin) return '*'; // Mobile/Curl
-      if (origin.endsWith('.vercel.app') || origin.includes('localhost') || origin.endsWith('.onrender.com')) {
-          return origin;
-      }
-      return origin; // Fallback: Allow all for now (Dev Mode), tighten later if needed
+      // Allow ALL origins by reflecting the request origin (effectively '*')
+      // This is the specific fix for "Failed to fetch" due to strict filtering
+      return origin || '*';
   },
   allowHeaders: ['Authorization', 'Content-Type', 'apikey', 'x-client-info', 'expires', 'x-admin-secret'],
   allowMethods: ['POST', 'GET', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],

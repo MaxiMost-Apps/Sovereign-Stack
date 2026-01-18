@@ -115,7 +115,7 @@ export default function DashboardCore() {
      const coreSlugs = ['morning_sun', 'deep_work', 'fasted_walk', 'shadow_audit', 'digital_sunset'];
 
      try {
-         const response = await fetch('https://maximost-api.onrender.com/api/habits/adopt', {
+         const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
              method: 'POST',
              headers: {
                  'Content-Type': 'application/json',
@@ -605,7 +605,7 @@ export default function DashboardCore() {
 
                    {/* REPLACED: Old direct fetch rendering with new HabitArchive component */}
                    <HabitArchive
-                        onImport={(habit) => handleLibraryClick(habit)} // REPAIR ORDER: Opens slide-in edit
+                        onImport={() => fetchData()} // REPAIR ORDER: Refresh list after adoption
                         userHabits={safeHabits}
                         onEdit={(habit) => handleLibraryClick(habit)} // Dual bind for clarity
                    />

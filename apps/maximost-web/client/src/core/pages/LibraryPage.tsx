@@ -92,7 +92,7 @@ export default function LibraryPage() {
   const handleQuickImport = async (habit: Habit) => {
       // REPAIR ORDER: Use live API for individual adoption in Archive page too
       try {
-          const response = await fetch('https://maximost-api.onrender.com/api/habits/adopt', {
+          const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export default function LibraryPage() {
       if (!slugs || slugs.length === 0) return toast.error("Empty Protocol");
 
       try {
-          const response = await fetch('https://maximost-api.onrender.com/api/habits/adopt', {
+          const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
