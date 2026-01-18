@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { useNavigate } from 'react-router-dom'; // REPAIR ORDER: Added useNavigate
 import { lexiconStore } from '../../store/lexiconStore'; // REPAIR ORDER: Import Sovereign Store
+import { getApiUrl } from '../../config'; // REPAIR ORDER: Centralized Config
 
 interface HabitArchiveProps {
     onImport: (habit: Habit) => void;
@@ -48,7 +49,7 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
             const { data: { session } } = await import('../supabase').then(m => m.supabase.auth.getSession());
             const token = session?.access_token;
 
-            const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+            const response = await fetch(getApiUrl('/api/habits/adopt'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

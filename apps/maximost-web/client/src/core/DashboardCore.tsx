@@ -24,6 +24,7 @@ import { HabitCard } from './components/HabitCard'; // Import new HabitCard
 import { HabitArchive } from './components/HabitArchive'; // Import new HabitArchive
 import { CouncilGhost } from '@/features/ghost/CouncilGhost';
 import { AscensionOverlay } from '@/components/AscensionOverlay';
+import { getApiUrl } from '../config'; // REPAIR ORDER: Centralized Config
 
 export default function DashboardCore() {
   const { toast } = useToast();
@@ -115,7 +116,7 @@ export default function DashboardCore() {
      const coreSlugs = ['morning_sun', 'deep_work', 'fasted_walk', 'shadow_audit', 'digital_sunset'];
 
      try {
-         const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+         const response = await fetch(getApiUrl('/api/habits/adopt'), {
              method: 'POST',
              headers: {
                  'Content-Type': 'application/json',

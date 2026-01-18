@@ -9,6 +9,7 @@ import { useToast } from '../components/Toast';
 import { HABIT_ATOMS, PROTOCOL_MOLECULES } from '../config/libraryData';
 import { lexiconStore } from '../../store/lexiconStore'; // REPAIR ORDER: Import Sovereign Store
 import { useNavigate } from 'react-router-dom'; // REPAIR ORDER: Added useNavigate
+import { getApiUrl } from '../../config'; // REPAIR ORDER: Centralized Config
 
 export default function LibraryPage() {
   const [activeTab, setActiveTab] = useState<'habits' | 'stacks'>('habits');
@@ -93,7 +94,7 @@ export default function LibraryPage() {
   const handleQuickImport = async (habit: Habit) => {
       // REPAIR ORDER: Use live API for individual adoption in Archive page too
       try {
-          const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+          const response = await fetch(getApiUrl('/api/habits/adopt'), {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
@@ -120,7 +121,7 @@ export default function LibraryPage() {
       if (!slugs || slugs.length === 0) return toast.error("Empty Protocol");
 
       try {
-          const response = await fetch('https://sovereign-stack.onrender.com/api/habits/adopt', {
+          const response = await fetch(getApiUrl('/api/habits/adopt'), {
               method: 'POST',
               headers: {
                   'Content-Type': 'application/json',
