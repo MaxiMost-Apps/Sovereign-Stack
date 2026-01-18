@@ -142,7 +142,7 @@ habitRoutes.post('/adopt', async (c) => {
     // Using supabaseAdmin here forces the write.
     const { error: insertError } = await supabaseAdmin
         .from('habits')
-        .insert(habitsToInsert);
+        .upsert(habitsToInsert, { onConflict: 'user_id, slug' });
 
     if (insertError) {
         console.error('❌ Adopt Write Error:', insertError);

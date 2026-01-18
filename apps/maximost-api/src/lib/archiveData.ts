@@ -226,3 +226,9 @@ export const PROTOCOL_MOLECULES = [
     habits: ["strength-session", "high-protein", "mobility", "nsdr"]
   }
 ];
+
+export const ARCHIVE_DATA = {
+    archive_version: "v6.0",
+    atoms: HABIT_ATOMS,
+    protocol_stacks: PROTOCOL_MOLECULES
+};

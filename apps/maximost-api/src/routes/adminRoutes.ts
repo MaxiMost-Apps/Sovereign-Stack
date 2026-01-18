@@ -281,21 +281,23 @@ adminRoutes.post('/seed-protocols', async (c) => {
 
     // 2. Seed Protocols
     for (const stack of ARCHIVE_DATA.protocol_stacks) {
+        // Map new schema (title/habits) to legacy seed expectation (id/name/expert_voice)
+        const s = stack as any;
         const payload = {
-            stack_id: stack.id,
-            title: stack.name,
-            description: stack.description,
-            expert_voice: stack.expert_voice,
-            theme_override: stack.theme_override,
-            habit_slugs: stack.habits,
-            overrides: stack.overrides || []
+            stack_id: s.id || s.title.toLowerCase().replace(/\s+/g, '-'),
+            title: s.name || s.title,
+            description: s.description,
+            expert_voice: s.expert_voice || 'System',
+            theme_override: s.theme_override || null,
+            habit_slugs: s.habits || s.habit_slugs,
+            overrides: s.overrides || []
         };
 
         const { error } = await supabase
             .from('maximost_library_protocols')
             .upsert(payload, { onConflict: 'stack_id' });
 
-        if (error) errors.push(`Protocol ${stack.id}: ${error.message}`);
+        if (error) errors.push(`Protocol ${payload.stack_id}: ${error.message}`);
     }
 
     if (errors.length > 0) {

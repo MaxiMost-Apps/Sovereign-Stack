@@ -180,6 +180,20 @@ webhookRoutes.post('/telemetry', async (c) => {
     // 2. Dump to Drive (Sovereign_Stack/Telemetry)
     try {
         const result = await driveService.uploadTelemetry(source, body);
+
+        // 3. Pipe to telemetry_logs (Command Brief V1.2)
+        const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+        const userId = body.user_id || body.userId || null;
+
+        const { error } = await supabase.from('telemetry_logs').insert({
+             source: source,
+             payload: body,
+             user_id: userId,
+             created_at: new Date().toISOString()
+        });
+
+        if (error) console.error('Telemetry DB Log Failed:', error);
+
         return c.json({ success: true, fileId: result.fileId });
     } catch (error: any) {
         console.error('Telemetry Upload Failed:', error);
