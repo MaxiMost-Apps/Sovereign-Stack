@@ -40,7 +40,7 @@ async function ingestHabits() {
     }));
 
     const { error } = await supabase
-        .from('atoms')
+        .from('maximost_library_habits')
         .upsert(mappedHabits, { onConflict: 'slug' });
 
     if (error) {
@@ -79,7 +79,7 @@ async function ingestProtocols() {
 
     // Target `protocol_stacks` as the master table
     const { error } = await supabase
-        .from('protocol_stacks')
+        .from('maximost_library_protocols')
         .upsert(mappedProtocols, { onConflict: 'stack_id' });
 
     if (error) {

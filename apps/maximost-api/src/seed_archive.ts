@@ -112,7 +112,7 @@ async function seed() {
         const payload = { ...habit, name: habit.title };
 
         const { error } = await supabase
-            .from('atoms')
+            .from('maximost_library_habits')
             .upsert(payload, { onConflict: 'slug' });
 
         if (error) console.error(`Error seeding habit ${habit.slug}:`, error.message);
@@ -132,7 +132,7 @@ async function seed() {
         };
 
         const { error } = await supabase
-            .from('protocol_stacks')
+            .from('maximost_library_protocols')
             .upsert(payload, { onConflict: 'stack_id' });
 
         if (error) console.error(`Error seeding protocol ${stack.id}:`, error.message);

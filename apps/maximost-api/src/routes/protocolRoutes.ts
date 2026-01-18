@@ -9,7 +9,7 @@ const app = new Hono<AppEnv>();
 app.get('/', async (c) => {
     const supabase = c.get('supabase');
     const { data, error } = await supabase
-        .from('protocol_stacks')
+        .from('maximost_library_protocols')
         .select('*');
 
     if (error) {
@@ -53,7 +53,7 @@ app.post('/ingest', async (c) => {
 
     // 4. Upsert Habits
     const { error: habitsError } = await adminSupabase
-        .from('atoms')
+        .from('maximost_library_habits')
         .upsert(habits, { onConflict: 'slug' });
 
     if (habitsError) {
@@ -63,7 +63,7 @@ app.post('/ingest', async (c) => {
 
     // 5. Upsert Protocols (Consolidated Table)
     const { error: protocolsError } = await adminSupabase
-        .from('protocol_stacks')
+        .from('maximost_library_protocols')
         .upsert(protocols, { onConflict: 'stack_id' });
 
     if (protocolsError) {
@@ -84,7 +84,7 @@ app.post('/deploy', async (c) => {
 
     // 1. Fetch Protocol Data (Consolidated Table)
     const { data: protocol, error: fetchError } = await supabase
-        .from('protocol_stacks')
+        .from('maximost_library_protocols')
         .select('*')
         .eq('stack_id', protocolId)
         .single();
@@ -130,7 +130,7 @@ app.post('/deploy', async (c) => {
 
     // Fetch details from library
     const { data: libraryHabits, error: libError } = await supabase
-        .from('atoms')
+        .from('maximost_library_habits')
         .select('*')
         .in('slug', habitSlugs);
 

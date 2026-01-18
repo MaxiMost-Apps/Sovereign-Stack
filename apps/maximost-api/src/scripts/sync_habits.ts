@@ -101,7 +101,7 @@ async function syncHabits() {
     console.log("Upserting to atoms...");
 
     const { data, error } = await supabase
-        .from('atoms')
+        .from('maximost_library_habits')
         .upsert(updates, { onConflict: 'slug' })
         .select();
 

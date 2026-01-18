@@ -79,7 +79,7 @@ app.get('/api/habits/library', async (c) => {
 
         // REPAIR ORDER: Query atoms (Corrected from maximost_atoms)
         const { data, error } = await supabaseAdmin
-            .from('atoms')
+            .from('maximost_library_habits')
             .select('*')
             .order('title');
 
@@ -275,7 +275,7 @@ app.get('/api/telemetry/averages', async (c) => {
 app.get('/api/archive/lore', async (c) => {
     const supabase = c.get('supabase');
     const { data, error } = await supabase
-        .from('atoms')
+        .from('maximost_library_habits')
         .select('*') // Select ALL columns (including metadata, icon, theme)
         .limit(100);
 

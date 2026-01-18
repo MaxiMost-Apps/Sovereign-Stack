@@ -28,7 +28,7 @@ async function fetchLoreMatches(supabase: SupabaseClient, userMessage: string = 
     if (!orQuery) return "";
 
     const { data } = await supabase
-        .from('atoms')
+        .from('maximost_library_habits')
         .select('name, how_instruction, why_instruction')
         .or(orQuery)
         .limit(3);

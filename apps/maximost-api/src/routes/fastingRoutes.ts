@@ -56,7 +56,7 @@ fastingRoutes.get('/status', async (c) => {
     // 3. Fetch Milestones from Library Habit (Source of Truth)
     // We fetch from atoms using the slug from the user's habit to ensure we match lore.
     const { data: libData } = await supabase
-        .from('atoms')
+        .from('maximost_library_habits')
         .select('metadata')
         .eq('slug', habitData.slug)
         .single();

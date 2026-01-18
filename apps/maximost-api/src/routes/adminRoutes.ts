@@ -273,7 +273,7 @@ adminRoutes.post('/seed-protocols', async (c) => {
         const payload = { ...habit, name: habit.title };
 
         const { error } = await supabase
-            .from('atoms')
+            .from('maximost_library_habits')
             .upsert(payload, { onConflict: 'slug' });
 
         if (error) errors.push(`Habit ${habit.slug}: ${error.message}`);
@@ -292,7 +292,7 @@ adminRoutes.post('/seed-protocols', async (c) => {
         };
 
         const { error } = await supabase
-            .from('protocol_stacks')
+            .from('maximost_library_protocols')
             .upsert(payload, { onConflict: 'stack_id' });
 
         if (error) errors.push(`Protocol ${stack.id}: ${error.message}`);
