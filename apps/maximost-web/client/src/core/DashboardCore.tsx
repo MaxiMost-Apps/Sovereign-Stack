@@ -25,6 +25,7 @@ import { HabitArchive } from './components/HabitArchive'; // Import new HabitArc
 import { CouncilGhost } from '@/features/ghost/CouncilGhost';
 import { AscensionOverlay } from '@/components/AscensionOverlay';
 import { getApiUrl } from '../config'; // REPAIR ORDER: Centralized Config
+import { Inspector } from './components/Inspector'; // REPAIR ORDER: Inspector Resilience
 
 export default function DashboardCore() {
   const { toast } = useToast();
@@ -348,7 +349,7 @@ export default function DashboardCore() {
   );
 
   return (
-
+    <Inspector>
       <div className="flex flex-col gap-6 pb-20 relative">
         {/* HEADER */}
         <div className="flex justify-between items-center">
@@ -674,6 +675,6 @@ export default function DashboardCore() {
         )}
 
       </div>
-
+    </Inspector>
   );
 }

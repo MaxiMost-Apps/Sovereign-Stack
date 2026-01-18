@@ -70,6 +70,30 @@ app.route('/api/atoms', atomRoutes);
 // REPAIR ORDER: Move Protocols public to bypass Auth Gate (Header Missing Fix)
 app.route('/api/protocols', protocolRoutes);
 
+// REPAIR ORDER: API Safety Net for Founding Status (Prevent 500 Loop)
+app.get('/api/founding-status', async (c) => {
+    try {
+        const adminSupabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+        // Try to count founding members (e.g. Sovereign Tier)
+        const { count, error } = await adminSupabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .eq('membership_tier', 'sovereign');
+
+        if (error) {
+             console.warn("Founding Status DB Error (Safety Net):", error.message);
+             // Return 0 instead of crashing
+             return c.json({ is_founding: false, count: 0 });
+        }
+
+        return c.json({ is_founding: (count || 0) < 500, count: count || 0 });
+    } catch (error: any) {
+        console.error("Founding Status Critical Failure (Safety Net):", error.message);
+        // Always return valid JSON to prevent frontend parser crash
+        return c.json({ is_founding: false, count: 0 });
+    }
+});
+
 // REPAIR ORDER: Define Public Library Route Directly (Aliased)
 // This GUARANTEES /api/habits/library is handled before Auth
 app.get('/api/habits/library', async (c) => {
