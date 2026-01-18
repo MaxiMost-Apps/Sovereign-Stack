@@ -35,12 +35,30 @@ const app = new Hono<AppEnv>();
 
 // --- CORS ---
 app.use('*', cors({
-  origin: '*', // REPAIR ORDER: Wildcard origin
+  // REPAIR ORDER: Explicit origin reflection for Credentials compatibility
+  origin: (origin) => {
+      // Allow Vercel Previews, Production, Localhost, and Render
+      if (!origin) return '*'; // Mobile/Curl
+      if (origin.endsWith('.vercel.app') || origin.includes('localhost') || origin.endsWith('.onrender.com')) {
+          return origin;
+      }
+      return origin; // Fallback: Allow all for now (Dev Mode), tighten later if needed
+  },
   allowHeaders: ['Authorization', 'Content-Type', 'apikey', 'x-client-info', 'expires', 'x-admin-secret'],
   allowMethods: ['POST', 'GET', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
   credentials: true,
   maxAge: 600,
 }));
+
+// --- Health Check (Diagnostic) ---
+app.get('/api/v1/health', (c) => {
+    return c.json({
+        status: "System Online",
+        timestamp: new Date().toISOString(),
+        service: "Maximost API",
+        version: "1.0.0"
+    });
+});
 
 // --- Public Routes (Bypass Auth) ---
 // REPAIR ORDER: Define Public Library Route Directly

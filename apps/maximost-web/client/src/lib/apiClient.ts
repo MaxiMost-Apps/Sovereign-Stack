@@ -7,12 +7,15 @@ const getApiBaseUrl = () => {
   if (!apiUrl) {
     throw new Error('VITE_API_BASE_URL is not defined. Please set it in your .env file or Vercel environment variables.');
   }
-  return apiUrl;
+  // Safety: Strip trailing slash to prevent double-slash errors
+  return apiUrl.replace(/\/$/, '');
 };
 
 const apiClient = {
   async request(endpoint: string, options: RequestInit = {}) {
-    const url = `${getApiBaseUrl()}${endpoint}`;
+    // Safety: Ensure endpoint has leading slash
+    const safeEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${getApiBaseUrl()}${safeEndpoint}`;
     const token = localStorage.getItem('token');
 
     const headers = new Headers(options.headers || {});
