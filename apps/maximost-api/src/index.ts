@@ -27,11 +27,16 @@ import publicRoutes from './routes/publicRoutes';
 import telemetryRoutes from './routes/telemetryRoutes';
 import completionsRoutes from './routes/completionsRoutes';
 import statsRoutes from './routes/statsRoutes';
+import atomRoutes from './routes/atomRoutes'; // REPAIR ORDER: Import atomRoutes
 
 import { calculateConsistencyIndex } from './lib/telemetry';
 import { calculateDrift } from './lib/shadowAudit';
 
 const app = new Hono<AppEnv>();
+
+// DEBUG: Verify Keys
+console.log(`🔐 Anon Key Status: ${config.SUPABASE_ANON_KEY ? 'Present' : 'MISSING'}`);
+console.log(`🔐 Service Key Status: ${config.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'MISSING'}`);
 
 // --- CORS ---
 app.use('*', cors({
@@ -58,16 +63,20 @@ app.get('/api/v1/health', (c) => {
 });
 
 // --- Public Routes (Bypass Auth) ---
-// REPAIR ORDER: Define Public Library Route Directly
+
+// REPAIR ORDER: Mount atomRoutes explicitly as requested
+app.route('/api/atoms', atomRoutes);
+
+// REPAIR ORDER: Define Public Library Route Directly (Aliased)
 // This GUARANTEES /api/habits/library is handled before Auth
 app.get('/api/habits/library', async (c) => {
     console.log('📚 Public Library Access Request');
     try {
         const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
-        // REPAIR ORDER: Query maximost_library_habits
+        // REPAIR ORDER: Query library_habits (Corrected from maximost_library_habits)
         const { data, error } = await supabaseAdmin
-            .from('maximost_library_habits')
+            .from('library_habits')
             .select('*')
             .order('title');
 
