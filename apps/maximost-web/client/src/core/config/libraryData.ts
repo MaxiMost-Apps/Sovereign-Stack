@@ -439,31 +439,46 @@ export const PROTOCOL_MOLECULES = [
   {
     title: "Atlas Golden Set",
     description: "The foundation. The five habits that stabilize any rig.",
-    habits: ["Morning Sunlight", "Deep Work Bout", "Zone 2 Cardio", "The Shadow Audit", "Digital Sunset"]
+    habits: ["morning_sun", "deep_work", "fasted_walk", "shadow_audit", "digital_sunset"]
   },
   {
     title: "Huberman Neural Stack",
     description: "Optimizing the brain through biological triggers.",
-    habits: ["Morning Sunlight", "Cold Exposure", "Nasal Breathing", "Digital Sunset"]
+    habits: ["morning_sun", "cold_plunge", "nsdr_reset", "digital_sunset"]
   },
   {
     title: "Goggins Iron Mind",
     description: "Building a calloused mind through intentional friction.",
-    habits: ["Accountability Mirror", "Heavy Lifting", "The Cookie Jar", "Taking Souls"]
+    habits: ["accountability_mirror", "heavy_lifting", "taking_souls", "cookie_jar"]
   },
   {
     title: "Attia Centenarian",
     description: "Training today for the 'Marginal Decade' of your life.",
-    habits: ["Zone 2 Cardio", "Heavy Lifting", "Intermittent Fasting", "Thermal Exposure"]
+    habits: ["fasted_walk", "heavy_lifting", "fasting", "vo2_max"]
   },
   {
     title: "Jocko Discipline",
     description: "Military-grade standard for daily execution.",
-    habits: ["Make Bed", "Deep Work Bout", "The Shadow Audit", "No Sugar"]
+    habits: ["make_bed", "deep_work", "shadow_audit", "no_sugar"]
   },
   {
     title: "The Stoic",
     description: "Ancient logic for modern chaos.",
-    habits: ["Memento Mori", "Amor Fati", "Prayer / Stillness", "Secret Good Deed"]
+    habits: ["memento_mori", "amor_fati", "prayer_stillness", "good_deed"]
+  },
+  {
+    title: "The War Phase",
+    description: "High-output optimization for crisis.",
+    habits: ["sauna", "digital_air_gap", "thermoregulation", "deep_work"]
+  },
+  {
+    title: "Deep Stack",
+    description: "Unlocking the cognitive superpower.",
+    habits: ["deep_work", "daily_shutdown", "touch_grass"]
+  },
+  {
+    title: "Athlete Standard",
+    description: "Explosive power and rapid recovery.",
+    habits: ["heavy_lifting", "protein_loading", "ready_state", "nsdr_reset"]
   }
 ];

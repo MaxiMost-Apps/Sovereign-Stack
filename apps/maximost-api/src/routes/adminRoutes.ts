@@ -306,6 +306,69 @@ adminRoutes.post('/seed-protocols', async (c) => {
     return c.json({ message: "Archive Seeding Successful", version: ARCHIVE_DATA.archive_version });
 });
 
+// POST /api/admin/force-deploy-core - Manual Link of Starting 5 (Self-Healing)
+adminRoutes.post('/force-deploy-core', async (c) => {
+    // 1. Role Check (Admin)
+    const user = c.get('user');
+    if (user.profile.role !== 'admin' && user.profile.role !== 'ROOT_ADMIN') {
+        return c.json({ error: 'Forbidden: Admin Access Required' }, 403);
+    }
+
+    const { targetUserId } = await c.req.json();
+    const deployUserId = targetUserId || user.id;
+
+    // 2. Service Role Client
+    const { createClient } = await import('@supabase/supabase-js');
+    const { config } = await import('../config');
+    const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+
+    console.log(`🚀 Force Deploying Core Stack to ${deployUserId}...`);
+
+    // 3. Define Core Slugs
+    const coreSlugs = ['morning_sun', 'deep_work', 'fasted_walk', 'shadow_audit', 'digital_sunset'];
+
+    // 4. Fetch Habit Definitions (Atoms)
+    const { data: atoms, error: atomError } = await supabase
+        .from('maximost_library_habits')
+        .select('*')
+        .in('slug', coreSlugs);
+
+    if (atomError || !atoms || atoms.length === 0) {
+        return c.json({ error: 'Failed to fetch core atoms', details: atomError }, 500);
+    }
+
+    // 5. Construct User Habits
+    const userHabits = atoms.map(atom => ({
+        user_id: deployUserId,
+        name: atom.title,
+        description: atom.description,
+        slug: atom.slug,
+        type: atom.type,
+        target_value: atom.target_value || 1,
+        unit: atom.unit || 'rep',
+        frequency: atom.frequency || 'daily',
+        icon: atom.icon,
+        theme: atom.theme,
+        color: atom.color,
+        metadata: atom.metadata,
+        why_instruction: atom.why_instruction,
+        how_instruction: atom.how_instruction,
+        linked_stacks: ["Atlas Golden Set"]
+    }));
+
+    // 6. Upsert to User Habits
+    const { error: deployError } = await supabase
+        .from('habits')
+        .upsert(userHabits, { onConflict: 'user_id, slug' as any });
+
+    if (deployError) {
+        console.error('Force Deploy Error:', deployError);
+        return c.json({ error: 'Failed to force deploy', details: deployError }, 500);
+    }
+
+    return c.json({ message: `Core Stack Deployed to ${deployUserId}`, count: userHabits.length });
+});
+
 // POST /api/admin/sync-bridge - Manual Trigger for Bridge Audit
 adminRoutes.post('/sync-bridge', async (c) => {
     // 1. Role Check
