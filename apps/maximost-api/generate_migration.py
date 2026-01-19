@@ -81,6 +81,19 @@ def generate_sql():
     print("ALTER TABLE habits ADD COLUMN IF NOT EXISTS base_color TEXT;")
     print("ALTER TABLE habits ADD COLUMN IF NOT EXISTS logic TEXT;")
     print("")
+    print("-- 5. Ensure Telemetry Logs Table")
+    print("""
+CREATE TABLE IF NOT EXISTS telemetry_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    source TEXT,
+    payload JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE telemetry_logs ENABLE ROW LEVEL SECURITY;
+-- Grants are tricky if roles differ, skipping specific grants assuming service_role has access.
+""")
+    print("")
     print(f"-- 2. Seed Library")
 
     for atom in ATOMS:

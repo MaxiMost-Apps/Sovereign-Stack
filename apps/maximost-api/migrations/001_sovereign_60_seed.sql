@@ -13,6 +13,19 @@ ALTER TABLE habits ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
 ALTER TABLE habits ADD COLUMN IF NOT EXISTS base_color TEXT;
 ALTER TABLE habits ADD COLUMN IF NOT EXISTS logic TEXT;
 
+-- 5. Ensure Telemetry Logs Table
+
+CREATE TABLE IF NOT EXISTS telemetry_logs (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    source TEXT,
+    payload JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE telemetry_logs ENABLE ROW LEVEL SECURITY;
+-- Grants are tricky if roles differ, skipping specific grants assuming service_role has access.
+
+
 -- 2. Seed Library
 
 INSERT INTO maximost_library_habits (slug, name, category, icon, theme, metadata, base_color, atom_id, logic)

@@ -152,11 +152,20 @@ export default function PreferencesPage() {
   ];
 
   const lenses = [
-      { id: 'fortitude', name: 'Fortitude', color: 'bg-amber-500', desc: 'Resilience & Grit' },
-      { id: 'reason', name: 'Reason', color: 'bg-blue-500', desc: 'Logic & Analysis' },
-      { id: 'visionary', name: 'Visionary', color: 'bg-purple-500', desc: 'Future & Strategy' },
-      { id: 'analytical', name: 'Analytical', color: 'bg-emerald-500', desc: 'Data & Precision' }
+      { id: 'fortitude', name: 'Fortitude', color: 'bg-emerald-500', hex: '#059669', desc: 'Resilience & Grit' },
+      { id: 'reason', name: 'Reason', color: 'bg-blue-600', hex: '#2563EB', desc: 'Logic & Analysis' },
+      { id: 'visionary', name: 'Visionary', color: 'bg-purple-600', hex: '#7C3AED', desc: 'Future & Strategy' },
+      { id: 'analytical', name: 'Analytical', color: 'bg-slate-400', hex: '#94A3B8', desc: 'Data & Precision' }
   ];
+
+  // Apply Global Theme
+  useEffect(() => {
+      const selected = lenses.find(l => l.id === activeLens);
+      if (selected) {
+          document.documentElement.style.setProperty('--primary', selected.hex);
+          // Optional: Dispatch event for non-react components if any
+      }
+  }, [activeLens]);
 
   const timezones = [
       "UTC", "America/New_York", "America/Los_Angeles", "America/Chicago", "Europe/London", "Europe/Paris", "Asia/Tokyo", "Australia/Sydney"
