@@ -205,12 +205,19 @@ export default function DashboardCore() {
     let habitId = editingHabit?.id;
 
     if (habitId) {
-       await supabase.from('habits').update(finalPayload).eq('id', habitId);
+       const { error } = await supabase.from('habits').update(finalPayload).eq('id', habitId);
+       if (error) {
+           toast.error("Update Failed: " + error.message);
+           return;
+       }
        toast.success("Habit Updated");
     } else {
        // Insert New
        const { data, error } = await supabase.from('habits').insert([finalPayload]).select().single();
-       if (error) { toast.error("Error: " + error.message); return; }
+       if (error) {
+           toast.error("Creation Failed: " + error.message);
+           return;
+       }
        habitId = data?.id;
        toast.success("Habit Created");
     }
