@@ -159,12 +159,19 @@ habitRoutes.post('/adopt', async (c) => {
 habitRoutes.put('/:id', async (c) => {
     const user = c.get('user');
     const { id } = c.req.param();
-    const { name, description } = await c.req.json();
+    const { name, description, frequency, daily_goal, target_value, metadata, base_color } = await c.req.json();
 
     const supabase = c.get('supabase');
     const { data, error } = await supabase
         .from('habits')
-        .update({ name, description })
+        .update({
+            name,
+            description,
+            frequency,
+            daily_goal: daily_goal || target_value, // Map target to daily_goal if needed
+            metadata,
+            base_color
+        })
         .eq('id', id)
         .eq('user_id', user.id)
         .select()
