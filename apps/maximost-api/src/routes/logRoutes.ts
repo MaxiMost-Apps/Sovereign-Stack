@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { createClient } from '@supabase/supabase-js';
+import { syncService } from '../services/syncService';
 import type { AppEnv } from '../hono';
 
 const logRoutes = new Hono<AppEnv>();
@@ -34,6 +35,10 @@ logRoutes.post('/', async (c) => {
         return c.json({ error: 'Failed to log habit' }, 500);
     }
 
+    // Vault Sync (Air-Gap Roadmap)
+    // Fire and forget - handled by SyncService
+    syncService.syncLedgerToVault(user.id, data).catch(err => console.error('Vault Sync Error:', err));
+
     return c.json({ message: 'Habit logged successfully', log: data });
 });
 
@@ -43,9 +48,10 @@ logRoutes.get('/feed', async (c) => {
     const supabase = c.get('supabase');
     const limitParam = c.req.query('limit');
     const limit = limitParam ? parseInt(limitParam) : 50;
+    const before = c.req.query('before'); // Timestamp offset for Load More
 
     // 1. Fetch Habit Logs (Completions)
-    const { data: habits } = await supabase
+    let habitQuery = supabase
         .from('habit_logs')
         .select(`
             id, completed_at, value, note,
@@ -54,6 +60,12 @@ logRoutes.get('/feed', async (c) => {
         .eq('user_id', user.id)
         .order('completed_at', { ascending: false })
         .limit(limit);
+
+    if (before) {
+        habitQuery = habitQuery.lt('completed_at', before);
+    }
+
+    const { data: habits } = await habitQuery;
 
     // 2. Fetch Telemetry Logs (Spikes)
     // Graceful fallback if table missing
@@ -86,17 +98,15 @@ logRoutes.get('/feed', async (c) => {
     habits?.forEach((h: any) => {
         feed.push({
             id: h.id,
-            timestamp: h.completed_at, // YYYY-MM-DD usually, treat as 00:00 or now?
-            // If completed_at is date only, sorting might be tricky vs timestamps.
-            // We'll append current time or 12:00 if it's just a date string.
-            // Ideally habit_logs has created_at too?
-            // Let's assume completed_at is the date of the log.
+            timestamp: h.completed_at,
             type: 'habit_completion',
             content: {
                 title: h.habits?.title || 'Unknown Habit',
                 mission: h.habits?.metadata?.logic || h.habits?.description,
-                narrative: h.note || h.habits?.metadata?.perspectives?.fortitude || "Protocol Complete.",
-                color: h.habits?.base_color || h.habits?.metadata?.base_color || '#10B981', // Default emerald
+                // Pass full perspectives for Lens-aware rendering on frontend
+                perspectives: h.habits?.metadata?.perspectives,
+                narrative: h.note, // User note takes precedence, else frontend uses perspective
+                color: h.habits?.base_color || h.habits?.metadata?.base_color || '#10B981',
                 icon: h.habits?.icon
             }
         });
