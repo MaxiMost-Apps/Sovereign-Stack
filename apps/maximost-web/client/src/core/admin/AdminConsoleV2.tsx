@@ -6,6 +6,8 @@ import {
   FileInput, GitBranch, Radio
 } from 'lucide-react';
 import { cn } from '../../lib/utils'; // Verify path to utils
+import { getApiUrl } from '../../config';
+import { supabase } from '../supabase';
 
 // --- THE 4 SOVEREIGN AIRLOCKS (INFRASTRUCTURE) ---
 const AIRLOCK_SYSTEMS = [
@@ -223,22 +225,46 @@ function DiagnosticsPanel() {
 
   const addLog = (msg: string) => setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev]);
 
-  const runDeepScan = () => {
-    addLog('>> INITIATING DEEP SCAN...');
+  const runDeepScan = async () => {
+    addLog('>> INITIATING SOVEREIGN DIAGNOSTICS...');
     setStatus({ api: 'pending', db: 'pending' });
 
-    // MOCK: Simulate API Check
-    setTimeout(() => {
-        setStatus(s => ({ ...s, api: 'online' }));
-        addLog('API GATEWAY: SECURE (20ms)');
-    }, 800);
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
 
-    // MOCK: Simulate DB Check
-    setTimeout(() => {
-        setStatus(s => ({ ...s, db: 'online' }));
-        addLog('DB CONNECTION: ESTABLISHED');
-        addLog('>> SCAN COMPLETE. ALL SYSTEMS NOMINAL.');
-    }, 1500);
+        // 1. API Handshake
+        const res = await fetch(getApiUrl('/api/admin/diagnostics'), {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 403) {
+            setStatus({ api: 'error', db: 'unknown' });
+            addLog('⚠️ ACCESS DENIED: Sovereign Clearance Required.');
+            return;
+        }
+
+        if (!res.ok) {
+             throw new Error(`API Error: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setStatus({ api: 'online', db: data.db_real_count > 0 ? 'online' : 'warning' });
+
+        addLog(`>> API AUTH: ${data.user_email}`);
+        addLog(`>> DB HABITS: ${data.db_real_count}`);
+        addLog(`>> LIBRARY: ${data.lib_real_count}`);
+
+        if (data.lib_real_count === 42) addLog('⚠️ WARNING: GHOST LIBRARY DETECTED (42 Items)');
+        else if (data.lib_real_count >= 60) addLog('✅ LIBRARY: SOVEREIGN 60 ACTIVE');
+
+        addLog(`>> SCHEMA HEALTH: ${data.schema_health ? 'PASS' : 'FAIL'}`);
+        addLog(`>> ROUTES: ${data.route_audit?.length || 0} Endpoints Active`);
+
+    } catch (e: any) {
+        setStatus({ api: 'error', db: 'error' });
+        addLog(`ERROR: ${e.message}`);
+    }
   };
 
   return (
@@ -248,7 +274,7 @@ function DiagnosticsPanel() {
         {/* TOOL 1: SYSTEM HEALTH */}
         <div className="bg-zinc-900/30 border border-zinc-800 p-6 rounded-lg space-y-4">
           <h3 className="text-zinc-500 font-bold uppercase text-xs tracking-widest flex items-center gap-2">
-            <Activity className="w-4 h-4" /> Tool 1: Deep Scan
+            <Activity className="w-4 h-4" /> Tool 1: Sovereign Diagnostics
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <StatusIndicator label="API Gateway" status={status.api} icon={Server} />

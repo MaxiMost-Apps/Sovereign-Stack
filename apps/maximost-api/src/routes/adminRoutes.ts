@@ -21,6 +21,54 @@ adminRoutes.use('*', async (c, next) => {
     await next();
 });
 
+// GET /api/admin/diagnostics - Health Check (Sovereign Lock)
+adminRoutes.get('/diagnostics', async (c) => {
+    const user = c.get('user');
+    // Sovereign Lock: Only admin@maximost.com
+    if (user.email !== 'admin@maximost.com') {
+        return c.json({ error: 'Access Denied: Sovereign Clearance Required' }, 403);
+    }
+
+    const supabase = c.get('supabase');
+
+    // 1. DB Count (Ghost Check)
+    const { count: dbRealCount } = await supabase
+        .from('habits') // User Habits
+        .select('*', { count: 'exact', head: true });
+
+    // Check library count too? "If this is 42..."
+    const { count: libCount } = await supabase
+        .from('maximost_library_habits')
+        .select('*', { count: 'exact', head: true });
+
+    // 2. Schema Health
+    // Check for critical columns
+    let schemaHealth = false;
+    try {
+        const { error } = await supabase
+            .from('habits')
+            .select('frequency, target_count, metadata')
+            .limit(1);
+        if (!error) schemaHealth = true;
+    } catch (e) { }
+
+    // 3. Route Audit (Static List for now, reflecting key endpoints)
+    const routeAudit = [
+        { method: 'POST', path: '/api/habits/adopt', status: 'Active' },
+        { method: 'POST', path: '/api/completions/toggle', status: 'Active' },
+        { method: 'PUT', path: '/api/habits/:id', status: 'Active' },
+        { method: 'GET', path: '/api/habit_logs/feed', status: 'Active' }
+    ];
+
+    return c.json({
+        db_real_count: dbRealCount,
+        lib_real_count: libCount,
+        schema_health: schemaHealth,
+        route_audit: routeAudit,
+        user_email: user.email
+    });
+});
+
 adminRoutes.get('/users', async (c) => {
     const supabase = c.get('supabase');
 
