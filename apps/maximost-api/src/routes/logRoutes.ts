@@ -55,13 +55,19 @@ logRoutes.get('/feed', async (c) => {
 
     // 2. Fetch Telemetry Logs (Spikes)
     // Graceful fallback if table missing
-    const { data: telemetry } = await supabase
-        .from('telemetry_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20)
-        .catch(() => ({ data: [] })); // Catch error if table doesn't exist
+    let telemetry: any[] = [];
+    try {
+        const { data, error } = await supabase
+            .from('telemetry_logs')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+        if (!error && data) telemetry = data;
+    } catch (e) {
+        // Ignore table missing error
+    }
 
     // 3. Fetch Field Notes (Journal)
     const { data: journals } = await supabase
@@ -95,7 +101,7 @@ logRoutes.get('/feed', async (c) => {
     });
 
     // Map Telemetry
-    (telemetry as any)?.forEach((t: any) => {
+    telemetry.forEach((t: any) => {
         feed.push({
             id: t.id,
             timestamp: t.created_at,
