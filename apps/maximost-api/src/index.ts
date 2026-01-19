@@ -27,23 +27,61 @@ import publicRoutes from './routes/publicRoutes';
 import telemetryRoutes from './routes/telemetryRoutes';
 import completionsRoutes from './routes/completionsRoutes';
 import statsRoutes from './routes/statsRoutes';
-import atomRoutes from './routes/atomRoutes'; // REPAIR ORDER: Import atomRoutes
+import atomRoutes from './routes/atomRoutes';
 
 import { calculateConsistencyIndex } from './lib/telemetry';
 import { calculateDrift } from './lib/shadowAudit';
 
-const app = new Hono<AppEnv>();
+// --- INITIALIZATION & CHECKS ---
 
-// DEBUG: Verify Keys
+// 1. Log Connection (Masked)
+console.log(`🔗 DB Connection Target: ${config.SUPABASE_URL ? config.SUPABASE_URL.substring(0, 20) + '...' : 'UNDEFINED'}`);
 console.log(`🔐 Anon Key Status: ${config.SUPABASE_ANON_KEY ? 'Present' : 'MISSING'}`);
 console.log(`🔐 Service Key Status: ${config.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'MISSING'}`);
 
-// --- CORS ---
+// 2. Schema Handshake (Startup Probe)
+const checkSchema = async () => {
+    // Only check in non-test env to allow CI to pass if needed, or enforce always. Enforcing always as requested.
+    if (process.env.NODE_ENV === 'test') return;
+
+    console.log("🔍 Running Schema Handshake...");
+    try {
+        const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+        // Check for 'frequency' column in 'habits'
+        const { error } = await supabase.from('habits').select('frequency, target_count').limit(1);
+
+        if (error) {
+            console.error("\n❌ FATAL: DATABASE SCHEMA MISMATCH");
+            console.error("   The API expects 'frequency' and 'target_count' columns in 'habits'.");
+            console.error("   The Database rejected the query.");
+            console.error(`   Error: ${error.message}`);
+            console.error("   ACTION: Run migrations/004_nuclear_override.sql immediately.\n");
+            process.exit(1); // Fail Deployment
+        }
+        console.log("✅ Schema Handshake Passed: Habits table is Sovereign-ready.");
+    } catch (e: any) {
+        console.error("❌ FATAL: Schema Check Crash", e.message);
+        process.exit(1);
+    }
+};
+
+// Execute Probe
+checkSchema();
+
+const app = new Hono<AppEnv>();
+
+// --- CORS (Sovereign Whitelist) ---
 app.use('*', cors({
-  // REPAIR ORDER: Explicit origin reflection for Credentials compatibility
   origin: (origin) => {
-      // Allow ALL origins by reflecting the request origin (effectively '*')
-      // This is the specific fix for "Failed to fetch" due to strict filtering
+      // Allow Localhost
+      if (!origin || origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) {
+          return origin || '*';
+      }
+      // Allow Vercel Previews and Production
+      if (origin.endsWith('.vercel.app') || origin === 'https://maximost.com') {
+          return origin;
+      }
+      // Fallback for tools/Postman if no origin
       return origin || '*';
   },
   allowHeaders: ['Authorization', 'Content-Type', 'apikey', 'x-client-info', 'expires', 'x-admin-secret'],
@@ -63,45 +101,33 @@ app.get('/api/v1/health', (c) => {
 });
 
 // --- Public Routes (Bypass Auth) ---
-
-// REPAIR ORDER: Mount atomRoutes explicitly as requested
 app.route('/api/atoms', atomRoutes);
-
-// REPAIR ORDER: Move Protocols public to bypass Auth Gate (Header Missing Fix)
 app.route('/api/protocols', protocolRoutes);
 
-// REPAIR ORDER: API Safety Net for Founding Status (Prevent 500 Loop)
+// API Safety Net for Founding Status
 app.get('/api/founding-status', async (c) => {
     try {
         const adminSupabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
-        // Try to count founding members (e.g. Sovereign Tier)
         const { count, error } = await adminSupabase
             .from('profiles')
             .select('*', { count: 'exact', head: true })
             .eq('membership_tier', 'sovereign');
 
         if (error) {
-             console.warn("Founding Status DB Error (Safety Net):", error.message);
-             // Return 0 instead of crashing
+             console.warn("Founding Status DB Error:", error.message);
              return c.json({ is_founding: false, count: 0 });
         }
-
         return c.json({ is_founding: (count || 0) < 500, count: count || 0 });
     } catch (error: any) {
-        console.error("Founding Status Critical Failure (Safety Net):", error.message);
-        // Always return valid JSON to prevent frontend parser crash
+        console.error("Founding Status Critical Failure:", error.message);
         return c.json({ is_founding: false, count: 0 });
     }
 });
 
-// REPAIR ORDER: Define Public Library Route Directly (Aliased)
-// This GUARANTEES /api/habits/library is handled before Auth
+// Public Library Route
 app.get('/api/habits/library', async (c) => {
-    console.log('📚 Public Library Access Request');
     try {
         const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
-
-        // REPAIR ORDER: Query atoms (Corrected from maximost_atoms)
         const { data, error } = await supabaseAdmin
             .from('maximost_library_habits')
             .select('*')
@@ -109,8 +135,12 @@ app.get('/api/habits/library', async (c) => {
 
         if (error) {
             console.error('Error fetching library habits:', error.message);
+            // NO FALLBACK - Truth in Engineering
             return c.json({ error: 'Failed to fetch library habits' }, 500);
         }
+
+        // Truth in Engineering: If empty, return empty.
+        // if (!data || data.length === 0) { ... } -> Returns [] automatically.
 
         console.log(`✅ Library Fetched: ${data?.length} items`);
         return c.json(data);
@@ -120,53 +150,24 @@ app.get('/api/habits/library', async (c) => {
     }
 });
 
-// --- Global Admin Bypass Middleware ---
-app.use('*', async (c, next) => {
-    // Skip if already handled (public routes) - Hono might not skip if route matched but next() not called?
-    // Actually, app.get() above terminates the request if it matches.
-    // So we don't strictly need this check if the above handler returns response.
-    await next();
-});
-
 // --- Auth Middleware ---
 app.use('/api/*', async (c, next) => {
-    // 0. BYPASS for Public Library (Redundant Safety)
-    if (c.req.path === '/api/habits/library') {
-        return next();
-    }
-
-    // 1. Bypass if User is already set (by Skeleton Key)
-    if (c.get('user')) {
-        await next();
-        return;
-    }
-
-    // 2. Exclude webhooks
-    if (c.req.path.startsWith('/api/webhooks')) {
-        return next();
-    }
+    if (c.req.path === '/api/habits/library') return next();
+    if (c.get('user')) { await next(); return; }
+    if (c.req.path.startsWith('/api/webhooks')) return next();
 
     try {
         const authHeader = c.req.header('authorization');
+        if (!authHeader) return c.json({ error: 'Authorization header is missing' }, 401);
 
-        if (!authHeader) {
-            return c.json({ error: 'Authorization header is missing' }, 401);
-        }
-
-        // Robust parsing: Case-insensitive 'Bearer' and trim whitespace
         const token = authHeader.replace(/^Bearer /i, '').trim();
-
-        // Internal Admin Client: Used ONLY for auth verification and enrichment
         const adminSupabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
-
         const { data: { user }, error } = await adminSupabase.auth.getUser(token);
 
         if (error || !user) {
-            console.error("Auth error:", error);
             return c.json({ error: 'Unauthorized' }, 401);
         }
 
-        // Enrich User
         const { data: profile } = await adminSupabase
             .from('profiles')
             .select('role, membership_tier, neural_config, callsign, display_name, full_name, timezone')
@@ -189,13 +190,8 @@ app.use('/api/*', async (c, next) => {
             }
         };
 
-        // User Context Client: Used for downstream requests (Respects RLS)
         const userSupabase = createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY, {
-            global: {
-                headers: {
-                    Authorization: authHeader // Pass the Bearer token
-                }
-            }
+            global: { headers: { Authorization: authHeader } }
         });
 
         c.set('user', enrichedUser);
@@ -211,7 +207,6 @@ app.use('/api/*', async (c, next) => {
 // --- Routes ---
 app.get('/', (c) => c.text('MaxiMost API is running (Phoenix Protocol Active)'));
 
-// app.route('/api/protocols', protocolRoutes); // Moved up to public
 app.route('/api/profiles', profileRoutes);
 app.route('/api/support', supportRoutes);
 app.route('/api/habits', habitRoutes);
@@ -300,32 +295,22 @@ app.get('/api/archive/lore', async (c) => {
     const supabase = c.get('supabase');
     const { data, error } = await supabase
         .from('maximost_library_habits')
-        .select('*') // Select ALL columns (including metadata, icon, theme)
+        .select('*')
         .limit(100);
 
     if (error) return c.json({ error: 'Failed to fetch lore' }, 500);
 
-    // Payload Polyfill: Ensure frontend receives explicit color/icon/description
     const enrichedData = data.map((h: any) => ({
         ...h,
-        // Fail-Safe: Top-Level -> Metadata -> Default
         color: h.color || h.metadata?.visuals?.color || '#3B82F6',
         icon: h.icon || h.metadata?.visuals?.icon || 'help-circle',
-        // Precedence Swap: Metadata > Description Column (to avoid "No description available" placeholders)
         description: h.metadata?.identity || h.metadata?.tactical || h.metadata?.compiler?.why || h.description || 'No description available.',
-
-        // Hoist Tactical/Identity (How/Why) explicitly for Vance's HUD
         tactical: h.metadata?.tactical || h.metadata?.compiler?.step || h.how_instruction || 'Execute the protocol.',
         identity: h.metadata?.identity || h.metadata?.compiler?.why || h.why_instruction || 'Forge your sovereign path.',
-
-        // Hoist Target/Unit/Freq/Type for Vance's HUD
         target_value: h.target_value || h.metadata?.target_value || 1,
         unit: h.unit || h.metadata?.unit || 'reps',
         frequency: h.frequency || h.metadata?.frequency || 'daily',
         type: h.type || h.metadata?.type || 'absolute',
-
-        // Ensure metadata is passed through for deep inspection
-        // Consolidate lore metadata: inject hex_color, identity, tactical
         metadata: {
             ...h.metadata,
             hex_color: h.color || h.metadata?.visuals?.color || '#3B82F6',
@@ -336,7 +321,6 @@ app.get('/api/archive/lore', async (c) => {
 
     return c.json(enrichedData);
 });
-
 
 // Error Handling
 app.notFound((c) => c.json({ error: 'Not Found' }, 404));
