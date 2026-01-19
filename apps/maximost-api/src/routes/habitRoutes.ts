@@ -82,6 +82,9 @@ habitRoutes.post('/', async (c) => {
     return c.json(data, { status: 201 });
 });
 
+// Preflight for Adopt
+habitRoutes.options('/adopt', (c) => c.text('', 204));
+
 // POST /api/habits/adopt - Adopt a habit (Single or Bulk)
 habitRoutes.post('/adopt', async (c) => {
     const user = c.get('user');

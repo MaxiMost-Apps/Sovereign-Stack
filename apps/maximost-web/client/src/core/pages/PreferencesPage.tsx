@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Save, Shield, Activity, Brain, Heart, CheckCircle, Zap, Clock, Monitor, ArrowLeft, ChevronDown, ChevronUp, User, AtSign, Mail, Lock, Globe } from 'lucide-react';
+import { Save, Shield, Activity, Brain, Heart, CheckCircle, Zap, Clock, Monitor, ArrowLeft, ChevronDown, ChevronUp, User, AtSign, Mail, Lock, Globe, Trash2, RefreshCw } from 'lucide-react';
 import { supabase } from '../supabase';
 import { useAuth } from '../AuthSystem';
 import { useNavigate } from 'react-router-dom';
@@ -24,23 +24,14 @@ export default function PreferencesPage() {
   const [startOfWeek, setStartOfWeek] = useState('MONDAY');
 
   // Profile State
-  const [fullName, setFullName] = useState('');
-  const [screenName, setScreenName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [dayStart, setDayStart] = useState('06:00');
+  const [dayEnd, setDayEnd] = useState('22:00');
 
   // Dirty Checking
   const [originalSettings, setOriginalSettings] = useState<any>({});
-  const hasChanges =
-      activeCoach !== originalSettings.coach ||
-      dayEndOffset !== originalSettings.offset ||
-      reducedMotion !== originalSettings.motion ||
-      startOfWeek !== originalSettings.startOfWeek ||
-      fullName !== originalSettings.fullName ||
-      screenName !== originalSettings.screenName ||
-      timezone !== originalSettings.timezone ||
-      password !== '';
+  // Simplified dirty check
+  const hasChanges = true; // Always allow save for now to ensure persistence
 
   const [loading, setLoading] = useState(false);
 
@@ -53,25 +44,14 @@ export default function PreferencesPage() {
       if (profile) {
         setTierName(profile.tier_name || 'INITIATE');
         setActiveCoach(profile.coach_preference || 'stoic');
-        setActiveLens(profile.neural_config?.lens || 'fortitude'); // Load Lens
+        setActiveLens(profile.neural_config?.lens || 'fortitude');
         setDayEndOffset(profile.day_end_offset || 0);
         setReducedMotion(profile.reduced_motion || false);
-        setStartOfWeek(profile.start_of_week || 'MONDAY');
-        setFullName(profile.full_name || '');
-        setScreenName(profile.username || '');
         setTimezone(profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
 
-        setEmail(user.email || '');
-
-        setOriginalSettings({
-            coach: profile.coach_preference || 'stoic',
-            offset: profile.day_end_offset || 0,
-            motion: profile.reduced_motion || false,
-            startOfWeek: profile.start_of_week || 'MONDAY',
-            fullName: profile.full_name || '',
-            screenName: profile.username || '',
-            timezone: profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
-        });
+        // Load Day Settings (Mock if missing from DB)
+        setDayStart(profile.neural_config?.day_start || '06:00');
+        setDayEnd(profile.neural_config?.day_end || '22:00');
         localStorage.setItem('activeCoach', profile.coach_preference || 'stoic');
       }
     };
@@ -89,36 +69,19 @@ export default function PreferencesPage() {
       const updates = {
             id: user.id,
             coach_preference: activeCoach,
-            neural_config: { lens: activeLens }, // Persist Lens
+            neural_config: {
+                lens: activeLens,
+                day_start: dayStart,
+                day_end: dayEnd
+            },
             day_end_offset: dayEndOffset,
             reduced_motion: reducedMotion,
-            start_of_week: startOfWeek,
-            full_name: fullName,
-            username: screenName,
             timezone: timezone,
             updated_at: new Date().toISOString()
       };
 
       const { error } = await supabase.from('profiles').upsert(updates);
       if (error) throw error;
-
-      // 2. Update Auth Data (Email/Password) - Account Genesis
-      if (password || (email !== user.email)) {
-          const authUpdates: any = {};
-          if (email !== user.email) authUpdates.email = email;
-          if (password) authUpdates.password = password;
-
-          const { error: authError } = await supabase.auth.updateUser(authUpdates);
-          if (authError) throw authError;
-
-          if (password) {
-              toast.success("Security Credentials Updated");
-              setPassword(''); // Clear field
-          }
-          if (email !== user.email) {
-              toast.success("Confirmation Email Sent");
-          }
-      }
 
       // Local Sync
       localStorage.setItem('activeCoach', activeCoach);
@@ -186,23 +149,35 @@ export default function PreferencesPage() {
       {/* GLOBAL PARAMETERS */}
 
       {/* LENSES & TONES */}
-      <div className="space-y-4">
-          <h2 className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Neural Lens (Theme)</h2>
-          <div className="grid grid-cols-2 gap-4">
-              {lenses.map(lens => (
-                  <button
-                      key={lens.id}
-                      onClick={() => setActiveLens(lens.id)}
-                      className={`p-4 rounded border text-left transition-all ${activeLens === lens.id ? 'bg-zinc-900 border-white/20' : 'bg-black border-zinc-800 opacity-50 hover:opacity-100'}`}
-                  >
-                      <div className={`w-3 h-3 rounded-full mb-2 ${lens.color}`} />
-                      <div className="text-xs font-bold text-white uppercase">{lens.name}</div>
-                      <div className="text-[10px] text-zinc-500">{lens.desc}</div>
-                  </button>
-              ))}
+      <div className="space-y-6">
+          <div>
+              <div className="flex items-center gap-2 mb-2">
+                  <h2 className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Neural Lens (Theme)</h2>
+                  <span className="text-[9px] text-zinc-500 italic">Updates the perspective of 'i' information on habits.</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                  {lenses.map(lens => (
+                      <button
+                          key={lens.id}
+                          onClick={() => setActiveLens(lens.id)}
+                          className={`p-4 rounded border text-left transition-all relative overflow-hidden group ${activeLens === lens.id ? 'bg-zinc-900 border-white/20' : 'bg-black border-zinc-800 opacity-50 hover:opacity-100'}`}
+                      >
+                          <div className={`absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-40 transition-opacity`}>
+                              {/* Icon placeholder or dynamic */}
+                              {lens.id === 'fortitude' && <Shield className={`w-8 h-8 ${lens.color.replace('bg-', 'text-')}`} />}
+                              {lens.id === 'reason' && <Brain className={`w-8 h-8 ${lens.color.replace('bg-', 'text-')}`} />}
+                              {lens.id === 'visionary' && <Globe className={`w-8 h-8 ${lens.color.replace('bg-', 'text-')}`} />}
+                              {lens.id === 'analytical' && <Activity className={`w-8 h-8 ${lens.color.replace('bg-', 'text-')}`} />}
+                          </div>
+                          <div className={`w-3 h-3 rounded-full mb-2 ${lens.color}`} />
+                          <div className="text-xs font-bold text-white uppercase">{lens.name}</div>
+                          <div className="text-[10px] text-zinc-500">{lens.desc}</div>
+                      </button>
+                  ))}
+              </div>
           </div>
 
-          <h2 className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest mt-6">Voice Protocol (Tone)</h2>
+          <h2 className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Voice Protocol (Tone)</h2>
           <div className="grid grid-cols-3 gap-4">
               {coaches.map(coach => (
                   <button
@@ -225,50 +200,84 @@ export default function PreferencesPage() {
             onChange={(e) => { setTimezone(e.target.value); triggerImpact(); }}
             className="w-full bg-black border border-zinc-800 p-3 text-white font-mono text-sm focus:border-blue-500 outline-none transition-colors appearance-none cursor-pointer"
           >
-            {timezones.map(tz => <option key={tz} value={tz}>{tz}</option>)}
-            <option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>System Default</option>
+            {timezones.map(tz => <option key={tz} value={tz}>{tz.replace('_', ' ')}</option>)}
+            <option value={Intl.DateTimeFormat().resolvedOptions().timeZone}>System Default ({Intl.DateTimeFormat().resolvedOptions().timeZone})</option>
           </select>
         </div>
+
         <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Day End Offset</label>
-          <input
-            type="number"
-            value={dayEndOffset}
-            onChange={(e) => { setDayEndOffset(Number(e.target.value)); triggerImpact(); }}
-            className="w-full bg-black border border-zinc-800 p-3 text-white font-mono text-sm focus:border-blue-500 outline-none"
-          />
+             <label className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Performance Mode</label>
+             <div className="flex items-center gap-2 p-3 bg-black border border-zinc-800 rounded">
+                 <button
+                    onClick={() => setReducedMotion(!reducedMotion)}
+                    className={`w-4 h-4 rounded border ${reducedMotion ? 'bg-blue-500 border-blue-500' : 'border-zinc-600'}`}
+                 />
+                 <span className="text-sm text-zinc-400">Reduce Motion</span>
+             </div>
         </div>
       </div>
 
-      {/* SECURE IDENTITY */}
-      <div className="space-y-4 pt-4 border-t border-zinc-900">
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Operator Email</label>
-          <input
-            type="email"
-            value={email}
-            placeholder="ENTER EMAIL TO UNLOCK"
-            className="w-full bg-black border border-zinc-800 p-3 text-white font-mono text-sm focus:border-emerald-500 outline-none"
-            onChange={(e) => {
-              setEmail(e.target.value);
-              triggerImpact();
-            }}
-          />
-        </div>
-
-        {/* ANIMATED PASSWORD REVEAL */}
-        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${email.length > 5 ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
-           <div className="space-y-2">
-            <label className="text-[10px] font-bold uppercase text-red-900 tracking-widest">Access Key</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-black border border-red-900/30 p-3 text-white font-mono text-sm focus:border-red-500 outline-none"
-            />
+      <div className="grid grid-cols-2 gap-6 pt-6 border-t border-zinc-900">
+          <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Day Start</label>
+              <select
+                value={dayStart}
+                onChange={(e) => setDayStart(e.target.value)}
+                className="w-full bg-black border border-zinc-800 p-3 text-white font-mono text-sm focus:border-blue-500 outline-none"
+              >
+                  {['04:00', '05:00', '06:00', '07:00', '08:00'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
           </div>
-        </div>
+          <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Day End</label>
+              <select
+                value={dayEnd}
+                onChange={(e) => setDayEnd(e.target.value)}
+                className="w-full bg-black border border-zinc-800 p-3 text-white font-mono text-sm focus:border-blue-500 outline-none"
+              >
+                  {['20:00', '21:00', '22:00', '23:00', '00:00'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+          </div>
+      </div>
+
+      {/* UTILITY ZONE */}
+      <div className="pt-12 border-t border-zinc-800 space-y-4">
+          <div className="flex justify-between items-center bg-zinc-900/30 p-4 rounded-lg border border-zinc-800">
+              <div>
+                  <h3 className="text-sm font-bold text-white">System Cache</h3>
+                  <p className="text-xs text-zinc-500">Force reload application data.</p>
+              </div>
+              <button
+                onClick={() => { localStorage.clear(); window.location.reload(); }}
+                className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold uppercase rounded transition-all"
+              >
+                  <RefreshCw className="w-3 h-3" /> Clear Cache
+              </button>
+          </div>
+
+          <div className="bg-red-950/10 border border-red-900/30 p-6 rounded-lg">
+              <h3 className="text-red-500 font-bold uppercase tracking-widest flex items-center gap-2 mb-2">
+                  <Trash2 className="w-4 h-4" /> Danger Zone
+              </h3>
+              <p className="text-zinc-500 text-sm mb-4">
+                  Irreversible action. Wipe all active habits and reset dashboard.
+              </p>
+              <button
+                onClick={async () => {
+                    if (window.confirm("CRITICAL WARNING: This will delete ALL your active habits. Are you sure?")) {
+                        if (window.confirm("Double Check: This cannot be undone.")) {
+                            setLoading(true);
+                            await supabase.from('habits').delete().eq('user_id', user.id);
+                            toast.success("Dashboard Wiped");
+                            window.location.reload();
+                        }
+                    }
+                }}
+                className="w-full py-3 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-900/50 rounded font-bold uppercase text-xs tracking-widest transition-all"
+              >
+                  Wipe Dashboard
+              </button>
+          </div>
       </div>
 
       {/* SAVE BUTTON */}

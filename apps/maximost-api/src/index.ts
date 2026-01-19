@@ -90,6 +90,9 @@ app.use('*', cors({
   maxAge: 600,
 }));
 
+// OPTIONS Preflight (Critical for Vercel/CORS)
+app.options('*', (c) => c.text('', 204));
+
 // --- Health Check (Diagnostic) ---
 app.get('/api/v1/health', (c) => {
     return c.json({
