@@ -1,51 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Activity, Zap, FileText, CheckCircle2, Lock } from 'lucide-react';
-
 import { supabase } from '../supabase';
 import { useAuth } from '../AuthSystem';
 import { subDays, format, parseISO, isSameDay } from 'date-fns';
 import { getThemeStyles } from '../config/themeConfig';
 import { getApiUrl } from '../../config';
-
-// Feed Card Component
-const FeedCard = ({ item }: any) => {
-    const { type, timestamp, content } = item;
-    const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    // Type Config
-    const config = {
-        habit_completion: { icon: CheckCircle2, border: content.color || '#10B981', bg: 'bg-zinc-900/50' },
-        telemetry: { icon: Activity, border: '#3B82F6', bg: 'bg-blue-950/20' },
-        field_note: { icon: FileText, border: '#9CA3AF', bg: 'bg-zinc-950', font: 'font-mono' }
-    }[type as 'habit_completion' | 'telemetry' | 'field_note'] || { icon: Zap, border: '#fff', bg: 'bg-zinc-900' };
-
-    const Icon = config.icon;
-
-    return (
-        <div className={`relative pl-4 border-l-2 py-4 ${config.bg} mb-2 rounded-r-lg transition-all hover:bg-white/5 group cursor-default`} style={{ borderColor: config.border }}>
-            <div className="flex justify-between items-start mb-1">
-                <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4" style={{ color: config.border }} />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">{content.title}</span>
-                </div>
-                <span className="text-[10px] text-zinc-500 font-mono">{time}</span>
-            </div>
-
-            {content.mission && (
-                <div className="text-[10px] text-zinc-400 mb-2 uppercase tracking-wide opacity-70">
-                    Mission: {content.mission}
-                </div>
-            )}
-
-            <div className={`text-sm text-zinc-300 leading-relaxed ${content.is_encrypted ? 'blur-sm select-none cursor-pointer hover:blur-none transition-all duration-500' : ''} ${config.font || ''}`}>
-                {content.narrative || content.preview || (typeof content.data === 'string' ? content.data : JSON.stringify(content.data))}
-                {content.is_encrypted && <Lock className="w-3 h-3 absolute bottom-4 right-4 text-zinc-600" />}
-            </div>
-        </div>
-    );
-};
+import { LedgerFeed } from '../components/LedgerFeed';
 
 export default function ProgressPage() {
   const { user } = useAuth();
@@ -165,15 +126,6 @@ export default function ProgressPage() {
 
   if (loading) return <div className="p-12 text-center text-slate-500">Loading Telemetry...</div>;
 
-  // Group Feed by Date
-  const groupedFeed = feed.reduce((acc: any, item: any) => {
-      // Assuming item.timestamp is ISO or Date string
-      const dateStr = item.timestamp ? new Date(item.timestamp).toDateString() : 'Unknown Date';
-      if (!acc[dateStr]) acc[dateStr] = [];
-      acc[dateStr].push(item);
-      return acc;
-  }, {});
-
   return (
 
     <div className="p-6 max-w-6xl mx-auto space-y-12 pb-24">
@@ -183,30 +135,7 @@ export default function ProgressPage() {
         <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-2">The Ledger</h1>
         <p className="text-slate-400 mb-6">Chronological stream of Sovereign Actions.</p>
 
-        <div className="bg-[#0b0c10] border border-white/5 rounded-2xl overflow-hidden min-h-[400px] relative">
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
-
-            <div className="p-6 space-y-8 max-h-[600px] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
-                {Object.entries(groupedFeed).map(([date, items]: any) => (
-                    <div key={date}>
-                        {/* STICKY DATE HEADER */}
-                        <div className="sticky top-0 z-10 bg-[#0b0c10]/95 backdrop-blur py-2 mb-4 border-b border-white/5">
-                            <h3 className="text-xs font-black text-slate-500 uppercase tracking-widest">{date}</h3>
-                        </div>
-                        <div className="space-y-1 pl-2 border-l border-white/5 ml-2">
-                            {items.map((item: any) => (
-                                <FeedCard key={item.id} item={item} />
-                            ))}
-                        </div>
-                    </div>
-                ))}
-                {feed.length === 0 && !loading && (
-                    <div className="text-center py-20 text-zinc-600 font-mono uppercase tracking-widest">
-                        No telemetry recorded. Initialize protocols.
-                    </div>
-                )}
-            </div>
-        </div>
+        <LedgerFeed feed={feed} loading={loading} />
       </div>
 
       {/* SECTION 1: CONSISTENCY INDEX (Bar Chart) */}

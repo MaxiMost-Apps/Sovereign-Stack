@@ -41,6 +41,8 @@ logRoutes.post('/', async (c) => {
 logRoutes.get('/feed', async (c) => {
     const user = c.get('user');
     const supabase = c.get('supabase');
+    const limitParam = c.req.query('limit');
+    const limit = limitParam ? parseInt(limitParam) : 50;
 
     // 1. Fetch Habit Logs (Completions)
     const { data: habits } = await supabase
@@ -51,7 +53,7 @@ logRoutes.get('/feed', async (c) => {
         `)
         .eq('user_id', user.id)
         .order('completed_at', { ascending: false })
-        .limit(50);
+        .limit(limit);
 
     // 2. Fetch Telemetry Logs (Spikes)
     // Graceful fallback if table missing
@@ -62,7 +64,7 @@ logRoutes.get('/feed', async (c) => {
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
-            .limit(20);
+            .limit(Math.min(limit, 20)); // Cap telemetry for density
 
         if (!error && data) telemetry = data;
     } catch (e) {
@@ -75,7 +77,7 @@ logRoutes.get('/feed', async (c) => {
         .select('*')
         .eq('user_id', user.id)
         .order('date', { ascending: false })
-        .limit(20);
+        .limit(Math.min(limit, 20));
 
     // 4. Merge & Sort
     const feed: any[] = [];

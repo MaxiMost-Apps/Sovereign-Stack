@@ -22,6 +22,7 @@ import { calculateStreak } from './utils/streakLogic';
 import { useToast } from './components/Toast';
 import { HabitCard } from './components/HabitCard'; // Import new HabitCard
 import { HabitArchive } from './components/HabitArchive'; // Import new HabitArchive
+import { LedgerFeed } from './components/LedgerFeed';
 import { CouncilGhost } from '@/features/ghost/CouncilGhost';
 import { AscensionOverlay } from '@/components/AscensionOverlay';
 import { getApiUrl } from '../config'; // REPAIR ORDER: Centralized Config
@@ -45,6 +46,12 @@ export default function DashboardCore() {
   const [isSystemLocked, setIsSystemLocked] = useState(() => localStorage.getItem('isSystemLocked') === 'true');
   const [isSortMode, setIsSortMode] = useState(false); // Phase 2: Sort Mode Toggle
   const [userProfile, setUserProfile] = useState<any>(null);
+
+  // BUNKER BANNER STATE
+  const [pulseFeed, setPulseFeed] = useState<any[]>([]);
+  const [fullFeed, setFullFeed] = useState<any[]>([]);
+  const [uptime, setUptime] = useState<any>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
       localStorage.setItem('isSystemLocked', String(isSystemLocked));
@@ -103,7 +110,39 @@ export default function DashboardCore() {
     setDecommissionedRigs(habitsWithStreak.filter((x: any) => x && x.id && x.is_active === false));
   };
 
-  useEffect(() => { fetchData(); }, [user]);
+  useEffect(() => {
+      fetchData();
+      if (user) {
+          // Fetch Pulse (Brief)
+          const session = supabase.auth.getSession().then(({ data }) => {
+              const token = data.session?.access_token;
+              if (token) {
+                  fetch(getApiUrl('/api/habit_logs/feed?limit=5'), { headers: { 'Authorization': `Bearer ${token}` } })
+                      .then(res => res.json())
+                      .then(data => setPulseFeed(data.feed || []));
+
+                  fetch(getApiUrl('/api/telemetry/uptime'), { headers: { 'Authorization': `Bearer ${token}` } })
+                      .then(res => res.json())
+                      .then(data => setUptime(data));
+              }
+          });
+      }
+  }, [user]);
+
+  const handleToggleHistory = () => {
+      if (!showHistory && fullFeed.length === 0) {
+          // Lazy Load Full History
+          supabase.auth.getSession().then(({ data }) => {
+              const token = data.session?.access_token;
+              if (token) {
+                  fetch(getApiUrl('/api/habit_logs/feed?limit=50'), { headers: { 'Authorization': `Bearer ${token}` } })
+                      .then(res => res.json())
+                      .then(data => setFullFeed(data.feed || []));
+              }
+          });
+      }
+      setShowHistory(!showHistory);
+  };
 
   const handleLoadDemo = async () => {
      if (loading) return; // REPAIR ORDER: Loading Lock (Debounce)
@@ -390,6 +429,36 @@ export default function DashboardCore() {
         </div>
 
 
+        {/* BUNKER BANNER (SITREP) */}
+        {viewMode === 'daily' && !isSystemLocked && (
+            <div className="bg-[#0b0c10] border border-white/5 rounded-xl p-4 mb-4 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-900/10 to-emerald-900/10 opacity-50"></div>
+                <div className="relative z-10 flex flex-col md:flex-row gap-6">
+                    {/* Alexis Brief */}
+                    <div className="flex-1 space-y-2">
+                        <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                            <Zap className="w-3 h-3" /> Alexis Intel Brief
+                        </h3>
+                        <p className="text-sm text-slate-300 leading-relaxed">
+                            {uptime ? (
+                                <>
+                                    System Status: <span className="text-white font-bold">{uptime.status?.toUpperCase() || 'ONLINE'}</span>.
+                                    7-Day Consistency: <span className={uptime.uptime_7d >= 80 ? 'text-emerald-400' : 'text-yellow-400'}>{uptime.uptime_7d}%</span>.
+                                    {uptime.drift_detected ? " Drift detected in sector 4. Realign." : " Perimeter secure. Maintain velocity."}
+                                </>
+                            ) : "Calibrating biometric telemetry..."}
+                        </p>
+                    </div>
+
+                    {/* Recent Pulse */}
+                    <div className="flex-1 border-l border-white/5 pl-6 hidden md:block">
+                        <h3 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-2">Recent Pulse</h3>
+                        <LedgerFeed feed={pulseFeed} compact={true} />
+                    </div>
+                </div>
+            </div>
+        )}
+
         <div className="flex flex-col md:flex-row justify-between items-center bg-[#0b0c10] p-1 rounded-lg border border-white/10 gap-4 md:gap-0">
            <div className="flex gap-1 w-full md:w-auto">
               {['daily', 'weekly', 'monthly'].map(m => (
@@ -590,12 +659,11 @@ export default function DashboardCore() {
                 </>
             )}
 
-            {/* REPAIR ORDER: Dash Controls - Create Habit Button */}
+            {/* REPAIR ORDER: Dash Controls - Mission History Toggle */}
             {viewMode === 'daily' && (
                <div className="mt-12 pt-8 border-t border-gray-800">
                    <div className="flex justify-between items-center mb-6">
-                       {/* REPAIR ORDER: Rename to ATOM LEDGER */}
-                       <h2 className="text-xl font-bold text-white uppercase tracking-widest">ATOM LEDGER</h2>
+                       <h2 className="text-xl font-bold text-white uppercase tracking-widest">MISSION CONTROL</h2>
                        <div className="flex items-center gap-4">
                            <button
                                onClick={() => setIsModalOpen(true)}
@@ -603,15 +671,21 @@ export default function DashboardCore() {
                            >
                                <Plus className="w-3 h-3" /> Create Habit
                            </button>
+                           <button
+                               onClick={handleToggleHistory}
+                               className={`flex items-center gap-2 px-4 py-2 rounded border text-[10px] font-bold uppercase tracking-widest transition-all ${showHistory ? 'bg-zinc-800 text-white border-zinc-700' : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-white'}`}
+                           >
+                               {showHistory ? 'Hide History' : 'View Mission History'}
+                           </button>
                        </div>
                    </div>
 
-                   {/* REPLACED: Old direct fetch rendering with new HabitArchive component */}
-                   <HabitArchive
-                        onImport={() => fetchData()} // REPAIR ORDER: Refresh list after adoption
-                        userHabits={safeHabits}
-                        onEdit={(habit) => handleLibraryClick(habit)} // Dual bind for clarity
-                   />
+                   {/* SLIDE-OUT LEDGER (Replacing Atom Ledger on Dash) */}
+                   {showHistory && (
+                        <div className="animate-in slide-in-from-top-4 duration-500">
+                            <LedgerFeed feed={fullFeed} />
+                        </div>
+                   )}
                </div>
             )}
           </>
