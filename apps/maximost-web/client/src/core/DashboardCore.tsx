@@ -673,7 +673,11 @@ export default function DashboardCore() {
                        <h2 className="text-xl font-bold text-white uppercase tracking-widest">MISSION CONTROL</h2>
                        <div className="flex items-center gap-4">
                            <button
-                               onClick={() => setIsModalOpen(true)}
+                               onClick={() => {
+                                   setEditingHabit(null);
+                                   setInitialForm({});
+                                   setIsModalOpen(true);
+                               }}
                                className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded border border-blue-500/30 text-[10px] font-bold uppercase tracking-widest transition-all"
                            >
                                <Plus className="w-3 h-3" /> Create Habit
@@ -743,13 +747,19 @@ export default function DashboardCore() {
         {isModalOpen && (
            <ConsoleOverlay
              isOpen={isModalOpen}
-             onClose={() => setIsModalOpen(false)}
+             onClose={() => {
+                 setIsModalOpen(false);
+                 setEditingHabit(null);
+             }}
              title={editingHabit ? "EDIT PROTOCOL" : "INITIALIZE PROTOCOL"}
            >
                <HabitForm
                    initialData={initialForm}
                    onSubmit={handleSaveHabit}
-                   onCancel={() => setIsModalOpen(false)}
+                   onCancel={() => {
+                       setIsModalOpen(false);
+                       setEditingHabit(null);
+                   }}
                    mode={editingHabit ? 'edit' : 'create'}
                />
            </ConsoleOverlay>
