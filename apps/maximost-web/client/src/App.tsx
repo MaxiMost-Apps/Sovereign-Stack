@@ -5,7 +5,7 @@ import { AIProvider } from './core/context/AIContext';
 import { LensProvider } from './core/context/LensContext';
 import DashboardCore from './core/DashboardCore';
 import LoginCore from './core/LoginCore'; // Mapped from LoginPage
-import AdminConsole from './core/admin/AdminConsoleV2';
+import AdminDiagnostics from './core/pages/AdminDiagnostics';
 import LibraryPage from './core/pages/LibraryPage';
 import AIWarRoomPage from './core/pages/AIWarRoomPage';
 import TheMirror from './core/pages/TheMirror';
@@ -69,8 +69,8 @@ function App() {
                 <Route path="/coach" element={<AIWarRoomPage />} />
                 <Route path="/mirror" element={<TheMirror />} />
                 <Route path="/architect" element={<TheArchitect />} />
-                <Route path="/admin" element={<AdminConsole />} />
-                <Route path="/admin/diagnostics" element={<AdminConsole />} />
+                <Route path="/admin" element={<AdminDiagnostics />} />
+                <Route path="/admin/diagnostics" element={<AdminDiagnostics />} />
 
                 {/* Tools Sub-routes */}
                 <Route path="/tools/lexicon" element={<LexiconPage />} />
