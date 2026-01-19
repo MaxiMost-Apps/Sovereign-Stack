@@ -78,7 +78,7 @@ app.use('*', cors({
           return origin || '*';
       }
       // Allow Vercel Previews and Production
-      if (origin.endsWith('.vercel.app') || origin === 'https://maximost.com') {
+      if (origin === 'https://maximost-ptv3yn68r-sovereign-stack.vercel.app' || origin.endsWith('.vercel.app') || origin === 'https://maximost.com') {
           return origin;
       }
       // Fallback for tools/Postman if no origin
