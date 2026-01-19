@@ -121,6 +121,8 @@ habitRoutes.post('/adopt', async (c) => {
     const habitsToInsert = libHabits.map((libHabit: any) => ({
         user_id: user.id,
         name: libHabit.title || libHabit.name,
+        title: libHabit.title || libHabit.name, // Schema Repair: Sync Title
+        start_date: new Date().toISOString().split('T')[0], // Schema Repair: Init Start Date
         description: libHabit.description || libHabit.metadata?.compiler?.why,
         slug: libHabit.slug,
         theme: libHabit.metadata?.visuals?.theme || libHabit.theme,
