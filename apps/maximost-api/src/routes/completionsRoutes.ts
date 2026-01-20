@@ -4,7 +4,7 @@ import { AppEnv } from '../hono';
 const completionsRoutes = new Hono<AppEnv>();
 
 // Preflight for Toggle
-completionsRoutes.options('/toggle', (c) => c.text('', 204));
+completionsRoutes.options('/toggle', (c) => c.text('OK', 200));
 
 // POST /api/completions/toggle - Immediate Upsert
 completionsRoutes.post('/toggle', async (c) => {

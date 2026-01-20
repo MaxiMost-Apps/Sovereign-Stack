@@ -83,7 +83,7 @@ habitRoutes.post('/', async (c) => {
 });
 
 // Preflight for Adopt
-habitRoutes.options('/adopt', (c) => c.text('', 204));
+habitRoutes.options('/adopt', (c) => c.text('OK', 200));
 
 // POST /api/habits/adopt - Adopt a habit (Single or Bulk)
 habitRoutes.post('/adopt', async (c) => {

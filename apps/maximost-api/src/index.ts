@@ -91,7 +91,7 @@ app.use('*', cors({
 }));
 
 // OPTIONS Preflight (Critical for Vercel/CORS)
-app.options('*', (c) => c.text('', 204));
+app.options('*', (c) => c.text('OK', 200));
 
 // --- Health Check (Diagnostic) ---
 app.get('/api/v1/health', (c) => {
