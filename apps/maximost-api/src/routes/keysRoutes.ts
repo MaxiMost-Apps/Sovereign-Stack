@@ -11,14 +11,24 @@ keysRoutes.get('/', async (c) => {
     // Looking at other routes, it seems auth middleware isn't strictly visible here, but let's assume we need to verify user.
     // The prompt implies this is for Vanguard/Architect users viewing their keys.
 
-    // We'll trust the caller to provide the user ID in a header 'X-User-Id' for this internal/MVP implementation
-    // or rely on the standard auth flow.
-    const userId = c.req.header('X-User-Id');
-    if (!userId) {
-        return c.json({ error: 'Unauthorized' }, 401);
-    }
+    // Security Hardening: Prefer Authorization Header
+    let userId = c.req.header('X-User-Id');
+    const authHeader = c.req.header('Authorization');
 
     const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+
+    if (authHeader) {
+        const token = authHeader.replace('Bearer ', '');
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+        if (!authError && user) {
+            userId = user.id;
+        }
+    }
+
+    if (!userId) {
+        return c.json({ error: 'Unauthorized: Missing valid Auth token or X-User-Id' }, 401);
+    }
 
     const { data, error } = await supabase
         .from('sovereign_keys')
