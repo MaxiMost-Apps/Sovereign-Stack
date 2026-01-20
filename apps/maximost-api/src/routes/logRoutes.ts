@@ -1,11 +1,73 @@
 import { Hono } from 'hono';
-import { createClient } from '@supabase/supabase-js';
+import { AppEnv } from '../hono';
 import { syncService } from '../services/syncService';
-import type { AppEnv } from '../hono';
 
 const logRoutes = new Hono<AppEnv>();
 
-// POST /api/habit_logs - Log or Update a habit completion
+// OPTIONS Preflight for Toggle
+logRoutes.options('/toggle', (c) => c.text('OK', 200));
+
+// POST /toggle - Habit Completion Toggle (Unified Logic)
+logRoutes.post('/toggle', async (c) => {
+    const user = c.get('user');
+    const supabase = c.get('supabase');
+    const { habit_id, target_date, status, value, metadata } = await c.req.json();
+
+    if (!habit_id || !target_date) {
+        return c.json({ error: 'Missing habit_id or target_date' }, 400);
+    }
+
+    // Determine value: 'value' overrides 'status' (boolean)
+    // If value is explicitly provided (0 or 1+), use it. Otherwise use status (true=1, false=0).
+    const finalValue = value !== undefined ? value : (status ? 1 : 0);
+
+    let data, error;
+
+    if (finalValue === 0) {
+        // DELETE logic for un-completing
+        // We match user_id, habit_id, and completed_at
+        const result = await supabase
+            .from('habit_logs')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('habit_id', habit_id)
+            .eq('completed_at', target_date);
+
+        error = result.error;
+        data = null; // Data is null on delete
+    } else {
+        // UPSERT logic for completing
+        const result = await supabase
+            .from('habit_logs')
+            .upsert({
+                user_id: user.id,
+                habit_id: habit_id,
+                completed_at: target_date,
+                value: finalValue,
+                metadata: metadata
+            }, { onConflict: 'user_id, habit_id, completed_at' })
+            .select()
+            .single();
+
+        data = result.data;
+        error = result.error;
+    }
+
+    if (error) {
+        console.error('Toggle Error:', error);
+        return c.json({ error: 'Persistence Failure', details: error.message }, 500);
+    }
+
+    // Vault Sync (Fire and forget)
+    if (data) {
+        syncService.syncLedgerToVault(user.id, data).catch(err => console.error('Vault Sync Error:', err));
+    }
+
+    // Return success
+    return c.json(data || { success: true, operation: 'delete' });
+});
+
+// POST / - Log Note (Legacy /api/habit_logs base endpoint)
 logRoutes.post('/', async (c) => {
     const user = c.get('user');
     const supabase = c.get('supabase');
@@ -17,13 +79,12 @@ logRoutes.post('/', async (c) => {
     }
 
     // Upsert Protocol
-    // We rely on the unique constraint (user_id, habit_id, completed_at) to handle updates
     const { data, error } = await supabase
         .from('habit_logs')
         .upsert({
             user_id: user.id,
             habit_id: habit_id,
-            completed_at: completed_at, // Ensure YYYY-MM-DD format from frontend
+            completed_at: completed_at,
             value: value,
             note: note
         }, { onConflict: 'user_id, habit_id, completed_at' })
@@ -35,116 +96,9 @@ logRoutes.post('/', async (c) => {
         return c.json({ error: 'Failed to log habit' }, 500);
     }
 
-    // Vault Sync (Air-Gap Roadmap)
-    // Fire and forget - handled by SyncService
     syncService.syncLedgerToVault(user.id, data).catch(err => console.error('Vault Sync Error:', err));
 
     return c.json({ message: 'Habit logged successfully', log: data });
-});
-
-// GET /api/habit_logs/feed - Unified Ledger Feed (Welltory-Style)
-logRoutes.get('/feed', async (c) => {
-    const user = c.get('user');
-    const supabase = c.get('supabase');
-    const limitParam = c.req.query('limit');
-    const limit = limitParam ? parseInt(limitParam) : 50;
-    const before = c.req.query('before'); // Timestamp offset for Load More
-
-    // 1. Fetch Habit Logs (Completions)
-    let habitQuery = supabase
-        .from('habit_logs')
-        .select(`
-            id, completed_at, value, note,
-            habits:habit_id (title, slug, metadata, base_color, icon)
-        `)
-        .eq('user_id', user.id)
-        .order('completed_at', { ascending: false })
-        .limit(limit);
-
-    if (before) {
-        habitQuery = habitQuery.lt('completed_at', before);
-    }
-
-    const { data: habits } = await habitQuery;
-
-    // 2. Fetch Telemetry Logs (Spikes)
-    // Graceful fallback if table missing
-    let telemetry: any[] = [];
-    try {
-        const { data, error } = await supabase
-            .from('telemetry_logs')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(Math.min(limit, 20)); // Cap telemetry for density
-
-        if (!error && data) telemetry = data;
-    } catch (e) {
-        // Ignore table missing error
-    }
-
-    // 3. Fetch Field Notes (Journal)
-    const { data: journals } = await supabase
-        .from('journal_entries')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(Math.min(limit, 20));
-
-    // 4. Merge & Sort
-    const feed: any[] = [];
-
-    // Map Habits
-    habits?.forEach((h: any) => {
-        feed.push({
-            id: h.id,
-            timestamp: h.completed_at,
-            type: 'habit_completion',
-            content: {
-                title: h.habits?.title || 'Unknown Habit',
-                mission: h.habits?.metadata?.logic || h.habits?.description,
-                // Pass full perspectives for Lens-aware rendering on frontend
-                perspectives: h.habits?.metadata?.perspectives,
-                narrative: h.note, // User note takes precedence, else frontend uses perspective
-                color: h.habits?.base_color || h.habits?.metadata?.base_color || '#10B981',
-                icon: h.habits?.icon
-            }
-        });
-    });
-
-    // Map Telemetry
-    telemetry.forEach((t: any) => {
-        feed.push({
-            id: t.id,
-            timestamp: t.created_at,
-            type: 'telemetry',
-            content: {
-                title: t.source ? `Telemetry: ${t.source}` : 'Telemetry Spike',
-                data: t.payload,
-                color: '#3B82F6' // Blue
-            }
-        });
-    });
-
-    // Map Journals
-    journals?.forEach((j: any) => {
-        feed.push({
-            id: j.id,
-            timestamp: j.date,
-            type: 'field_note',
-            content: {
-                title: 'Field Note',
-                preview: j.content ? j.content.substring(0, 60) + '...' : 'Encrypted Content',
-                color: '#9CA3AF', // Slate
-                is_encrypted: !j.content
-            }
-        });
-    });
-
-    // Sort Descending
-    feed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-    return c.json({ feed });
 });
 
 export default logRoutes;

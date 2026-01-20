@@ -74,17 +74,11 @@ const app = new Hono<AppEnv>();
 app.use('*', cors({
   origin: (origin) => {
       // Dynamic Allow-List (Vercel & Localhost)
+      // Allow any origin that looks like it's ours, plus return the origin itself to be permissive
       if (!origin || origin.includes('localhost') || origin.endsWith('.vercel.app') || origin === 'https://maximost.com') {
           return origin;
       }
-      // Block unknown origins (Strict Security)
-      // Hono cors: return undefined or null to block?
-      // Or return origin if we want to be permissive for debugging?
-      // User said "The whitelist is too strict... We are going to open the gates wide".
-      // But also provided logic that blocks if not matching.
-      // I'll return origin if matched, otherwise I'll return specific error?
-      // Hono CORS simply sets Access-Control-Allow-Origin. If I return null, it doesn't set it.
-      return origin; // TEMPORARY: Allow all to fix 405/CORS blocking if logic fails
+      return origin; // Permissive Mode to fix 405/CORS blocking
   },
   allowHeaders: ['Authorization', 'Content-Type', 'apikey', 'x-client-info', 'expires', 'x-admin-secret'],
   allowMethods: ['POST', 'GET', 'OPTIONS', 'DELETE', 'PUT', 'PATCH'],
@@ -143,9 +137,6 @@ app.get('/api/habits/library', async (c) => {
             // NO FALLBACK - Truth in Engineering
             return c.json({ error: 'Failed to fetch library habits' }, 500);
         }
-
-        // Truth in Engineering: If empty, return empty.
-        // if (!data || data.length === 0) { ... } -> Returns [] automatically.
 
         console.log(`✅ Library Fetched: ${data?.length} items`);
         return c.json(data);
@@ -218,7 +209,11 @@ app.route('/api/habits', habitRoutes);
 app.route('/api/ai', aiRoutes);
 app.route('/api/admin', adminRoutes);
 app.route('/api/journal', journalRoutes);
+
+// ROUTING FIX: Both habit_logs and completions point to logRoutes
 app.route('/api/habit_logs', logRoutes);
+app.route('/api/completions', logRoutes);
+
 app.route('/api/reorder', reorderRoutes);
 app.route('/api/webhooks', webhookRoutes);
 app.route('/api/webhooks/terra', terraRoutes);
@@ -230,7 +225,6 @@ app.route('/api/body', bodyRoutes);
 app.route('/api/mirror', mirrorRoutes);
 app.route('/api/public', publicRoutes);
 app.route('/api/telemetry', telemetryRoutes);
-app.route('/api/completions', completionsRoutes);
 app.route('/api/stats', statsRoutes);
 
 // Telemetry Endpoint: Uptime
