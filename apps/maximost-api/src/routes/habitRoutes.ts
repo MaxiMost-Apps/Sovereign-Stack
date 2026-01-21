@@ -88,10 +88,18 @@ habitRoutes.options('/adopt', (c) => c.text('OK', 200));
 // POST /api/habits/adopt - Adopt a habit (Single or Bulk)
 habitRoutes.post('/adopt', async (c) => {
     const user = c.get('user');
-    const body = await c.req.json();
-    const supabase = c.get('supabase'); // Used for reading/writing if RLS allows, but we might need admin for writes too if blocked
+    let body = {};
+    try {
+        body = await c.req.json();
+    } catch (e) {
+        console.error("JSON Parse Error in Adopt:", e);
+        return c.json({ error: "Invalid JSON" }, 400);
+    }
 
-    console.log('📦 Adopt Request:', { user_id: user.id, body });
+    // DEBUG: Confirm route is hit and payload
+    console.log('✅ ADOPT ROUTE HIT. Payload:', JSON.stringify(body));
+
+    const supabase = c.get('supabase');
 
     // Handle Bulk (slugs array) or Single (slug string)
     const slugs = body.slugs || (body.slug ? [body.slug] : []);
@@ -137,7 +145,7 @@ habitRoutes.post('/adopt', async (c) => {
         type: (libHabit.type === 'metric' || libHabit.type === 'duration') ? 'unit' : 'absolute',
         target_value: libHabit.target_value || 1,
         unit: libHabit.unit,
-        category: libHabit.category,
+        // category: libHabit.category, // TEMPORARY FIX: Comment out potentially missing columns
         frequency: libHabit.frequency || 'daily'
     }));
 
