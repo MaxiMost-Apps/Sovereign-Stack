@@ -67,6 +67,52 @@ logRoutes.post('/toggle', async (c) => {
     return c.json(data || { success: true, operation: 'delete' });
 });
 
+// GET /feed - Activity Feed (Fixes 404)
+logRoutes.get('/feed', async (c) => {
+    const user = c.get('user');
+    const supabase = c.get('supabase');
+    const limit = parseInt(c.req.query('limit') || '10');
+
+    // Fetch recent logs joined with habit details
+    const { data, error } = await supabase
+        .from('habit_logs')
+        .select(`
+            *,
+            habits (
+                title,
+                icon,
+                color,
+                metadata
+            )
+        `)
+        .eq('user_id', user.id)
+        .order('completed_at', { ascending: false }) // Sort by date first
+        .order('created_at', { ascending: false }) // Then by creation time
+        .limit(limit);
+
+    if (error) {
+        console.error("Feed Error:", error);
+        return c.json({ feed: [] }); // Fail safe
+    }
+
+    return c.json({ feed: data || [] });
+});
+
+// GET / - All Logs (Legacy)
+logRoutes.get('/', async (c) => {
+    const user = c.get('user');
+    const supabase = c.get('supabase');
+
+    // Return simple list of logs for the user
+    const { data, error } = await supabase
+        .from('habit_logs')
+        .select('*')
+        .eq('user_id', user.id);
+
+    if (error) return c.json({ error: 'Failed to fetch logs' }, 500);
+    return c.json(data || []);
+});
+
 // POST / - Log Note (Legacy /api/habit_logs base endpoint)
 logRoutes.post('/', async (c) => {
     const user = c.get('user');
