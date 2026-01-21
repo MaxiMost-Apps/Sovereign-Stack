@@ -1,14 +1,10 @@
 // This file centralizes all API communication.
 
 const getApiBaseUrl = () => {
-  // Get the API URL from environment variables, which is set by Vercel.
-  // The VITE_ prefix is necessary for Vite to expose it to the frontend code.
-  const apiUrl = import.meta.env.VITE_API_BASE_URL;
-  if (!apiUrl) {
-    throw new Error('VITE_API_BASE_URL is not defined. Please set it in your .env file or Vercel environment variables.');
-  }
-  // Safety: Strip trailing slash to prevent double-slash errors
-  return apiUrl.replace(/\/$/, '');
+  // FORCE CONNECTION TO RENDER
+  // We are bypassing environment variables to ensure the frontend talks to the correct backend.
+  const API_BASE_URL = 'https://sovereign-stack.onrender.com';
+  return API_BASE_URL;
 };
 
 const apiClient = {
