@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import { useAuth } from '../AuthSystem';
+import { getApiUrl } from '@/config';
 
 interface InspectorProps {
     children: React.ReactNode;
@@ -32,8 +33,8 @@ export const Inspector: React.FC<InspectorProps> = ({ children }) => {
 
                 // 2. SECONDARY: Fire & Forget (Non-Blocking)
                 // Founding Status, Telemetry, etc.
-                fetch('/api/founding-status').catch(e => console.warn("Secondary Fetch Failed (Ignored):", e));
-                fetch('/api/telemetry/uptime').catch(e => console.warn("Telemetry Failed (Ignored):", e));
+                fetch(getApiUrl('/api/founding-status')).catch(e => console.warn("Secondary Fetch Failed (Ignored):", e));
+                fetch(getApiUrl('/api/telemetry/uptime')).catch(e => console.warn("Telemetry Failed (Ignored):", e));
 
                 // 3. UNLOCK
                 setIsSystemReady(true);

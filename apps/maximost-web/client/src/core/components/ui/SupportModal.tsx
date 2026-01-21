@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Activity, MessageSquare, Send } from 'lucide-react';
 import { useAuth } from '../../AuthSystem';
 import { useToast } from '../Toast';
+import { getApiUrl } from '@/config';
 
 export function SupportModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user } = useAuth();
@@ -18,7 +19,7 @@ export function SupportModal({ isOpen, onClose }: { isOpen: boolean; onClose: ()
      // API CALL (As per Phase 1.2: POST to /api/support/signal)
      try {
          // USE PROXY: Route via local middleware to avoid CORS
-         await fetch('/api/backend/support/signal', {
+         await fetch(getApiUrl('/api/support/signal'), {
              method: 'POST',
              headers: { 'Content-Type': 'application/json' },
              body: JSON.stringify({ user_id: user?.id, message })

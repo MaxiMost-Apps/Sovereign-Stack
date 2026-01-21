@@ -5,6 +5,7 @@ import { Send, AlertCircle } from 'lucide-react'; // Added AlertCircle
 import { useCoach, CoachPersonaId } from '@/context/CoachContext';
 import { coachPersonaData, CoachPersona } from '@/data/coachPersonaData'; // Use CoachPersona type
 import ChatMessage from '@/components/ai/ChatMessage';
+import { getApiUrl } from '@/config';
 
 // This local 'coachSelectorButtons' array is for the selector UI
 const coachSelectorButtons: { id: CoachPersonaId, name: string }[] = [
@@ -73,7 +74,7 @@ const AICoachPage: React.FC = () => {
 
     try {
         // SAVAGE PROTOCOL: Use Real Mirror API
-        const response = await fetch('/api/mirror/roast', {
+        const response = await fetch(getApiUrl('/api/mirror/roast'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ excuse: messageToSend })

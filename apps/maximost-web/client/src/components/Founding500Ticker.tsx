@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { getApiUrl } from '@/config';
 
 export const Founding500Ticker: React.FC = () => {
     const [count, setCount] = useState<number | null>(null);
@@ -9,7 +10,7 @@ export const Founding500Ticker: React.FC = () => {
             try {
                 // Determine API base URL (can be from env or relative if proxy setup)
                 // Assuming Vite proxy or same domain for simplicity in monorepo dev
-                const res = await fetch('/api/stats/vanguard-count');
+                const res = await fetch(getApiUrl('/api/stats/vanguard-count'));
                 if (res.ok) {
                     const data = await res.json();
                     setCount(data.count);

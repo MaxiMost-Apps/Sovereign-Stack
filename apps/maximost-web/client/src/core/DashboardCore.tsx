@@ -290,7 +290,7 @@ export default function DashboardCore() {
             value: newVal // Send explicit value (0 = delete, 1 = completed)
         };
 
-        const response = await fetch('/api/completions/toggle', {
+        const response = await fetch(getApiUrl('/api/completions/toggle'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
