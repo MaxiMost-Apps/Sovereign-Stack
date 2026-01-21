@@ -11,7 +11,7 @@ export const useHabits = () => {
     const fetchHabits = async () => {
         try {
             setLoading(true);
-            const response = await fetch('https://maximost-api.onrender.com/api/habits/library');
+            const response = await fetch('https://sovereign-stack.onrender.com/api/habits/library');
             if (!response.ok) throw new Error('Failed to fetch habit library');
             const data = await response.json();
             setHabits(data || []);

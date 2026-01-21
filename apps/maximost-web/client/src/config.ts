@@ -2,7 +2,7 @@
 // Source of Truth for API endpoints and environment variables
 
 // Use Environment Variable if available (Vercel), otherwise fallback to Production URL
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://maximost-api.onrender.com";
+export const API_BASE_URL = "https://sovereign-stack.onrender.com";
 
 // Safety: Ensure no trailing slash
 export const getApiUrl = (endpoint: string) => {

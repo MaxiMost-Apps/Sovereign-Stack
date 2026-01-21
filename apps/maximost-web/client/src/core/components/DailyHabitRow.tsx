@@ -69,9 +69,7 @@ export default function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, 
 
       try {
           // NEW ENDPOINT: Server-Orchestrated Logging
-          const apiUrl = import.meta.env.VITE_API_BASE_URL
-              ? `${import.meta.env.VITE_API_BASE_URL}/api/habit_logs`
-              : 'http://localhost:3000/api/habit_logs';
+          const apiUrl = "https://sovereign-stack.onrender.com/api/habit_logs";
 
           const response = await fetch(apiUrl, {
               method: 'POST',
