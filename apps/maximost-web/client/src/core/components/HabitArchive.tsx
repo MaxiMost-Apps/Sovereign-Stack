@@ -39,7 +39,7 @@ export function HabitArchive({ onAdopt }: HabitArchiveProps) {
           <Plus size={24} />
         </div>
         <span className="text-sm font-bold text-slate-400 group-hover:text-blue-400 uppercase tracking-widest">
-          Build Custom Protocol
+          Create New Habit
         </span>
       </div>
 

@@ -158,13 +158,13 @@ export default function DashboardCore() {
                     <SortableContext items={safeHabits} strategy={verticalListSortingStrategy}>
                         {AbsoluteHabits.map((h: any) => (
                             <SortableHabitRow key={h.id} id={h.id} disabled={!isSortMode}>
-                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} />
+                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} isFuture={isFuture(toISODate(selectedDate))} />
                             </SortableHabitRow>
                         ))}
                          {FrequencyHabits.length > 0 && <h3 className="text-xs font-bold text-gray-500 uppercase mt-4">Frequency</h3>}
                         {FrequencyHabits.map((h: any) => (
                             <SortableHabitRow key={h.id} id={h.id} disabled={!isSortMode}>
-                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} />
+                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} isFuture={isFuture(toISODate(selectedDate))} />
                             </SortableHabitRow>
                         ))}
                     </SortableContext>

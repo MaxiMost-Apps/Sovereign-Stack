@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Save, Activity, Droplet, Zap, Brain, Moon, Sun, Flame } from 'lucide-react';
+import React, { useState } from 'react';
+import { Save, Activity, Droplet, Zap, Brain, Moon, Sun, Flame, Layout, Music, Anchor, Coffee } from 'lucide-react';
 import { getThemeStyles } from '../config/themeConfig';
 
 interface HabitFormProps {
@@ -10,96 +10,101 @@ interface HabitFormProps {
 }
 
 const COLORS = ['maximost_blue', 'emerald_city', 'fuji_purple', 'mars_orange', 'obsidian_dark'];
+const ICONS = [
+  { id: 'Activity', icon: Activity },
+  { id: 'Zap', icon: Zap },
+  { id: 'Brain', icon: Brain },
+  { id: 'Flame', icon: Flame },
+  { id: 'Droplet', icon: Droplet },
+  { id: 'Moon', icon: Moon },
+  { id: 'Sun', icon: Sun },
+  { id: 'Coffee', icon: Coffee },
+];
 
 export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }: HabitFormProps) {
 
-  // 1. ROBUST INITIALIZATION (Check all possible field names)
   const [formData, setFormData] = useState({
     title: initialData.title || '',
     color: initialData.color || 'maximost_blue',
     icon: initialData.icon || 'Activity',
-
-    // Normalize Goal: Look for daily_goal OR target_value OR default to 1
     daily_goal: initialData.daily_goal || initialData.target_value || 1,
     unit: initialData.unit || 'reps',
-
-    // Normalize Frequency: Look for frequency_type OR type OR default to 'daily'
     frequency_type: initialData.frequency_type || initialData.type || 'daily',
     target_days: initialData.target_days || 1,
-
     why_instruction: initialData.why_instruction || initialData.identity || '',
     how_instruction: initialData.how_instruction || initialData.tactical || '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // 2. PREPARE PAYLOAD (Ensure Numbers are Numbers)
-    const payload = {
-      ...initialData, // Keep ID/Created_at
+    onSubmit({
+      ...initialData,
       ...formData,
       daily_goal: parseInt(String(formData.daily_goal)) || 1,
       target_days: parseInt(String(formData.target_days)) || 1,
-      // Ensure we send frequency_type specifically
       frequency_type: formData.frequency_type
-    };
-
-    onSubmit(payload);
+    });
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       
-      {/* IDENTITY */}
+      {/* HEADER: NAME & COLOR */}
       <div className="space-y-4">
         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Identity</label>
         <input
           type="text"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          placeholder="Protocol Name"
-          className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white font-bold placeholder:text-slate-600 focus:border-blue-500 outline-none"
+          placeholder="Habit Name"
+          className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white font-bold text-lg focus:border-blue-500 outline-none"
           required
         />
         
-        {/* COLORS */}
-        <div className="flex gap-2">
+        {/* COLOR PICKER */}
+        <div className="flex gap-3 justify-start">
            {COLORS.map(c => (
              <button
                key={c}
                type="button"
                onClick={() => setFormData({ ...formData, color: c })}
-               className={`w-8 h-8 rounded-full border-2 transition-all ${formData.color === c ? 'border-white scale-110' : 'border-transparent opacity-50'}`}
+               className={`w-8 h-8 rounded-full border-2 transition-all ${formData.color === c ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-40 hover:opacity-100'}`}
                style={{ backgroundColor: getThemeStyles(c).primary }}
              />
            ))}
         </div>
       </div>
 
-      {/* CALIBRATION (The Broken Part) */}
+      {/* ICON PICKER */}
+      <div className="space-y-2">
+         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Visual Anchor</label>
+         <div className="flex gap-2 flex-wrap">
+            {ICONS.map(({ id, icon: Icon }) => (
+                <button
+                    key={id}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, icon: id })}
+                    className={`p-2 rounded-lg border transition-all ${formData.icon === id ? 'bg-white/10 border-white text-white' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                >
+                    <Icon size={20} />
+                </button>
+            ))}
+         </div>
+      </div>
+
+      {/* CALIBRATION (Goals) */}
       <div className="space-y-4 pt-4 border-t border-white/5">
         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Calibration</label>
         
         <div className="grid grid-cols-2 gap-4">
-          <div>
+            <div>
             <label className="text-xs text-slate-400 block mb-1">Target Value</label>
-            <input
-              type="number"
-              min="1"
-              value={formData.daily_goal}
-              onChange={(e) => setFormData({ ...formData, daily_goal: e.target.value })}
-              className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white font-mono"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-slate-400 block mb-1">Unit (e.g. oz, mins)</label>
-            <input
-              type="text"
-              value={formData.unit}
-              onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-              className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white"
-            />
-          </div>
+            <input type="number" min="1" value={formData.daily_goal} onChange={(e) => setFormData({ ...formData, daily_goal: e.target.value })} className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white" />
+            </div>
+            <div>
+            <label className="text-xs text-slate-400 block mb-1">Unit</label>
+            <input type="text" value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })} className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white" />
+            </div>
         </div>
 
         <div>
@@ -115,26 +120,15 @@ export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }
         </div>
       </div>
 
-      {/* DIRECTIVES */}
+      {/* WHY / HOW */}
       <div className="space-y-4 pt-4 border-t border-white/5">
-        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Directives</label>
-        
         <div>
-           <label className="text-xs text-emerald-500/80 font-bold block mb-1">WHY (Identity Anchor)</label>
-           <textarea
-             value={formData.why_instruction}
-             onChange={(e) => setFormData({ ...formData, why_instruction: e.target.value })}
-             className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-slate-300 text-sm h-20 resize-none outline-none focus:border-emerald-500/50"
-           />
+           <label className="text-xs text-emerald-500 font-bold block mb-1">WHY (Purpose)</label>
+           <textarea value={formData.why_instruction} onChange={(e) => setFormData({ ...formData, why_instruction: e.target.value })} className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-slate-300 text-xs h-16 resize-none" />
         </div>
-
         <div>
-           <label className="text-xs text-blue-500/80 font-bold block mb-1">HOW (Tactical Execution)</label>
-           <textarea
-             value={formData.how_instruction}
-             onChange={(e) => setFormData({ ...formData, how_instruction: e.target.value })}
-             className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-slate-300 text-sm h-20 resize-none outline-none focus:border-blue-500/50"
-           />
+           <label className="text-xs text-blue-500 font-bold block mb-1">HOW (Execution)</label>
+           <textarea value={formData.how_instruction} onChange={(e) => setFormData({ ...formData, how_instruction: e.target.value })} className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-slate-300 text-xs h-16 resize-none" />
         </div>
       </div>
 
