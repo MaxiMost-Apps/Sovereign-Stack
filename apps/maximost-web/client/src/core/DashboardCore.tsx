@@ -89,16 +89,37 @@ export default function DashboardCore() {
      const currentEntry = logs[key];
      let newVal = valOverride !== null ? valOverride : (currentEntry ? 0 : 1);
 
+     // 1. Optimistic Update (Instant UI feedback)
      const newLogs = { ...logs };
      if (newVal === 0) delete newLogs[key];
      else newLogs[key] = { habit_id: habitId, completed_at: dateStr, value: newVal };
      setLogs(newLogs);
+     localStorage.setItem('habit_logs_cache', JSON.stringify(newLogs));
 
-     await fetch(getApiUrl('/api/completions/toggle'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
-        body: JSON.stringify({ habit_id: habitId, target_date: dateStr, value: newVal })
-     }).catch(() => toast.error("Sync Failed"));
+     // 2. API Sync (The Fix: sending 'date', not 'target_date')
+     try {
+        const payload = {
+            habit_id: habitId,
+            user_id: user.id, // Explicitly send user_id for safety
+            date: dateStr,    // ✅ FIXED: Matches API expectation
+            value: newVal
+        };
+
+        const res = await fetch(getApiUrl('/api/completions/toggle'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error('Sync Failed');
+
+     } catch (error: any) {
+        toast.error(`Sync Error: ${error.message}`);
+        // Revert on failure if needed, or keep optimistic state
+     }
   };
 
   const handleDragEnd = async (event: any) => {

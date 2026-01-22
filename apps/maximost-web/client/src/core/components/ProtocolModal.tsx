@@ -3,10 +3,16 @@ import { X, CheckSquare, Square, Layers, ArrowRight } from 'lucide-react';
 import { getThemeStyles } from '../config/themeConfig';
 
 export default function ProtocolModal({ stack, isOpen, onClose, onConfirm }: any) {
-  // Default to all selected
+  // Default to all selected (Fix: Ensure this re-evaluates when stack changes or modal opens)
   // Handle case where stack.habits might be missing or different structure
-  const initialIds = (stack?.habits || []).map((h: any) => h.id || h.slug || h);
-  const [selectedIds, setSelectedIds] = useState<string[]>(initialIds);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Reset/Init selection when stack changes
+  React.useEffect(() => {
+      if (stack?.habits) {
+          setSelectedIds(stack.habits.map((h: any) => h.id || h.slug || h));
+      }
+  }, [stack]);
 
   if (!isOpen || !stack) return null;
 
