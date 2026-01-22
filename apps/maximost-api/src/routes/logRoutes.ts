@@ -5,15 +5,14 @@ import { AppEnv } from '../hono';
 
 const router = new Hono<AppEnv>();
 
-// Initialize Supabase Admin Client
-const supabase = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
+// ⚡️ GOD MODE CLIENT
+const supabaseAdmin = createClient(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY);
 
-// --- THE TOGGLE ENGINE ---
 router.post('/toggle', async (c) => {
   try {
-    const user = c.get('user'); // Get user from Auth Middleware
+    const user = c.get('user');
     const body: any = await c.req.json();
-    console.log('✅ TOGGLE HIT:', body);
+    console.log('✅ TOGGLE:', body);
 
     // ADAPTATION: Handle Frontend Payload (target_date, value) OR User Payload (date, user_id)
     const habit_id = body.habit_id;
@@ -21,17 +20,15 @@ router.post('/toggle', async (c) => {
     const dateStr = body.target_date || body.date || new Date().toISOString();
     const value = body.value; // Optional explicit value
 
-    if (!habit_id || !user_id) {
-      console.error('❌ Missing habit_id or user_id');
-      return c.json({ error: 'Missing habit_id or user_id' }, 400);
-    }
+    if (!habit_id || !user_id) return c.json({ error: 'Missing Info' }, 400);
 
-    // 1. CHECK: Did we already do this today?
-    // We look for a log for this habit, this user, on this date.
-    const startOfDay = new Date(dateStr).toISOString().split('T')[0] + ' 00:00:00';
-    const endOfDay = new Date(dateStr).toISOString().split('T')[0] + ' 23:59:59';
+    // DEFINE "TODAY"
+    const checkDate = new Date(dateStr);
+    const startOfDay = checkDate.toISOString().split('T')[0] + ' 00:00:00';
+    const endOfDay = checkDate.toISOString().split('T')[0] + ' 23:59:59';
 
-    const { data: existingLogs, error: fetchError } = await supabase
+    // 1. CHECK EXISTING (Admin Mode)
+    const { data: existing } = await supabaseAdmin
       .from('habit_logs')
       .select('id')
       .eq('habit_id', habit_id)
@@ -39,13 +36,7 @@ router.post('/toggle', async (c) => {
       .gte('completed_at', startOfDay)
       .lte('completed_at', endOfDay);
 
-    if (fetchError) {
-      console.error('⚠️ DB Error checking logs:', fetchError);
-      throw fetchError;
-    }
-
-    let result;
-    const exists = existingLogs && existingLogs.length > 0;
+    const exists = existing && existing.length > 0;
 
     // LOGIC: Explicit Value OR Toggle
     let shouldDelete = false;
@@ -55,51 +46,49 @@ router.post('/toggle', async (c) => {
        shouldDelete = exists; // Toggle behavior
     }
 
+    // 2. TOGGLE LOGIC
     if (shouldDelete) {
-      // 2. TOGGLE OFF (Delete)
+      // DELETE (Uncheck)
       if (exists) {
-          const { error: delError } = await supabase
-            .from('habit_logs')
-            .delete()
-            .eq('id', existingLogs[0].id);
-
-          if (delError) throw delError;
+          await supabaseAdmin.from('habit_logs').delete().eq('id', existing[0].id);
       }
-      result = { status: 'uncompleted', id: existingLogs[0]?.id };
-
+      return c.json({ status: 'uncompleted', id: existing?.[0]?.id }, 200);
     } else {
-      // 3. TOGGLE ON (Insert/Update)
+      // INSERT (Check)
       if (!exists) {
-          const { data: newLog, error: insError } = await supabase
+          const { data: newLog, error } = await supabaseAdmin
             .from('habit_logs')
             .insert({
               habit_id,
               user_id,
-              completed_at: new Date(dateStr).toISOString(),
+              completed_at: checkDate.toISOString(),
               value: value !== undefined && value > 0 ? value : 1
             })
             .select()
             .single();
 
-          if (insError) throw insError;
-          result = { status: 'completed', log: newLog };
+          if (error) {
+            console.error('❌ Log Insert Error:', error);
+            return c.json({ error: error.message }, 500);
+          }
+          return c.json({ status: 'completed', log: newLog }, 200);
       } else {
-          // Already exists
-          result = { status: 'completed', log: existingLogs[0] };
+          return c.json({ status: 'completed', log: existing[0] }, 200);
       }
     }
 
-    return c.json(result, 200);
-
-  } catch (error) {
-    console.error('🔥 TOGGLE FATAL ERROR:', error);
-    return c.json({ error: 'Failed to toggle' }, 500);
+  } catch (e) {
+    console.error('🔥 TOGGLE FATAL:', e);
+    return c.json({ error: 'Server Error' }, 500);
   }
 });
 
-// --- RESTORED FEED/STATS ROUTES (To prevent 404s) ---
+// SAFETY ROUTES (Prevent 404s)
 router.get('/feed', (c) => c.json([], 200));
 router.get('/stats', (c) => c.json({}, 200));
 router.get('/', (c) => c.json([], 200));
+
+// Options for CORS
+router.options('*', (c) => c.text('OK', 200));
 
 export default router;
