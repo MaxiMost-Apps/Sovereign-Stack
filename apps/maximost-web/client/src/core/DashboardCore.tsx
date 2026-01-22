@@ -1,27 +1,30 @@
 import { useState, useEffect } from 'react';
-// ✅ CORRECTED IMPORTS (Using single dot for same-level or parent traversal relative to core)
-import { supabase } from '../supabase'; 
-import { useAuth } from '../AuthSystem';
-import { getApiUrl } from '../config';
-import { calculateStreak } from '../utils/streakLogic';
-import { toISODate, isFuture } from '../utils/dateUtils';
-import DailyHabitRow from '../components/DailyHabitRow';
-import WeeklyMatrix from '../components/WeeklyMatrix';
-import MonthlyCalendar from '../components/MonthlyCalendar';
-import HabitForm from '../components/HabitForm';
-import CreateHabitModal from '../components/CreateHabitModal';
-import ConsoleOverlay from '../components/ConsoleOverlay';
-import { HabitArchive } from '../components/HabitArchive';
-import { Inspector } from '../components/Inspector';
-import { useToast } from '../components/Toast';
+
+// ✅ FIXED IMPORTS: Changed from "../" to "./" because these files are in src/core/
+import { supabase } from './supabase'; 
+import { useAuth } from './AuthSystem';
+import { calculateStreak } from './utils/streakLogic';
+import { toISODate, isFuture } from './utils/dateUtils';
+import DailyHabitRow from './components/DailyHabitRow';
+import WeeklyMatrix from './components/WeeklyMatrix';
+import MonthlyCalendar from './components/MonthlyCalendar';
+import HabitForm from './components/HabitForm';
+import CreateHabitModal from './components/CreateHabitModal';
+import ConsoleOverlay from './components/ConsoleOverlay';
+import { HabitArchive } from './components/HabitArchive';
+import { Inspector } from './components/Inspector';
+import { useToast } from './components/Toast';
 import { Lock, Unlock, ArrowUpDown, Plus } from 'lucide-react';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
-import SortableHabitRow from '../components/SortableHabitRow';
+import SortableHabitRow from './components/SortableHabitRow';
 import { startOfWeek, endOfWeek, isWithinInterval, subHours, addMonths, subMonths, addDays, subDays, format, isSameDay } from 'date-fns';
 
+// Config usually sits one level up, so we keep this one as ../
+import { getApiUrl } from '../config'; 
+
 export default function DashboardCore() {
-  console.log("🚀 SAFE DASHBOARD CORE LOADED - VERSION 3.0"); 
+  console.log("🚀 SAFE DASHBOARD CORE LOADED - LOCAL PATHS"); 
   
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
