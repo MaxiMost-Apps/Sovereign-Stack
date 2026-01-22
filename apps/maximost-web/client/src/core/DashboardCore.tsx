@@ -12,8 +12,7 @@ import HabitForm from './components/HabitForm';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import SortableHabitRow from './components/SortableHabitRow';
-import { Lock, Unlock, ArrowUpDown, Plus } from 'lucide-react'; // Removed Zap, Layers
-import CreateHabitModal from './components/CreateHabitModal';
+import { Lock, Unlock, ArrowUpDown, Plus } from 'lucide-react'; 
 import ConsoleOverlay from './components/ConsoleOverlay';
 import { calculateStreak } from './utils/streakLogic';
 import { useToast } from './components/Toast';
@@ -64,7 +63,8 @@ export default function DashboardCore() {
     if (hError) console.error("Habit Fetch Error:", hError);
     setUserProfile(p);
 
-    const rawHabits = h || []; // Crash prevention
+    // CRASH PREVENTION: Default to [] if data is null/undefined
+    const rawHabits = h || []; 
     const rawLogs = l || [];
 
     const logMap: any = {};
@@ -95,7 +95,7 @@ export default function DashboardCore() {
 
   useEffect(() => {
       fetchData();
-      // NOTE: Removed Telemetry/Feed fetch calls to stabilize dashboard
+      // NOTE: Telemetry and Feed removed for stability
   }, [user]);
 
   const handleLoadDemo = async () => {
@@ -249,7 +249,7 @@ export default function DashboardCore() {
            </div>
         </div>
 
-        {/* --- INTEL BRIEF REMOVED FOR STABILITY --- */}
+        {/* --- INTEL BRIEF REMOVED --- */}
 
         {/* ALIGNED STICKY TOGGLES */}
         <div className="sticky top-0 z-20 flex flex-row justify-between items-center bg-[#0b0c10]/95 backdrop-blur p-2 rounded-lg border border-white/10 gap-2 mb-4 shadow-xl">
