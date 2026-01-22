@@ -1,123 +1,86 @@
-import React, { useState, useEffect } from 'react';
-import { HabitCard } from './HabitCard';
-import { Habit } from '@/types/habit';
-import { Loader2 } from 'lucide-react';
-import { useToast } from '../components/Toast';
-import { useNavigate } from 'react-router-dom'; // REPAIR ORDER: Added useNavigate
-import { lexiconStore } from '../../store/lexiconStore'; // REPAIR ORDER: Import Sovereign Store
-import { getApiUrl } from '../../config'; // REPAIR ORDER: Centralized Config
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
+import { Activity, Layers, Plus, ArrowRight } from 'lucide-react';
+import { getThemeStyles } from '../config/themeConfig';
 
 interface HabitArchiveProps {
-    onImport: (habit: Habit) => void;
-    userHabits: Habit[]; // Pass user's active habits to gray them out
-    onEdit?: (habit: Habit) => void; // Pass edit handler
-    hideHeader?: boolean;
+  onAdopt?: (template: any) => void; // The handler we just passed
 }
 
-export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits, onEdit, hideHeader }) => {
-    const [libraryHabits, setLibraryHabits] = useState<Habit[]>([]);
-    const [loading, setLoading] = useState(true);
-    const { toast } = useToast();
-    const navigate = useNavigate(); // REPAIR ORDER: Init hook
+export function HabitArchive({ onAdopt }: HabitArchiveProps) {
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    // Mapping user active habits for quick lookup
-    const activeHabitSlugs = new Set(userHabits.map(h => h.slug));
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
 
-    useEffect(() => {
-        // REPAIR ORDER: Sovereign Source Loading
-        // We bypass the API fetch completely to guarantee the list appears.
-        const sovereignAtoms = lexiconStore.atoms.map((atom: any) => ({
-            id: atom.title, // Use title as temp ID
-            title: atom.title,
-            description: atom.description || atom.how_instruction,
-            category: atom.category,
-            // REPAIR ORDER: Use explicit slug from store to match backend (underscores), fallback to underscore gen
-            slug: atom.slug || atom.title.toLowerCase().replace(/\s+/g, '_'),
-            metadata: {
-                tactical: { description: atom.description }
-            },
-            ...atom
-        }));
+  const fetchTemplates = async () => {
+    // Fetch 'system' habits or templates.
+    // If you don't have a 'is_template' column, we can filter by user_id IS NULL or a specific flag.
+    // For now, let's fetch ALL habits to populate the list, filtering out the user's active ones if needed.
+    // Ideally, you have a 'library' table or a flag.
+    const { data } = await supabase.from('habits').select('*').eq('is_active', false).limit(20);
+    if (data) setTemplates(data);
+    setLoading(false);
+  };
 
-        setLibraryHabits(sovereignAtoms);
-        setLoading(false);
-    }, []);
+  if (loading) return <div className="text-slate-500 text-xs">Loading Archives...</div>;
 
-    const handleAdopt = async (habit: Habit) => {
-        try {
-            // Use Absolute URL for Adoption
-            // REPAIR ORDER: Added Auth Header to fix 401 Silent Fail
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-            const response = await fetch(getApiUrl('/api/habits/adopt'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ slug: habit.slug })
-            });
-
-            if (!response.ok) {
-                const err = await response.json().catch(() => ({}));
-                console.error("Adoption Error:", err);
-                throw new Error(err.error || 'Adoption Failed');
-            }
-
-            toast.success(`Protocol [${habit.title}] Deployed.`);
-            onImport(habit); // Trigger parent refresh or modal
-            navigate('/dashboard'); // REPAIR ORDER: Enforce Redirect
-
-        } catch (error: any) {
-            toast.error(error.message);
-        }
-    };
-
-    if (loading) return <div className="p-12 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-zinc-700" /></div>;
-
-    return (
-        <div className="space-y-6">
-             {!hideHeader && (
-                 <div className="flex justify-between items-center mb-6">
-                     {/* REPAIR ORDER: Rename to ATOM LEDGER */}
-                     <h2 className="text-xl font-bold text-white uppercase tracking-widest">ATOM LEDGER</h2>
-                     <span className="text-xs font-mono text-zinc-500">{libraryHabits.length} PROTOCOLS AVAILABLE</span>
-                  </div>
-             )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                 {libraryHabits.map((t: any) => {
-                    const isActive = activeHabitSlugs.has(t.slug);
-
-                    const mappedHabit: Habit = {
-                        id: t.slug, // Use slug as ID for library display
-                        title: t.title,
-                        description: t.metadata?.tactical?.description || t.description || "No description available",
-                        category: t.category, // Pass through new categories
-                        metadata: t.metadata,
-                        type: t.type,
-                        target_value: t.target_value,
-                        unit: t.unit,
-                        completed: isActive, // Hijack 'completed' to show active state
-                        slug: t.slug,
-                        theme: t.theme,
-                        icon: t.icon
-                    };
-
-                    return (
-                        <div key={t.slug} className={isActive ? "opacity-50 pointer-events-none grayscale" : ""}>
-                            <HabitCard
-                               habit={mappedHabit}
-                               mode="archive"
-                               onQuickImport={!isActive ? () => handleAdopt(mappedHabit) : undefined}
-                               onEdit={onEdit} // Pass the slide-in trigger
-                            />
-                        </div>
-                    );
-                 })}
-              </div>
+      {/* 1. CREATE NEW CARD */}
+      <div
+        onClick={() => onAdopt && onAdopt({})} // Open Empty Form
+        className="p-6 rounded-xl border border-dashed border-white/10 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-white/5 hover:border-blue-500/50 transition-all group"
+      >
+        <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+          <Plus size={24} />
         </div>
-    );
-};
+        <span className="text-sm font-bold text-slate-400 group-hover:text-blue-400 uppercase tracking-widest">
+          Build Custom Protocol
+        </span>
+      </div>
+
+      {/* 2. TEMPLATE CARDS */}
+      {templates.map((t) => {
+        const theme = getThemeStyles(t.color || 'maximost_blue');
+        return (
+          <div
+            key={t.id}
+            onClick={() => onAdopt && onAdopt({
+              ...t,
+              id: undefined, // Clear ID so it creates a NEW habit
+              is_active: true // Ensure it starts active
+            })}
+            className="p-5 rounded-xl bg-[#0b0c10] border border-white/5 hover:border-white/20 cursor-pointer transition-all group relative overflow-hidden"
+          >
+            <div className="flex justify-between items-start mb-4">
+               <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 group-hover:text-white transition-colors">
+                  <Activity size={20} />
+               </div>
+               <div className="px-2 py-1 rounded bg-white/5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  {t.frequency_type || 'Daily'}
+               </div>
+            </div>
+
+            <h3 className="text-sm font-bold text-slate-200 mb-1 group-hover:text-blue-400 transition-colors">
+              {t.title}
+            </h3>
+            <p className="text-xs text-slate-500 line-clamp-2 mb-4">
+              {t.description || t.why_instruction || "No mission brief available."}
+            </p>
+
+            <div className="flex items-center gap-2 text-[10px] font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+               INITIALIZE <ArrowRight size={12} />
+            </div>
+
+            {/* Color Strip */}
+            <div className="absolute bottom-0 left-0 w-full h-[2px]" style={{ background: theme.primary }} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}

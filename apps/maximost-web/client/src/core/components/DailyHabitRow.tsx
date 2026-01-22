@@ -34,14 +34,14 @@ export default function DailyHabitRow({
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const theme = getThemeStyles(habit.color);
+  // Normalize Target
   const target = habit.daily_goal || habit.target_value || 1;
-  const isQuantified = target > 1;
+  const isQuantified = target > 1; // If target is 1, it's a Boolean (Circle). If > 1, it's Quantified (Rectangle).
+
   const currentValue = logEntry?.value || 0;
   const progress = Math.min((currentValue / target) * 100, 100);
   const isFullyComplete = currentValue >= target;
 
-  // Auto-focus input when mode switches
   useEffect(() => {
     if (isInputMode && inputRef.current) {
       inputRef.current.focus();
@@ -51,9 +51,7 @@ export default function DailyHabitRow({
   const handleInputSubmit = () => {
     setIsInputMode(false);
     const val = parseInt(inputValue);
-    if (!isNaN(val)) {
-      onToggle(habit.id, date, val);
-    }
+    if (!isNaN(val)) onToggle(habit.id, date, val);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -65,11 +63,9 @@ export default function DailyHabitRow({
     if (isSystemLocked || isFuture || isSortMode) return;
 
     if (isQuantified) {
-      // Enter Input Mode for Numbers
       setInputValue(currentValue.toString());
       setIsInputMode(true);
     } else {
-      // Standard Toggle for Checkboxes
       const val = isFullyComplete ? 0 : 1;
       onToggle(habit.id, date, val);
     }
@@ -103,7 +99,6 @@ export default function DailyHabitRow({
           <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
              {habit.frequency_type === 'weekly' && <span className="text-blue-400">Weekly</span>}
              {isQuantified && <span>Goal: {target} {habit.unit}</span>}
-             {habit.current_streak > 1 && <span className="text-orange-500">🔥 {habit.current_streak}</span>}
           </div>
         </div>
       </div>
@@ -111,7 +106,6 @@ export default function DailyHabitRow({
       {/* RIGHT: CONTROLS */}
       <div className="flex items-center gap-3">
         
-        {/* CONTROL: CLICK TO TYPE / CHECK */}
         {!isSortMode && (
            <div className="relative">
              {isInputMode ? (
@@ -122,24 +116,25 @@ export default function DailyHabitRow({
                  onChange={(e) => setInputValue(e.target.value)}
                  onBlur={handleInputSubmit}
                  onKeyDown={handleKeyDown}
-                 className="w-16 bg-black border border-blue-500 text-white font-bold text-center rounded py-1 outline-none"
+                 className="w-16 bg-black border border-blue-500 text-white font-bold text-center rounded py-1 outline-none z-50 relative"
                />
              ) : (
                <button
                  onClick={handleMainClick}
                  disabled={isSystemLocked}
                  className={cn(
-                   "min-w-[3rem] h-8 px-2 rounded-lg border-2 flex items-center justify-center transition-all font-bold text-xs",
+                   "flex items-center justify-center transition-all font-bold text-xs border-2",
+                   // ✅ SHAPE LOGIC: Rect for Numbers, Circle for Checks
+                   isQuantified ? "min-w-[3rem] h-8 px-2 rounded-lg" : "w-8 h-8 rounded-full",
+
                    isFullyComplete
                      ? "bg-emerald-500 border-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.5)]"
                      : "border-slate-700 hover:border-slate-500 bg-transparent text-slate-400 hover:text-white"
                  )}
                >
                  {isQuantified ? (
-                   // Show Number (e.g. "50")
                    <span>{currentValue}</span>
                  ) : (
-                   // Show Checkmark
                    isFullyComplete && <Check size={16} strokeWidth={4} />
                  )}
                </button>
