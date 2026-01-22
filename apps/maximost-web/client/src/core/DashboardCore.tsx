@@ -12,14 +12,12 @@ import HabitForm from './components/HabitForm';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import SortableHabitRow from './components/SortableHabitRow';
-import { Lock, Unlock, Zap, Layers, Plus, ArrowUpDown } from 'lucide-react';
-import { DEMO_HABITS } from './config/demoData'; // Keep imports safe
+import { Lock, Unlock, ArrowUpDown, Plus } from 'lucide-react'; // Removed Zap, Layers
 import CreateHabitModal from './components/CreateHabitModal';
 import ConsoleOverlay from './components/ConsoleOverlay';
 import { calculateStreak } from './utils/streakLogic';
 import { useToast } from './components/Toast';
-import { HabitArchive } from './components/HabitArchive'; // ✅ RESTORED LIBRARY
-import { LedgerFeed } from './components/LedgerFeed';
+import { HabitArchive } from './components/HabitArchive';
 import { getApiUrl } from '../config'; 
 import { Inspector } from './components/Inspector';
 
@@ -27,25 +25,22 @@ export default function DashboardCore() {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  
+  // CORE STATE (Habits Only)
   const [habits, setHabits] = useState<any[]>([]);
   const [logs, setLogs] = useState<any>(() => JSON.parse(localStorage.getItem('habit_logs_cache') || '{}'));
   const [weeklyProgress, setWeeklyProgress] = useState<any>({});
   const [loading, setLoading] = useState(false);
+  
+  // UI STATE
   const [viewMode, setViewMode] = useState('daily');
   const [selectedDate, setSelectedDate] = useState(new Date());
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
   const [initialForm, setInitialForm] = useState({});
   const [isSystemLocked, setIsSystemLocked] = useState(() => localStorage.getItem('isSystemLocked') === 'true');
   const [isSortMode, setIsSortMode] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
-
-  // BUNKER BANNER STATE
-  const [pulseFeed, setPulseFeed] = useState<any[]>([]);
-  const [fullFeed, setFullFeed] = useState<any[]>([]);
-  const [uptime, setUptime] = useState<any>(null);
-  const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
       localStorage.setItem('isSystemLocked', String(isSystemLocked));
@@ -60,18 +55,26 @@ export default function DashboardCore() {
 
   const fetchData = async () => {
     if (!user) return;
-    const { data: h } = await supabase.from('habits').select('*').order('sort_order');
+    
+    // 1. SAFE FETCH (Defensive)
+    const { data: h, error: hError } = await supabase.from('habits').select('*').order('sort_order');
     const { data: l } = await supabase.from('habit_logs').select('*').eq('user_id', user.id);
-    const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    
+    if (hError) console.error("Habit Fetch Error:", hError);
     setUserProfile(p);
 
+    const rawHabits = h || []; // Crash prevention
+    const rawLogs = l || [];
+
     const logMap: any = {};
-    const weekStart = startOfWeek(new Date(), { weekStartsOn: userProfile?.start_of_week === 'SUNDAY' ? 0 : 1 });
-    const weekEnd = endOfWeek(new Date(), { weekStartsOn: userProfile?.start_of_week === 'SUNDAY' ? 0 : 1 });
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: p?.start_of_week === 'SUNDAY' ? 0 : 1 });
+    const weekEnd = endOfWeek(new Date(), { weekStartsOn: p?.start_of_week === 'SUNDAY' ? 0 : 1 });
     const weeklyMap: any = {};
 
-    l?.forEach((log: any) => {
-      const dateStr = log.completed_at.split('T')[0]; // Safe split
+    rawLogs.forEach((log: any) => {
+      const dateStr = log.completed_at ? log.completed_at.split('T')[0] : '';
+      if (!dateStr) return;
       logMap[`${log.habit_id}_${dateStr}`] = log;
       if (isWithinInterval(new Date(dateStr), { start: weekStart, end: weekEnd }) && log.value > 0) {
           weeklyMap[log.habit_id] = (weeklyMap[log.habit_id] || 0) + 1;
@@ -82,7 +85,7 @@ export default function DashboardCore() {
     setWeeklyProgress(weeklyMap);
     localStorage.setItem('habit_logs_cache', JSON.stringify(logMap));
 
-    const habitsWithStreak = (h || []).map((habit: any) => ({
+    const habitsWithStreak = rawHabits.map((habit: any) => ({
        ...habit,
        streak: calculateStreak(habit, logMap)
     }));
@@ -92,31 +95,8 @@ export default function DashboardCore() {
 
   useEffect(() => {
       fetchData();
-      if (user) {
-          const session = supabase.auth.getSession().then(({ data }) => {
-              const token = data.session?.access_token;
-              if (token) {
-                  fetch(getApiUrl('/api/habit_logs/feed?limit=5'), { headers: { 'Authorization': `Bearer ${token}` } })
-                      .then(res => res.json()).then(data => setPulseFeed(data.feed || []));
-                  fetch(getApiUrl('/api/telemetry/uptime'), { headers: { 'Authorization': `Bearer ${token}` } })
-                      .then(res => res.json()).then(data => setUptime(data));
-              }
-          });
-      }
+      // NOTE: Removed Telemetry/Feed fetch calls to stabilize dashboard
   }, [user]);
-
-  const handleToggleHistory = () => {
-      if (!showHistory && fullFeed.length === 0) {
-          supabase.auth.getSession().then(({ data }) => {
-              const token = data.session?.access_token;
-              if (token) {
-                  fetch(getApiUrl('/api/habit_logs/feed?limit=50'), { headers: { 'Authorization': `Bearer ${token}` } })
-                      .then(res => res.json()).then(data => setFullFeed(data.feed || []));
-              }
-          });
-      }
-      setShowHistory(!showHistory);
-  };
 
   const handleLoadDemo = async () => {
      if (loading) return;
@@ -176,7 +156,6 @@ export default function DashboardCore() {
      const key = `${habitId}_${dateStr}`;
      const currentEntry = logs[key];
 
-     // 1. Calculate New State (Supports numeric override for water/reps)
      let newVal = 1;
      if (valOverride !== null) newVal = valOverride;
      else if (currentEntry) newVal = 0;
@@ -270,29 +249,9 @@ export default function DashboardCore() {
            </div>
         </div>
 
-        {/* ✅ FIXED: COMPACT INTEL BRIEF */}
-        {viewMode === 'daily' && !isSystemLocked && (
-            <div className="bg-[#0b0c10] border border-white/5 rounded-xl p-3 mb-2 relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-900/10 to-emerald-900/10 opacity-50"></div>
-                <div className="relative z-10 flex flex-row items-center gap-6">
-                    <div className="flex-1">
-                        <h3 className="text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
-                            <Zap className="w-3 h-3" /> Alexis Intel Brief
-                        </h3>
-                        <p className="text-xs text-slate-300 leading-relaxed truncate">
-                            {uptime ? (
-                                <>System: <span className="text-white font-bold">{uptime.status?.toUpperCase() || 'ONLINE'}</span>. Consistency: <span className={uptime.uptime_7d >= 80 ? 'text-emerald-400' : 'text-yellow-400'}>{uptime.uptime_7d}%</span>.</>
-                            ) : "Calibrating..."}
-                        </p>
-                    </div>
-                    <div className="hidden md:block">
-                        <LedgerFeed feed={pulseFeed} compact={true} />
-                    </div>
-                </div>
-            </div>
-        )}
+        {/* --- INTEL BRIEF REMOVED FOR STABILITY --- */}
 
-        {/* ✅ FIXED: ALIGNED STICKY TOGGLES (Forced Row) */}
+        {/* ALIGNED STICKY TOGGLES */}
         <div className="sticky top-0 z-20 flex flex-row justify-between items-center bg-[#0b0c10]/95 backdrop-blur p-2 rounded-lg border border-white/10 gap-2 mb-4 shadow-xl">
            <div className="flex gap-1">
               {['daily', 'weekly', 'monthly'].map(m => (
@@ -360,16 +319,12 @@ export default function DashboardCore() {
                            <button onClick={() => { setEditingHabit(null); setInitialForm({}); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white rounded border border-blue-500/30 text-[10px] font-bold uppercase tracking-widest transition-all">
                                <Plus className="w-3 h-3" /> Create Habit
                            </button>
-                           <button onClick={handleToggleHistory} className={`flex items-center gap-2 px-4 py-2 rounded border text-[10px] font-bold uppercase tracking-widest transition-all ${showHistory ? 'bg-zinc-800 text-white border-zinc-700' : 'bg-transparent text-zinc-500 border-zinc-800 hover:text-white'}`}>
-                               {showHistory ? 'Hide History' : 'View Mission History'}
-                           </button>
                        </div>
                    </div>
-                   {showHistory && <div className="animate-in slide-in-from-top-4 duration-500"><LedgerFeed feed={fullFeed} /></div>}
                </div>
             )}
             
-            {/* ✅ FIXED: HABIT LIBRARY AT BOTTOM */}
+            {/* HABIT LIBRARY AT BOTTOM */}
             {viewMode === 'daily' && (
                 <div className="mt-12 border-t border-white/5 pt-12">
                      <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4">
