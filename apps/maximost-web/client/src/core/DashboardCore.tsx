@@ -185,8 +185,8 @@ export default function DashboardCore() {
                  <span className="w-2 h-2 rounded-full bg-slate-700"></span>
                  HABIT LIBRARY
              </h2>
-             {/* ✅ WIRE THE HANDLER: Pass handleEdit as 'onAdopt' */}
-             <HabitArchive onAdopt={(template: any) => handleEdit(template)} />
+             {/* Pass 'library' mode explicitly */}
+             <HabitArchive mode="library" onAdopt={(template: any) => handleEdit(template)} />
         </div>
 
         {isModalOpen && (
