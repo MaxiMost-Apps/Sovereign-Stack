@@ -98,12 +98,17 @@ export default function DashboardCore() {
 
      // 2. API Sync (The Fix: sending 'date', not 'target_date')
      try {
+        // ✅ UNIVERSAL PAYLOAD: Sends data in every format the API might expect
         const payload = {
             habit_id: habitId,
-            user_id: user.id, // Explicitly send user_id for safety
-            date: dateStr,    // ✅ FIXED: Matches API expectation
+            user_id: user.id,
+            date: dateStr,          // Format A
+            target_date: dateStr,   // Format B
+            completed_at: dateStr,  // Format C
             value: newVal
         };
+
+        console.log("SYNCING:", payload); // Debug log
 
         const res = await fetch(getApiUrl('/api/completions/toggle'), {
             method: 'POST',
@@ -114,11 +119,14 @@ export default function DashboardCore() {
             body: JSON.stringify(payload)
         });
 
-        if (!res.ok) throw new Error('Sync Failed');
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Server Error: ${res.status} ${errText}`);
+        }
 
      } catch (error: any) {
-        toast.error(`Sync Error: ${error.message}`);
-        // Revert on failure if needed, or keep optimistic state
+        console.error("SYNC FAILED:", error);
+        toast.error("Sync Failed: Check Console");
      }
   };
 
