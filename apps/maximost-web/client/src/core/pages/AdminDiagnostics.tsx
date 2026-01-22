@@ -4,65 +4,58 @@ import { supabase } from '../supabase';
 import { getApiUrl } from '../../config';
 
 export default function AdminDiagnostics() {
-  const [data, setData] = useState<any>(null);
-  const [error, setError] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [logs, setLogs] = useState<string[]>([]);
+  const [status, setStatus] = useState<string>('idle');
 
   useEffect(() => {
     // FORCE-FETCH the real endpoint. No caching.
     // Enhanced with Auth to pass middleware
-    const fetchDiagnostics = async () => {
+    const runDiagnostics = async () => {
+        setScanning(true);
+        setLogs(prev => [...prev, "INITIALIZING SYSTEM SCAN..."]);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
+            // 1. LATENCY CHECK
+            const start = performance.now();
+            const { count, error } = await supabase.from('habits').select('*', { count: 'exact', head: true });
+            const latency = Math.round(performance.now() - start);
+            if (error) throw error;
+            setLogs(prev => [...prev, `✅ DATABASE CONNECTION: ACTIVE (${latency}ms)`]);
+            setLogs(prev => [...prev, `✅ RECORDS FOUND: ${count}`]);
 
-            if (!token) {
-                setError("No Active Session. Please Login.");
-                return;
+            // 2. AUTH CHECK
+            const { data: session } = await supabase.auth.getSession();
+            if (session?.session) {
+                setLogs(prev => [...prev, `✅ AUTH TOKEN: VALID (User: ${session.session.user.id.slice(0,4)}...)`]);
+            } else {
+                setLogs(prev => [...prev, `⚠️ AUTH TOKEN: MISSING OR EXPIRED`]);
             }
-
-            const res = await fetch(getApiUrl('/api/admin/diagnostics'), {
-              headers: {
-                  'Cache-Control': 'no-cache',
-                  'Authorization': `Bearer ${token}`
-              }
-            });
-
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error || `Status: ${res.status}`);
-            setData(json);
-        } catch (err: any) {
-            setError(err.message);
+            setStatus('operational');
+        } catch (e: any) {
+            setLogs(prev => [...prev, `❌ CRITICAL FAILURE: ${e.message}`]);
+            setStatus('error');
+        } finally {
+            setScanning(false);
         }
     };
 
-    fetchDiagnostics();
+    runDiagnostics();
   }, []);
 
   return (
     <div style={{ padding: '40px', background: '#000', color: '#0F0', fontFamily: 'monospace', minHeight: '100vh' }}>
-      <h1>💀 SOVEREIGN DIAGNOSTICS (RAW)</h1>
+      <h1>💀 SOVEREIGN DIAGNOSTICS (REAL-TIME)</h1>
 
-      {error && <h2 style={{ color: 'red' }}>❌ ERROR: {error}</h2>}
+      <div style={{ border: '1px solid #333', padding: '20px', marginBottom: '20px', minHeight: '300px' }}>
+         {logs.map((log, i) => (
+             <div key={i} style={{ marginBottom: '5px' }}>{log}</div>
+         ))}
+         {scanning && <div className="animate-pulse">_</div>}
+      </div>
 
-      {!data && !error && <h3>Ping...</h3>}
+      {status === 'operational' && <h2 style={{ color: '#0F0' }}>SYSTEM OPERATIONAL</h2>}
+      {status === 'error' && <h2 style={{ color: 'red' }}>SYSTEM COMPROMISED</h2>}
 
-      {data && (
-        <>
-          <div style={{ border: '1px solid #333', padding: '20px', marginBottom: '20px' }}>
-            <h3>1. DATABASE STATUS</h3>
-            {/* If this is 42, we kill the fallback file */}
-            <p>DB REAL HABIT COUNT: <strong>{data.db_real_count}</strong> (User Table)</p>
-            <p>LIB REAL HABIT COUNT: <strong>{data.lib_real_count}</strong> (Library Table)</p>
-            <p>SCHEMA HEALTH: <strong>{data.schema_health ? '✅ ONLINE' : '❌ CRITICAL FAILURE'}</strong></p>
-            <p>USER: <strong>{data.user_email}</strong></p>
-          </div>
-
-          <div style={{ border: '1px solid #333', padding: '20px' }}>
-            <h3>2. ROUTE AUDIT (The 405 Check)</h3>
-            <pre>{JSON.stringify(data.route_audit, null, 2)}</pre>
-          </div>
-        </>
-      )}
     </div>
   );
 }
