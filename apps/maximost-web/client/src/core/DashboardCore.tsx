@@ -181,7 +181,11 @@ export default function DashboardCore() {
 
         {/* LIBRARY */}
         <div className="mt-12 border-t border-white/5 pt-12">
-             <HabitArchive userHabits={safeHabits} onImport={fetchData} onEdit={handleEdit} />
+             <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4">
+                 <span className="w-2 h-2 rounded-full bg-slate-700"></span>
+                 HABIT LIBRARY
+             </h2>
+             <HabitArchive userHabits={safeHabits} onImport={fetchData} onEdit={handleEdit} hideHeader={true} />
         </div>
 
         {isModalOpen && (

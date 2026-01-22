@@ -12,9 +12,10 @@ interface HabitArchiveProps {
     onImport: (habit: Habit) => void;
     userHabits: Habit[]; // Pass user's active habits to gray them out
     onEdit?: (habit: Habit) => void; // Pass edit handler
+    hideHeader?: boolean;
 }
 
-export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits, onEdit }) => {
+export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits, onEdit, hideHeader }) => {
     const [libraryHabits, setLibraryHabits] = useState<Habit[]>([]);
     const [loading, setLoading] = useState(true);
     const { toast } = useToast();
@@ -78,11 +79,13 @@ export const HabitArchive: React.FC<HabitArchiveProps> = ({ onImport, userHabits
 
     return (
         <div className="space-y-6">
-             <div className="flex justify-between items-center mb-6">
-                 {/* REPAIR ORDER: Rename to ATOM LEDGER */}
-                 <h2 className="text-xl font-bold text-white uppercase tracking-widest">ATOM LEDGER</h2>
-                 <span className="text-xs font-mono text-zinc-500">{libraryHabits.length} PROTOCOLS AVAILABLE</span>
-              </div>
+             {!hideHeader && (
+                 <div className="flex justify-between items-center mb-6">
+                     {/* REPAIR ORDER: Rename to ATOM LEDGER */}
+                     <h2 className="text-xl font-bold text-white uppercase tracking-widest">ATOM LEDGER</h2>
+                     <span className="text-xs font-mono text-zinc-500">{libraryHabits.length} PROTOCOLS AVAILABLE</span>
+                  </div>
+             )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                  {libraryHabits.map((t: any) => {

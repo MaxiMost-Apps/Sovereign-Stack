@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { Check, Plus, Minus, MoreVertical, Edit2, Trash2, RotateCcw, Activity } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef, useEffect } from 'react';
+import { Check, MoreVertical, Edit2, Trash2, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getThemeStyles } from '../config/themeConfig';
 
@@ -31,44 +30,56 @@ export default function DailyHabitRow({
   isFuture
 }: DailyHabitRowProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [isInputMode, setIsInputMode] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const theme = getThemeStyles(habit.color);
-  
-  // 1. DETERMINE MODE: Boolean (Check) vs Quantitative (Numbers)
   const target = habit.daily_goal || habit.target_value || 1;
   const isQuantified = target > 1;
   const currentValue = logEntry?.value || 0;
-  
-  // 2. PROGRESS CALCULATION
   const progress = Math.min((currentValue / target) * 100, 100);
   const isFullyComplete = currentValue >= target;
 
-  const handleIncrement = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isSystemLocked || isFuture) return;
-    const next = currentValue + 1;
-    onToggle(habit.id, date, next);
+  // Auto-focus input when mode switches
+  useEffect(() => {
+    if (isInputMode && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isInputMode]);
+
+  const handleInputSubmit = () => {
+    setIsInputMode(false);
+    const val = parseInt(inputValue);
+    if (!isNaN(val)) {
+      onToggle(habit.id, date, val);
+    }
   };
 
-  const handleDecrement = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (isSystemLocked || isFuture || currentValue <= 0) return;
-    const next = currentValue - 1;
-    // If going to 0, send 0 (which usually deletes the log in the backend)
-    onToggle(habit.id, date, next);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleInputSubmit();
+    if (e.key === 'Escape') setIsInputMode(false);
   };
 
-  const handleCheck = () => {
-    if (isSystemLocked || isFuture) return;
-    // Toggle: If complete, set to 0. If incomplete, set to Target (Instant finish)
-    const val = isFullyComplete ? 0 : target;
-    onToggle(habit.id, date, val);
+  const handleMainClick = () => {
+    if (isSystemLocked || isFuture || isSortMode) return;
+
+    if (isQuantified) {
+      // Enter Input Mode for Numbers
+      setInputValue(currentValue.toString());
+      setIsInputMode(true);
+    } else {
+      // Standard Toggle for Checkboxes
+      const val = isFullyComplete ? 0 : 1;
+      onToggle(habit.id, date, val);
+    }
   };
 
   return (
     <div className={cn(
       "group relative flex items-center justify-between p-3 rounded-xl border transition-all mb-3",
       "bg-[#0b0c10] border-white/5 hover:border-white/10",
-      isFullyComplete ? "opacity-50 grayscale" : "opacity-100",
+      isFullyComplete && !isQuantified ? "opacity-50 grayscale" : "opacity-100",
       isSortMode && "cursor-grab active:cursor-grabbing border-dashed border-slate-700"
     )}>
       
@@ -78,22 +89,20 @@ export default function DailyHabitRow({
           "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
           isFullyComplete ? "bg-emerald-500/20 text-emerald-500" : "bg-white/5 text-slate-500"
         )}>
-           {/* You can map icons dynamically if needed */}
            <Activity size={18} />
         </div>
         
         <div className="flex flex-col">
           <span className={cn(
             "font-bold text-sm transition-all",
-            isFullyComplete ? "text-slate-500 line-through" : "text-slate-200"
+            isFullyComplete && !isQuantified ? "text-slate-500 line-through" : "text-slate-200"
           )}>
             {habit.title}
           </span>
           
-          {/* META: Frequency or Unit */}
           <div className="flex items-center gap-2 text-[10px] text-slate-500 font-bold tracking-wider uppercase">
              {habit.frequency_type === 'weekly' && <span className="text-blue-400">Weekly</span>}
-             {isQuantified && <span>{currentValue} / {target} {habit.unit}</span>}
+             {isQuantified && <span>Goal: {target} {habit.unit}</span>}
              {habit.current_streak > 1 && <span className="text-orange-500">🔥 {habit.current_streak}</span>}
           </div>
         </div>
@@ -102,44 +111,43 @@ export default function DailyHabitRow({
       {/* RIGHT: CONTROLS */}
       <div className="flex items-center gap-3">
         
-        {/* CONTROL 1: QUANTIFIED STEPPER */}
-        {isQuantified && !isSortMode && (
-          <div className="flex items-center bg-black/50 rounded-lg border border-white/10 overflow-hidden">
-            <button 
-              onClick={handleDecrement}
-              className="p-2 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
-            >
-              <Minus size={14} />
-            </button>
-            <div className="w-12 text-center text-xs font-mono font-bold text-white border-l border-r border-white/10 py-1">
-               {Math.floor(progress)}%
-            </div>
-            <button 
-              onClick={handleIncrement}
-              className="p-2 hover:bg-white/10 text-blue-400 hover:text-white transition-colors"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
-        )}
-
-        {/* CONTROL 2: MAIN TOGGLE (Checkbox or Finish) */}
-        {!isQuantified && !isSortMode && (
-           <button
-             onClick={handleCheck}
-             disabled={isSystemLocked}
-             className={cn(
-               "w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all",
-               isFullyComplete 
-                 ? "bg-emerald-500 border-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.5)]" 
-                 : "border-slate-700 hover:border-slate-500 bg-transparent"
+        {/* CONTROL: CLICK TO TYPE / CHECK */}
+        {!isSortMode && (
+           <div className="relative">
+             {isInputMode ? (
+               <input
+                 ref={inputRef}
+                 type="number"
+                 value={inputValue}
+                 onChange={(e) => setInputValue(e.target.value)}
+                 onBlur={handleInputSubmit}
+                 onKeyDown={handleKeyDown}
+                 className="w-16 bg-black border border-blue-500 text-white font-bold text-center rounded py-1 outline-none"
+               />
+             ) : (
+               <button
+                 onClick={handleMainClick}
+                 disabled={isSystemLocked}
+                 className={cn(
+                   "min-w-[3rem] h-8 px-2 rounded-lg border-2 flex items-center justify-center transition-all font-bold text-xs",
+                   isFullyComplete
+                     ? "bg-emerald-500 border-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+                     : "border-slate-700 hover:border-slate-500 bg-transparent text-slate-400 hover:text-white"
+                 )}
+               >
+                 {isQuantified ? (
+                   // Show Number (e.g. "50")
+                   <span>{currentValue}</span>
+                 ) : (
+                   // Show Checkmark
+                   isFullyComplete && <Check size={16} strokeWidth={4} />
+                 )}
+               </button>
              )}
-           >
-             {isFullyComplete && <Check size={16} strokeWidth={4} />}
-           </button>
+           </div>
         )}
 
-        {/* CONTROL 3: MENU (Edit/Delete) */}
+        {/* MENU */}
         <div className="relative">
           <button 
             onClick={() => setShowMenu(!showMenu)} 
@@ -167,7 +175,7 @@ export default function DailyHabitRow({
         </div>
       </div>
       
-      {/* PROGRESS BAR BACKGROUND (For Quantified) */}
+      {/* PROGRESS BAR (Quantified Only) */}
       {isQuantified && currentValue > 0 && currentValue < target && (
         <div className="absolute bottom-0 left-0 h-[2px] bg-blue-500/50 transition-all duration-500" style={{ width: `${progress}%` }} />
       )}
