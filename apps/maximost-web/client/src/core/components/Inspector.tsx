@@ -33,8 +33,8 @@ export const Inspector: React.FC<InspectorProps> = ({ children }) => {
 
                 // 2. SECONDARY: Fire & Forget (Non-Blocking)
                 // Founding Status, Telemetry, etc.
-                fetch(getApiUrl('/api/founding-status')).catch(e => console.warn("Secondary Fetch Failed (Ignored):", e));
-                fetch(getApiUrl('/api/telemetry/uptime')).catch(e => console.warn("Telemetry Failed (Ignored):", e));
+                // fetch(getApiUrl('/api/founding-status')).catch(e => console.warn("Secondary Fetch Failed (Ignored):", e));
+                // fetch(getApiUrl('/api/telemetry/uptime')).catch(e => console.warn("Telemetry Failed (Ignored):", e));
 
                 // 3. UNLOCK
                 setIsSystemReady(true);
