@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Ghost, Copy, Hammer, Brain, Flame, Shield, Activity, Lock } from 'lucide-react';
+import { Ghost, Copy, Hammer, Brain, Flame, Shield, Activity, Lock, Share2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../AuthSystem';
+import { useToast } from '../components/Toast';
 
 // --- UTILITIES ---
 function cn(...classes: (string | undefined | null | false)[]) {
@@ -32,13 +33,22 @@ const SCHEMA_PAYLOAD = {
   }]
 };
 
-const MOCK_ROASTS = [
+const SAFE_ROASTS = [
     "Your fatigue is a lie told by your limbic system to save energy. You are not tired; you are unconditioned. Dopamine is earned. Lace up now.",
     "Fear is just unauthorized norepinephrine. You are protecting an ego that hasn't built anything yet. Seneca teaches us we suffer more in imagination than reality. Launch it.",
     "That excuse is comfortable. Comfort is the enemy of sovereignty. Do not negotiate with weakness. Execute the standard.",
     "You are negotiating with yourself because you know the right choice is the hard one. The easy path leads to a hard life. The hard path leads to a life of command.",
     "Nobody cares about your circumstances; they only care about your results. Stop auditing your pain and start auditing your actions.",
     "The version of you that achieves this goal is watching you right now, and they are embarrassed by this hesitation. Move."
+];
+
+const BEAST_ROASTS = [
+    "I don't care how you feel. Feelings are for civilians. You have a duty to perform. Get the f*** up and do the work.",
+    "Stop being a slave to your own weakness. That voice in your head telling you to quit? That's the enemy. Kill it.",
+    "You want a hug? Go to your mommy. You want a legacy? You have to bleed for it. Embrace the suck.",
+    "Pain is the price of entry. If you aren't willing to pay it, you don't belong in the arena. Stop whining.",
+    "Your excuses are pathetic. They are the sound of your dreams dying. Shut your mouth and move your feet.",
+    "Nobody is coming to save you. You have to save yourself. And right now, you are failing. Fix it."
 ];
 
 // --- SUB-COMPONENTS ---
@@ -99,14 +109,18 @@ const BiometricGauge = ({ icon: Icon, accent, title, status, value, reversed = f
 
 export default function TheMirror() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [excuse, setExcuse] = useState('');
   const [roast, setRoast] = useState('');
   const [loading, setLoading] = useState(false);
   const [roastCount, setRoastCount] = useState(0);
   const [sessionCount, setSessionCount] = useState(0); // Track guest session limit
   const [showSignupGate, setShowSignupGate] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [isCracked, setIsCracked] = useState(false);
+
+  // Phase 2 States
+  const [shatter, setShatter] = useState(false);
+  const [mode, setMode] = useState<'SAFE' | 'BEAST'>('BEAST');
 
   useEffect(() => {
     const count = parseInt(localStorage.getItem('maximost_mirror_count') || '0');
@@ -126,7 +140,7 @@ export default function TheMirror() {
     };
   }, []);
 
-  const handleRoast = async () => {
+  const handleStrike = async () => {
     if (!excuse.trim()) return;
 
     // 3-STRIKE RULE
@@ -139,10 +153,15 @@ export default function TheMirror() {
     setRoast('');
     setIsCracked(false);
 
-    // SIMULATE API CALL & "CRACKING" EFFECT
+    // THE HAMMER STRIKE (Wait for "analysis" then strike)
     setTimeout(() => {
-        setIsCracked(true);
-        const randomRoast = MOCK_ROASTS[Math.floor(Math.random() * MOCK_ROASTS.length)];
+        setShatter(true); // Trigger CSS Shake
+        setIsCracked(true); // Show Crack Overlay
+
+        // Select Roast based on Mode
+        const source = mode === 'BEAST' ? BEAST_ROASTS : SAFE_ROASTS;
+        const randomRoast = source[Math.floor(Math.random() * source.length)];
+
         setRoast(randomRoast);
         setLoading(false);
 
@@ -150,22 +169,32 @@ export default function TheMirror() {
         setRoastCount(newCount);
         localStorage.setItem('maximost_mirror_count', newCount.toString());
 
-        // Increment Session Count
         const newSess = sessionCount + 1;
         setSessionCount(newSess);
         sessionStorage.setItem('mirror_session_count', newSess.toString());
-    }, 1500);
+
+        // Reset Shatter animation state quickly so it can re-trigger if needed,
+        // though CSS animation usually runs once per class add.
+        setTimeout(() => setShatter(false), 500);
+    }, 1500); // 1.5s analysis delay
   };
 
-  const handleCopy = () => {
-    const viralText = `> ${roast}\n\n**Shattered by Maximost.com/Mirror**`;
-    // Fallback for iframe environments if clipboard API is restricted, though standard method usually works in modern browsers
-    try {
-        navigator.clipboard.writeText(viralText);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-        // Fallback or silent fail
+  const handleShare = async () => {
+    const text = `I just faced the Accountability Mirror.\n\n"${roast}"\n\nFace your truth at Maximost.app`;
+
+    if (navigator.share) {
+       try {
+           await navigator.share({ title: 'Accountability Mirror', text });
+       } catch (err) {
+           console.error("Share failed:", err);
+       }
+    } else {
+       try {
+           await navigator.clipboard.writeText(text);
+           toast.addToast("Copied to clipboard. Go spread the pain.", 'success');
+       } catch (e) {
+           toast.addToast("Failed to copy.", 'error');
+       }
     }
   };
 
@@ -173,6 +202,7 @@ export default function TheMirror() {
       setExcuse('');
       setRoast('');
       setIsCracked(false);
+      setShatter(false);
   };
 
   return (
@@ -192,6 +222,24 @@ export default function TheMirror() {
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* THE HAMMER SHAKE */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .animate-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
         }
       `}</style>
 
@@ -213,6 +261,25 @@ export default function TheMirror() {
 
             {/* LEFT FLANK: PROTOCOL CARDS */}
             <div className="lg:col-span-3 space-y-4">
+                {/* MODE TOGGLE */}
+                <div className="p-4 border border-zinc-800 bg-zinc-900/30 rounded-lg flex flex-col gap-2">
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Operating Mode</span>
+                    <div className="flex bg-black p-1 rounded-lg border border-zinc-800">
+                        <button
+                            onClick={() => setMode('SAFE')}
+                            className={cn("flex-1 py-2 text-xs font-bold uppercase rounded transition-all", mode === 'SAFE' ? "bg-zinc-800 text-white" : "text-zinc-500 hover:text-white")}
+                        >
+                            Safe
+                        </button>
+                        <button
+                            onClick={() => setMode('BEAST')}
+                            className={cn("flex-1 py-2 text-xs font-bold uppercase rounded transition-all flex items-center justify-center gap-1", mode === 'BEAST' ? "bg-red-900/50 text-red-500 border border-red-900" : "text-zinc-500 hover:text-red-400")}
+                        >
+                            <AlertTriangle size={10} /> Beast
+                        </button>
+                    </div>
+                </div>
+
                 <ProtocolCard
                     icon={Flame} accent="orange" title="Iron Mind Protocol" source="David Goggins"
                     quote="The 40% Rule Applies. You are not done when you are tired; you are done when you are finished."
@@ -245,8 +312,9 @@ export default function TheMirror() {
                 )}
 
                 <div className={cn(
-                    "relative bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-2 border-zinc-800 p-1 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500",
-                    isCracked && "border-zinc-700 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                    "relative bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-2 border-zinc-800 p-1 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-100",
+                    isCracked && "border-zinc-700 shadow-[0_0_30px_rgba(255,255,255,0.1)]",
+                    shatter && "animate-shake border-red-500/50"
                 )}>
                     {/* Reflective Overlay & Crack Effect */}
                     <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.05)_50%,transparent_75%)] bg-[length:250%_250%] animate-shine opacity-50 pointer-events-none" />
@@ -273,7 +341,7 @@ export default function TheMirror() {
                                     />
                                 </div>
                                 <button
-                                    onClick={handleRoast}
+                                    onClick={handleStrike}
                                     disabled={loading || !excuse}
                                     className={cn(
                                         "w-full py-4 rounded-lg font-black uppercase tracking-widest text-sm transition-all relative overflow-hidden group bg-white text-black hover:bg-zinc-200 active:scale-[0.98]",
@@ -282,7 +350,7 @@ export default function TheMirror() {
                                 >
                                     <span className="flex items-center justify-center gap-2 relative z-10">
                                         {loading ? <Activity className="w-5 h-5 animate-spin" /> : <Hammer className="w-5 h-5" />}
-                                        {loading ? "Analyzing Weakness..." : "Shatter The Excuse"}
+                                        {loading ? "Analyzing Weakness..." : "FACE THE TRUTH"}
                                     </span>
                                     {/* Button Glint Effect */}
                                     <div className="absolute inset-0 h-full w-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left bg-gradient-to-r from-transparent via-zinc-400/30 to-transparent" />
@@ -308,10 +376,10 @@ export default function TheMirror() {
                                         Face Another
                                     </button>
                                     <button
-                                        onClick={handleCopy}
+                                        onClick={handleShare}
                                         className="flex-1 py-3 bg-white text-black rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-zinc-200 transition-all flex items-center justify-center gap-2"
                                     >
-                                        {copied ? <span className="text-emerald-700 flex items-center gap-1">Copied <Activity className="w-3 h-3"/></span> : <span>Copy Result <Copy className="w-3 h-3"/></span>}
+                                        <Share2 className="w-4 h-4" /> SHARE SUFFERING
                                     </button>
                                 </div>
                             </div>
