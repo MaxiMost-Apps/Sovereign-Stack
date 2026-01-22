@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-// ✅ CORRECTED IMPORTS (Changed ../../ to ../)
+// ✅ CORRECTED IMPORTS (Using single dot for same-level or parent traversal relative to core)
 import { supabase } from '../supabase'; 
 import { useAuth } from '../AuthSystem';
 import { getApiUrl } from '../config';
@@ -21,7 +21,7 @@ import SortableHabitRow from '../components/SortableHabitRow';
 import { startOfWeek, endOfWeek, isWithinInterval, subHours, addMonths, subMonths, addDays, subDays, format, isSameDay } from 'date-fns';
 
 export default function DashboardCore() {
-  console.log("🚀 SAFE DASHBOARD CORE LOADED - PATHS FIXED"); 
+  console.log("🚀 SAFE DASHBOARD CORE LOADED - VERSION 3.0"); 
   
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -161,4 +161,32 @@ export default function DashboardCore() {
                          {FrequencyHabits.length > 0 && <h3 className="text-xs font-bold text-gray-500 uppercase mt-4">Frequency</h3>}
                         {FrequencyHabits.map((h: any) => (
                             <SortableHabitRow key={h.id} id={h.id} disabled={!isSortMode}>
-                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${
+                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} />
+                            </SortableHabitRow>
+                        ))}
+                    </SortableContext>
+                </div>
+            )}
+            {viewMode === 'weekly' && <WeeklyMatrix habits={safeHabits} currentDate={selectedDate} logs={logs} onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete} isSystemLocked={isSystemLocked} isSortMode={isSortMode} startOfWeek={0} adjustedToday={subHours(new Date(), 0)} />}
+            {viewMode === 'monthly' && <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />}
+        </DndContext>
+
+        {/* CONTROLS */}
+        <div className="mt-8 pt-4 border-t border-gray-800 flex justify-between">
+            <button onClick={() => { setEditingHabit(null); setInitialForm({}); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 rounded text-[10px] font-bold uppercase"><Plus className="w-3 h-3" /> Create Habit</button>
+        </div>
+
+        {/* LIBRARY */}
+        <div className="mt-12 border-t border-white/5 pt-12">
+             <HabitArchive />
+        </div>
+
+        {isModalOpen && (
+           <ConsoleOverlay isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingHabit ? "EDIT" : "NEW"}>
+               <HabitForm initialData={initialForm} onSubmit={async (data) => { /* Reuse logic */ setIsModalOpen(false); fetchData(); }} onCancel={() => setIsModalOpen(false)} mode={editingHabit ? 'edit' : 'create'} />
+           </ConsoleOverlay>
+        )}
+      </div>
+    </Inspector>
+  );
+}
