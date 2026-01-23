@@ -158,25 +158,58 @@ export default function DashboardCore() {
   return (
     <Inspector>
       <div className="flex flex-col gap-4 pb-[120px] relative">
-        <div className="flex justify-between items-center py-2">
-           <h1 className="text-xl font-black text-white tracking-tight">Mission Control</h1>
+
+        {/* HEADER: TITLE & CONTROLS */}
+        <div className="flex justify-between items-center py-4">
+           <h1 className="text-2xl font-black text-white tracking-tighter uppercase">Mission Control</h1>
            <div className="flex gap-2">
-              <button onClick={() => setIsSortMode(!isSortMode)} className="p-2 bg-gray-800 rounded border border-gray-700 text-slate-400"><ArrowUpDown size={20} /></button>
-              <button onClick={() => setIsSystemLocked(!isSystemLocked)} className="p-2 bg-gray-800 rounded border border-gray-700 text-slate-400">{isSystemLocked ? <Lock size={20} /> : <Unlock size={20} />}</button>
+              {/* SORT BUTTON */}
+              <button
+                onClick={() => setIsSortMode(!isSortMode)}
+                className={`p-3 rounded-xl border transition-all ${
+                    isSortMode
+                    ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]'
+                    : 'bg-[#1a1d24] border-white/10 text-slate-400 hover:text-white'
+                }`}
+              >
+                <ArrowUpDown size={20} strokeWidth={isSortMode ? 3 : 2} />
+              </button>
+
+              {/* LOCK BUTTON */}
+              <button
+                onClick={() => setIsSystemLocked(!isSystemLocked)}
+                className={`p-3 rounded-xl border transition-all ${
+                    isSystemLocked
+                    ? 'bg-red-500/10 border-red-500 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                    : 'bg-[#1a1d24] border-white/10 text-slate-400 hover:text-white'
+                }`}
+              >
+                {isSystemLocked ? <Lock size={20} strokeWidth={3} /> : <Unlock size={20} />}
+              </button>
            </div>
         </div>
 
-        {/* DATE NAV */}
-        <div className="sticky top-0 z-20 flex justify-between items-center bg-[#0b0c10]/95 backdrop-blur p-2 rounded-lg border border-white/10 mb-4">
-           <div className="flex gap-1">
+        {/* DATE NAV (Unified Style) */}
+        <div className="sticky top-0 z-20 flex justify-between items-center bg-[#0b0c10]/95 backdrop-blur-md p-2 rounded-xl border border-white/10 mb-4 shadow-xl">
+           <div className="flex gap-1 bg-black/20 p-1 rounded-lg">
               {['daily', 'weekly', 'monthly'].map(m => (
-                 <button key={m} onClick={() => setViewMode(m)} className={`px-3 py-1 text-xs font-bold uppercase ${viewMode === m ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>{m}</button>
+                 <button
+                    key={m}
+                    onClick={() => setViewMode(m)}
+                    className={`px-4 py-1.5 text-[10px] font-black uppercase rounded-md transition-all ${
+                        viewMode === m
+                        ? 'bg-slate-700 text-white shadow-lg'
+                        : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                 >
+                    {m}
+                 </button>
               ))}
            </div>
-           <div className="flex items-center gap-2">
-              <button onClick={() => handleDateChange(-1)} className="text-white">←</button>
-              <span className="text-xs font-bold text-white w-24 text-center">{getNavText()}</span>
-              <button onClick={() => handleDateChange(1)} className="text-white">→</button>
+           <div className="flex items-center gap-4 pr-2">
+              <button onClick={() => handleDateChange(-1)} className="text-slate-400 hover:text-white transition-colors">←</button>
+              <span className="text-xs font-bold text-white w-24 text-center tracking-wider">{getNavText()}</span>
+              <button onClick={() => handleDateChange(1)} className="text-slate-400 hover:text-white transition-colors">→</button>
            </div>
         </div>
 

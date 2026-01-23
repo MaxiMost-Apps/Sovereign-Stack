@@ -110,19 +110,32 @@ export default function DailyHabitRow({
                     {habit.title}
                 </span>
 
-                {/* ⬅️ MOVED TO LEFT: CONTROLS (Info & Menu) */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => setShowInfo(!showInfo)} className="p-1 text-slate-600 hover:text-blue-400 transition-colors">
-                        <Info size={14} />
+                {/* ALWAYS VISIBLE CONTROLS (No Hover Requirement) */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowInfo(!showInfo)}
+                        className={`p-1.5 rounded-md transition-colors ${showInfo ? 'bg-blue-500/20 text-blue-400' : 'text-slate-600 hover:text-slate-300 hover:bg-white/5'}`}
+                    >
+                        <Info size={16} />
                     </button>
                     <div className="relative">
-                        <button onClick={() => setShowMenu(!showMenu)} className="p-1 text-slate-600 hover:text-white transition-colors">
-                            <MoreVertical size={14} />
+                        <button
+                            onClick={() => setShowMenu(!showMenu)}
+                            className={`p-1.5 rounded-md transition-colors ${showMenu ? 'bg-white/10 text-white' : 'text-slate-600 hover:text-slate-300 hover:bg-white/5'}`}
+                        >
+                            <MoreVertical size={16} />
                         </button>
+
+                        {/* DROPDOWN MENU */}
                         {showMenu && (
-                            <div className="absolute left-0 top-6 w-32 bg-[#1a1d24] border border-white/10 rounded-lg shadow-2xl z-50 overflow-hidden">
-                                <button onClick={() => { onEdit(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 flex items-center gap-2"><Edit2 size={12} /> Edit</button>
-                                <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-2"><Trash2 size={12} /> Delete</button>
+                            <div className="absolute left-0 top-8 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
+                                <button onClick={() => { onEdit(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 flex items-center gap-3">
+                                    <Edit2 size={14} /> Edit Protocol
+                                </button>
+                                <div className="h-[1px] bg-white/5 my-0" />
+                                <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3">
+                                    <Trash2 size={14} /> Delete
+                                </button>
                             </div>
                         )}
                     </div>

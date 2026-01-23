@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Activity, Droplet, Zap, Brain, Moon, Sun, Flame, Layout, Music, Anchor, Coffee } from 'lucide-react';
+import { Save, Activity, Droplet, Zap, Brain, Moon, Sun, Flame, Layout, Music, Anchor, Coffee, Trash2 } from 'lucide-react';
 import { getThemeStyles } from '../config/themeConfig';
 
 interface HabitFormProps {
@@ -132,11 +132,25 @@ export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }
         </div>
       </div>
 
-      <div className="flex gap-3 pt-6">
-        <button type="button" onClick={onCancel} className="flex-1 py-3 bg-gray-800 text-slate-400 rounded-lg font-bold">CANCEL</button>
-        <button type="submit" className="flex-[2] py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-500 flex items-center justify-center gap-2">
-          <Save size={18} /> SAVE
-        </button>
+      {/* FOOTER ACTIONS */}
+      <div className="pt-6 sticky bottom-0 bg-[#14151a] border-t border-white/5 pb-2">
+        <div className="flex gap-3">
+            <button type="button" onClick={onCancel} className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl font-bold transition-all uppercase text-xs tracking-widest">
+                Cancel
+            </button>
+            <button type="submit" className="flex-[2] py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-900/20 uppercase text-xs tracking-widest">
+                <Save size={16} /> Save Updates
+            </button>
+        </div>
+
+        {/* DELETE ZONE (Only in Edit Mode) */}
+        {mode === 'edit' && (
+            <div className="mt-4 text-center">
+                <button type="button" className="text-[10px] font-bold text-red-900 hover:text-red-500 transition-colors uppercase tracking-widest flex items-center justify-center gap-2 w-full py-2">
+                    <Trash2 size={12} /> Archive Protocol
+                </button>
+            </div>
+        )}
       </div>
 
     </form>
