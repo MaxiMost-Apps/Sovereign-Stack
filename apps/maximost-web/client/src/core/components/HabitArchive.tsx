@@ -83,7 +83,7 @@ export function HabitArchive({ onAdopt, mode = 'library' }: HabitArchiveProps) {
               {t.title}
             </h3>
             <p className="text-xs text-slate-500 line-clamp-2 mb-4">
-              {t.description || t.why_instruction || "System Protocol."}
+              {t.description || t.why_instruction || t.how_instruction || "No mission brief available."}
             </p>
 
             <div className="flex items-center gap-2 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0" style={{ color: theme.secondary }}>
