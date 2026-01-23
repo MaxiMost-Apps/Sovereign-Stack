@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-
-// ✅ FIXED IMPORTS: Changed from "../" to "./" because these files are in src/core/
 import { supabase } from './supabase'; 
 import { useAuth } from './AuthSystem';
+import { getApiUrl } from '../config';
 import { calculateStreak } from './utils/streakLogic';
-import { toISODate, isFuture } from './utils/dateUtils';
+import { toISODate } from './utils/dateUtils';
 import DailyHabitRow from './components/DailyHabitRow';
 import WeeklyMatrix from './components/WeeklyMatrix';
 import MonthlyCalendar from './components/MonthlyCalendar';
 import HabitForm from './components/HabitForm';
-import CreateHabitModal from './components/CreateHabitModal';
 import ConsoleOverlay from './components/ConsoleOverlay';
 import { HabitArchive } from './components/HabitArchive';
 import { Inspector } from './components/Inspector';
@@ -18,21 +16,17 @@ import { Lock, Unlock, ArrowUpDown, Plus } from 'lucide-react';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import SortableHabitRow from './components/SortableHabitRow';
-import { startOfWeek, endOfWeek, isWithinInterval, subHours, addMonths, subMonths, addDays, subDays, format, isSameDay } from 'date-fns';
-
-// Config usually sits one level up, so we keep this one as ../
-import { getApiUrl } from '../config'; 
+import { subHours, addMonths, subMonths, addDays, subDays, format, isSameDay } from 'date-fns';
 
 export default function DashboardCore() {
-  console.log("🚀 SAFE DASHBOARD CORE LOADED - LOCAL PATHS"); 
+  // ✅ NEW VERSION LOG
+  console.log("🚀 MAXIMOST GOLD STANDARD V1.0"); 
   
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   
-  // STATE
   const [habits, setHabits] = useState<any[]>([]);
   const [logs, setLogs] = useState<any>(() => JSON.parse(localStorage.getItem('habit_logs_cache') || '{}'));
-  const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('daily');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,7 +34,6 @@ export default function DashboardCore() {
   const [initialForm, setInitialForm] = useState({});
   const [isSystemLocked, setIsSystemLocked] = useState(() => localStorage.getItem('isSystemLocked') === 'true');
   const [isSortMode, setIsSortMode] = useState(false);
-  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => { localStorage.setItem('isSystemLocked', String(isSystemLocked)); }, [isSystemLocked]);
 
@@ -49,16 +42,12 @@ export default function DashboardCore() {
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 }, disabled: !isSortMode })
   );
 
-  if (authLoading) return <div className="bg-black h-screen text-white flex items-center justify-center">LOADING SAFE MODE...</div>;
+  if (authLoading) return <div className="bg-black h-screen text-white flex items-center justify-center">LOADING...</div>;
 
   const fetchData = async () => {
     if (!user) return;
-    
-    // SAFE FETCH (No Telemetry)
     const { data: h } = await supabase.from('habits').select('*').order('sort_order');
     const { data: l } = await supabase.from('habit_logs').select('*').eq('user_id', user.id);
-    const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-    setUserProfile(p);
 
     const rawHabits = h || [];
     const rawLogs = l || [];
@@ -79,7 +68,6 @@ export default function DashboardCore() {
 
   useEffect(() => { fetchData(); }, [user]);
 
-  // HANDLERS
   const handleEdit = (habit: any) => { setEditingHabit(habit); setInitialForm(habit); setIsModalOpen(true); };
   const handleDelete = async () => { await fetchData(); };
   
@@ -89,44 +77,24 @@ export default function DashboardCore() {
      const currentEntry = logs[key];
      let newVal = valOverride !== null ? valOverride : (currentEntry ? 0 : 1);
 
-     // 1. Optimistic Update (Instant UI feedback)
      const newLogs = { ...logs };
      if (newVal === 0) delete newLogs[key];
      else newLogs[key] = { habit_id: habitId, completed_at: dateStr, value: newVal };
      setLogs(newLogs);
-     localStorage.setItem('habit_logs_cache', JSON.stringify(newLogs));
 
-     // 2. API Sync (The Fix: sending 'date', not 'target_date')
      try {
-        // ✅ UNIVERSAL PAYLOAD: Sends data in every format the API might expect
-        const payload = {
-            habit_id: habitId,
-            user_id: user.id,
-            date: dateStr,          // Format A
-            target_date: dateStr,   // Format B
-            completed_at: dateStr,  // Format C
-            value: newVal
+        const payload = { 
+            habit_id: habitId, 
+            date: dateStr, 
+            value: parseInt(String(newVal))
         };
-
-        console.log("SYNCING:", payload); // Debug log
-
-        const res = await fetch(getApiUrl('/api/completions/toggle'), {
+        await fetch(getApiUrl('/api/completions/toggle'), {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
             body: JSON.stringify(payload)
         });
-
-        if (!res.ok) {
-            const errText = await res.text();
-            throw new Error(`Server Error: ${res.status} ${errText}`);
-        }
-
-     } catch (error: any) {
-        console.error("SYNC FAILED:", error);
-        toast.error("Sync Failed: Check Console");
+     } catch (error) {
+        console.error("Sync Error", error);
      }
   };
 
@@ -158,75 +126,42 @@ export default function DashboardCore() {
   return (
     <Inspector>
       <div className="flex flex-col gap-4 pb-[120px] relative">
-
-        {/* HEADER: TITLE & CONTROLS */}
         <div className="flex justify-between items-center py-4">
            <h1 className="text-2xl font-black text-white tracking-tighter uppercase">Mission Control</h1>
            <div className="flex gap-2">
-              {/* SORT BUTTON */}
-              <button
-                onClick={() => setIsSortMode(!isSortMode)}
-                className={`p-3 rounded-xl border transition-all ${
-                    isSortMode
-                    ? 'bg-blue-600 border-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.5)]'
-                    : 'bg-[#1a1d24] border-white/10 text-slate-400 hover:text-white'
-                }`}
-              >
-                <ArrowUpDown size={20} strokeWidth={isSortMode ? 3 : 2} />
-              </button>
-
-              {/* LOCK BUTTON */}
-              <button
-                onClick={() => setIsSystemLocked(!isSystemLocked)}
-                className={`p-3 rounded-xl border transition-all ${
-                    isSystemLocked
-                    ? 'bg-red-500/10 border-red-500 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
-                    : 'bg-[#1a1d24] border-white/10 text-slate-400 hover:text-white'
-                }`}
-              >
-                {isSystemLocked ? <Lock size={20} strokeWidth={3} /> : <Unlock size={20} />}
-              </button>
+              <button onClick={() => setIsSortMode(!isSortMode)} className={`p-3 rounded-xl border transition-all ${isSortMode ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#1a1d24] border-white/10 text-slate-400'}`}><ArrowUpDown size={20} /></button>
+              <button onClick={() => setIsSystemLocked(!isSystemLocked)} className={`p-3 rounded-xl border transition-all ${isSystemLocked ? 'bg-red-500/10 border-red-500 text-red-500' : 'bg-[#1a1d24] border-white/10 text-slate-400'}`}>{isSystemLocked ? <Lock size={20} /> : <Unlock size={20} />}</button>
            </div>
         </div>
 
-        {/* DATE NAV (Unified Style) */}
+        {/* DATE NAV */}
         <div className="sticky top-0 z-20 flex justify-between items-center bg-[#0b0c10]/95 backdrop-blur-md p-2 rounded-xl border border-white/10 mb-4 shadow-xl">
            <div className="flex gap-1 bg-black/20 p-1 rounded-lg">
               {['daily', 'weekly', 'monthly'].map(m => (
-                 <button
-                    key={m}
-                    onClick={() => setViewMode(m)}
-                    className={`px-4 py-1.5 text-[10px] font-black uppercase rounded-md transition-all ${
-                        viewMode === m
-                        ? 'bg-slate-700 text-white shadow-lg'
-                        : 'text-slate-500 hover:text-slate-300'
-                    }`}
-                 >
-                    {m}
-                 </button>
+                 <button key={m} onClick={() => setViewMode(m)} className={`px-4 py-1.5 text-[10px] font-black uppercase rounded-md transition-all ${viewMode === m ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}>{m}</button>
               ))}
            </div>
            <div className="flex items-center gap-4 pr-2">
-              <button onClick={() => handleDateChange(-1)} className="text-slate-400 hover:text-white transition-colors">←</button>
+              <button onClick={() => handleDateChange(-1)} className="text-slate-400">←</button>
               <span className="text-xs font-bold text-white w-24 text-center tracking-wider">{getNavText()}</span>
-              <button onClick={() => handleDateChange(1)} className="text-slate-400 hover:text-white transition-colors">→</button>
+              <button onClick={() => handleDateChange(1)} className="text-slate-400">→</button>
            </div>
         </div>
 
         {/* HABIT LIST */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             {viewMode === 'daily' && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <SortableContext items={safeHabits} strategy={verticalListSortingStrategy}>
                         {AbsoluteHabits.map((h: any) => (
                             <SortableHabitRow key={h.id} id={h.id} disabled={!isSortMode}>
-                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} isFuture={isFuture(toISODate(selectedDate))} />
+                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} isFuture={false} />
                             </SortableHabitRow>
                         ))}
-                         {FrequencyHabits.length > 0 && <h3 className="text-xs font-bold text-gray-500 uppercase mt-4">Frequency</h3>}
+                        {FrequencyHabits.length > 0 && <h3 className="text-[10px] font-bold text-slate-600 uppercase mt-6 mb-2 tracking-widest pl-2">Frequency Protocols</h3>}
                         {FrequencyHabits.map((h: any) => (
                             <SortableHabitRow key={h.id} id={h.id} disabled={!isSortMode}>
-                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} isFuture={isFuture(toISODate(selectedDate))} />
+                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} isFuture={false} />
                             </SortableHabitRow>
                         ))}
                     </SortableContext>
@@ -236,24 +171,18 @@ export default function DashboardCore() {
             {viewMode === 'monthly' && <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />}
         </DndContext>
 
-        {/* CONTROLS */}
         <div className="mt-8 pt-4 border-t border-gray-800 flex justify-between">
             <button onClick={() => { setEditingHabit(null); setInitialForm({}); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 rounded text-[10px] font-bold uppercase"><Plus className="w-3 h-3" /> Create Habit</button>
         </div>
 
-        {/* LIBRARY */}
         <div className="mt-12 border-t border-white/5 pt-12">
-             <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4">
-                 <span className="w-2 h-2 rounded-full bg-slate-700"></span>
-                 HABIT LIBRARY
-             </h2>
-             {/* Pass 'library' mode explicitly */}
-             <HabitArchive mode="library" onAdopt={(template: any) => handleEdit(template)} />
+             <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-slate-700"></span> HABIT LIBRARY</h2>
+             <HabitArchive onAdopt={(template: any) => handleEdit(template)} />
         </div>
 
         {isModalOpen && (
            <ConsoleOverlay isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingHabit ? "EDIT" : "NEW"}>
-               <HabitForm initialData={initialForm} onSubmit={async (data) => { /* Reuse logic */ setIsModalOpen(false); fetchData(); }} onCancel={() => setIsModalOpen(false)} mode={editingHabit ? 'edit' : 'create'} />
+               <HabitForm initialData={initialForm} onSubmit={async (data) => { setIsModalOpen(false); await supabase.from('habits').upsert(data); fetchData(); }} onCancel={() => setIsModalOpen(false)} mode={editingHabit ? 'edit' : 'create'} />
            </ConsoleOverlay>
         )}
       </div>
