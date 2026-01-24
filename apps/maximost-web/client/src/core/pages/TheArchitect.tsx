@@ -24,21 +24,40 @@ export default function TheArchitect() {
   // Kinetic State
   const [isSaving, setIsSaving] = useState(false);
 
-  // Dynamic Placeholder State
-  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  // Typewriter Placeholder Logic
+  const [placeholderText, setPlaceholderText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [loopNum, setLoopNum] = useState(0);
+  const [typingSpeed, setTypingSpeed] = useState(150);
+
   const placeholders = [
-      "e.g., A Sovereign Founder...",
-      "e.g., A Disciplined Father...",
-      "e.g., A Kinetic Athlete...",
-      "e.g., A Stoic Leader..."
+      "Sovereign Founder",
+      "Disciplined Father",
+      "Kinetic Athlete",
+      "Stoic Leader",
+      "Strategic Investor"
   ];
 
   useEffect(() => {
-      const interval = setInterval(() => {
-          setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
-      }, 3000);
-      return () => clearInterval(interval);
-  }, []);
+    const handleType = () => {
+      const i = loopNum % placeholders.length;
+      const fullText = placeholders[i];
+
+      setPlaceholderText(isDeleting ? fullText.substring(0, placeholderText.length - 1) : fullText.substring(0, placeholderText.length + 1));
+
+      setTypingSpeed(isDeleting ? 30 : 150);
+
+      if (!isDeleting && placeholderText === fullText) {
+        setTimeout(() => setIsDeleting(true), 2000); // Pause at end
+      } else if (isDeleting && placeholderText === '') {
+        setIsDeleting(false);
+        setLoopNum(loopNum + 1);
+      }
+    };
+
+    const timer = setTimeout(handleType, typingSpeed);
+    return () => clearTimeout(timer);
+  }, [placeholderText, isDeleting, loopNum, typingSpeed]);
 
   useEffect(() => {
       if (tabParam === 'toolbelt') setActiveTab('toolbelt');
@@ -223,8 +242,8 @@ export default function TheArchitect() {
                                     <label className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">Who do you wish to become?</label>
                                     <input
                                         type="text"
-                                        placeholder={placeholders[placeholderIndex]}
-                                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors font-mono transition-all duration-500"
+                                        placeholder={`e.g., A ${placeholderText}...`}
+                                        className="w-full bg-zinc-900 border border-zinc-800 rounded p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-purple-500 transition-colors font-mono"
                                     />
                                 </div>
                             </div>
