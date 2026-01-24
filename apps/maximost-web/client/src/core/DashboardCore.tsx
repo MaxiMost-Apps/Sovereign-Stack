@@ -19,8 +19,8 @@ import SortableHabitRow from './components/SortableHabitRow';
 import { subHours, addMonths, subMonths, addDays, subDays, format, isSameDay } from 'date-fns';
 
 export default function DashboardCore() {
-  // ✅ NEW VERSION LOG
-  console.log("🚀 MAXIMOST GOLD STANDARD V1.0"); 
+  // ✅ VERSION CHECK: If you don't see this, the deploy failed.
+  console.log("🚀 MAXIMOST GOLD STANDARD V2.0 - ACTIVE");
   
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -83,9 +83,9 @@ export default function DashboardCore() {
      setLogs(newLogs);
 
      try {
-        const payload = { 
-            habit_id: habitId, 
-            date: dateStr, 
+        const payload = {
+            habit_id: habitId,
+            date: dateStr,
             value: parseInt(String(newVal))
         };
         await fetch(getApiUrl('/api/completions/toggle'), {
@@ -175,6 +175,7 @@ export default function DashboardCore() {
             <button onClick={() => { setEditingHabit(null); setInitialForm({}); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 rounded text-[10px] font-bold uppercase"><Plus className="w-3 h-3" /> Create Habit</button>
         </div>
 
+        {/* LIBRARY */}
         <div className="mt-12 border-t border-white/5 pt-12">
              <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-slate-700"></span> HABIT LIBRARY</h2>
              <HabitArchive onAdopt={(template: any) => handleEdit(template)} />
