@@ -61,6 +61,20 @@ router.post('/adopt', async (c) => {
       const { data: template } = await supabaseAdmin.from('habits').select('*').eq('slug', slug).single();
 
       if (template) {
+        // ✅ Check if user already has this habit (by title)
+        const { data: existing } = await supabaseAdmin
+            .from('habits')
+            .select('id')
+            .eq('user_id', user_id)
+            .eq('title', template.title)
+            .maybeSingle();
+
+        if (existing) {
+            console.log(`Skipping duplicate adoption for ${template.title}`);
+            results.push(existing);
+            continue;
+        }
+
         // Clone it
         const { data: newHabit, error } = await supabaseAdmin
           .from('habits')

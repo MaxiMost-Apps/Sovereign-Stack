@@ -20,7 +20,7 @@ import { subHours, addMonths, subMonths, addDays, subDays, format, isSameDay } f
 
 export default function DashboardCore() {
   // ✅ VERSION CHECK: If you don't see this, the deploy failed.
-  console.log("🚀 MAXIMOST GOLD STANDARD V2.0 - ACTIVE");
+  console.log("🚀 MAXIMOST GOLD V3.1 - DIAMOND");
   
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -59,7 +59,17 @@ export default function DashboardCore() {
     });
     setLogs(logMap);
 
-    const habitsWithStreak = rawHabits.map((habit: any) => ({
+    // ✅ DEDUPLICATE HABITS (Fix for repeating "Deep Work" / "No Sugar")
+    const uniqueHabitsMap = new Map();
+    rawHabits.forEach((habit: any) => {
+        // We use title as the unique key. If duplicate exists, we keep the first one (usually oldest ID due to sort)
+        if (!uniqueHabitsMap.has(habit.title)) {
+            uniqueHabitsMap.set(habit.title, habit);
+        }
+    });
+    const uniqueHabits = Array.from(uniqueHabitsMap.values());
+
+    const habitsWithStreak = uniqueHabits.map((habit: any) => ({
        ...habit,
        streak: calculateStreak(habit, logMap)
     }));
