@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Activity, Zap, Brain, Flame, Droplet, Moon, Sun, Coffee, Dumbbell, Book, Briefcase, Heart, Trash2, Calendar, FileText, Layout } from 'lucide-react';
+import { Save, Activity, Zap, Brain, Flame, Droplet, Moon, Sun, Coffee, Dumbbell, Book, Briefcase, Heart, Trash2, Calendar, FileText } from 'lucide-react';
 import { getThemeStyles } from '../config/themeConfig';
 
 interface HabitFormProps {
@@ -18,8 +18,8 @@ const ICONS = [
 ];
 
 export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }: HabitFormProps) {
-  // ✅ LOG TO VERIFY UPDATE
-  console.log("✅ HABIT FORM TITAN LOADED");
+  // ✅ LOG TO PROVE WE OVERWROTE MAIN
+  console.log("✅ HABIT FORM: MAIN BRANCH OVERWRITE ACTIVE");
 
   const [formData, setFormData] = useState({
     title: initialData.title || '',
@@ -49,7 +49,7 @@ export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }
             <select
                value={formData.frequency_type}
                onChange={(e) => setFormData({ ...formData, frequency_type: e.target.value })}
-               className="w-full bg-black border border-white/20 rounded-lg p-2 text-white font-bold text-sm outline-none focus:border-blue-500"
+               className="w-full bg-black border border-white/20 rounded-lg p-2 text-white font-bold text-sm outline-none focus:border-blue-500 uppercase"
             >
                <option value="daily">Daily Protocol</option>
                <option value="weekly">Weekly Target</option>
@@ -62,12 +62,12 @@ export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }
                 type="date"
                 value={formData.start_date}
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                className="w-full bg-black border border-white/20 rounded-lg p-2 text-white font-bold text-sm outline-none focus:border-blue-500"
+                className="w-full bg-black border border-white/20 rounded-lg p-2 text-white font-bold text-sm outline-none focus:border-blue-500 uppercase"
             />
         </div>
       </div>
 
-      {/* 2. IDENTITY (Name & Target) */}
+      {/* 2. IDENTITY */}
       <div className="space-y-4">
           <div>
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Habit Identity</label>
@@ -94,9 +94,9 @@ export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }
           </div>
       </div>
 
-      {/* 3. VISUALS (Split Layout - Colors Left, Icons Right) */}
+      {/* 3. VISUALS (Fixed: Colors Left, Icons Right) */}
       <div className="grid grid-cols-12 gap-6 pt-6 border-t border-white/5">
-          {/* COLORS */}
+          {/* COLORS (4 Cols) */}
           <div className="col-span-4 border-r border-white/5 pr-4">
              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Theme</label>
              <div className="grid grid-cols-3 gap-3">
@@ -112,7 +112,7 @@ export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }
              </div>
           </div>
 
-          {/* ICONS */}
+          {/* ICONS (8 Cols) */}
           <div className="col-span-8 pl-2">
              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Icon</label>
              <div className="grid grid-cols-6 gap-2">

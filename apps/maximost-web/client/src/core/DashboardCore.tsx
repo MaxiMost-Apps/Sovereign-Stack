@@ -19,8 +19,8 @@ import SortableHabitRow from './components/SortableHabitRow';
 import { subHours, addMonths, subMonths, addDays, subDays, format, isSameDay } from 'date-fns';
 
 export default function DashboardCore() {
-  // ✅ VERSION CHECK: If you don't see this, the deploy failed.
-  console.log("🚀 MAXIMOST GOLD V3.1 - DIAMOND");
+  // ✅ IF YOU SEE THIS, WE WON.
+  console.log("🚀 MAXIMOST: MAIN BRANCH OVERWRITE SUCCESSFUL");
   
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -59,17 +59,7 @@ export default function DashboardCore() {
     });
     setLogs(logMap);
 
-    // ✅ DEDUPLICATE HABITS (Fix for repeating "Deep Work" / "No Sugar")
-    const uniqueHabitsMap = new Map();
-    rawHabits.forEach((habit: any) => {
-        // We use title as the unique key. If duplicate exists, we keep the first one (usually oldest ID due to sort)
-        if (!uniqueHabitsMap.has(habit.title)) {
-            uniqueHabitsMap.set(habit.title, habit);
-        }
-    });
-    const uniqueHabits = Array.from(uniqueHabitsMap.values());
-
-    const habitsWithStreak = uniqueHabits.map((habit: any) => ({
+    const habitsWithStreak = rawHabits.map((habit: any) => ({
        ...habit,
        streak: calculateStreak(habit, logMap)
     }));
@@ -162,7 +152,7 @@ export default function DashboardCore() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             {viewMode === 'daily' && (
                 <div className="space-y-3">
-                    <SortableContext items={safeHabits} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={safeHabits.map((h: any) => h.id)} strategy={verticalListSortingStrategy}>
                         {AbsoluteHabits.map((h: any) => (
                             <SortableHabitRow key={h.id} id={h.id} disabled={!isSortMode}>
                                 <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} isFuture={false} />
@@ -185,7 +175,6 @@ export default function DashboardCore() {
             <button onClick={() => { setEditingHabit(null); setInitialForm({}); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 rounded text-[10px] font-bold uppercase"><Plus className="w-3 h-3" /> Create Habit</button>
         </div>
 
-        {/* LIBRARY */}
         <div className="mt-12 border-t border-white/5 pt-12">
              <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-slate-700"></span> HABIT LIBRARY</h2>
              <HabitArchive onAdopt={(template: any) => handleEdit(template)} />
