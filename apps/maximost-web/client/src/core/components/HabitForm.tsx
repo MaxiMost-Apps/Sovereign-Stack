@@ -18,6 +18,9 @@ const ICONS = [
 ];
 
 export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }: HabitFormProps) {
+  // ✅ LOG TO VERIFY UPDATE
+  console.log("✅ HABIT FORM TITAN LOADED");
+
   const [formData, setFormData] = useState({
     title: initialData.title || '',
     color: initialData.color || 'maximost_blue',
@@ -91,9 +94,9 @@ export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }
           </div>
       </div>
 
-      {/* 3. VISUALS (Split Layout) */}
+      {/* 3. VISUALS (Split Layout - Colors Left, Icons Right) */}
       <div className="grid grid-cols-12 gap-6 pt-6 border-t border-white/5">
-          {/* COLORS (Left - 4 Cols) */}
+          {/* COLORS */}
           <div className="col-span-4 border-r border-white/5 pr-4">
              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Theme</label>
              <div className="grid grid-cols-3 gap-3">
@@ -109,7 +112,7 @@ export default function HabitForm({ initialData = {}, onSubmit, onCancel, mode }
              </div>
           </div>
 
-          {/* ICONS (Right - 8 Cols) */}
+          {/* ICONS */}
           <div className="col-span-8 pl-2">
              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Icon</label>
              <div className="grid grid-cols-6 gap-2">
