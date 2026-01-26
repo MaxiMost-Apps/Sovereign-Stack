@@ -152,7 +152,7 @@ export default function DashboardV3() {
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             {viewMode === 'daily' && (
                 <div className="space-y-3">
-                    <SortableContext items={safeHabits} strategy={verticalListSortingStrategy}>
+                    <SortableContext items={safeHabits.map((h: any) => h.id)} strategy={verticalListSortingStrategy}>
                         {AbsoluteHabits.map((h: any) => (
                             <SortableHabitRow key={h.id} id={h.id} disabled={!isSortMode}>
                                 <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} isFuture={false} />
