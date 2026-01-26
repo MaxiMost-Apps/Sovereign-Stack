@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
-import { Activity, ArrowRight, Layers, Zap, Brain, Flame, Droplet, Moon, Sun, Layout, Music, Anchor, Coffee } from 'lucide-react';
+import { Activity, ArrowRight, Zap, Brain, Flame, Droplet, Moon, Sun, Coffee } from 'lucide-react';
 import { getThemeStyles } from '../config/themeConfig';
 
-const ICON_MAP: any = { Activity, Zap, Brain, Flame, Droplet, Moon, Sun, Layout, Music, Anchor, Coffee };
+const ICON_MAP: any = { Activity, Zap, Brain, Flame, Droplet, Moon, Sun, Coffee };
 
-// MOCK DATA (Safety Net)
+// MOCK DATA: Use this if DB returns nothing
 const MOCK_TEMPLATES = [
     { id: 't1', title: 'Morning Sunlight', icon: 'Sun', color: 'maximost_blue', description: 'Anchor your circadian clock with 10m outdoor light.' },
     { id: 't2', title: 'Zone 2 Cardio', icon: 'Activity', color: 'emerald_city', description: '45 mins of steady state movement.' },
@@ -19,15 +19,19 @@ interface HabitArchiveProps {
 }
 
 export function HabitArchive({ onAdopt, mode = 'library' }: HabitArchiveProps) {
+  console.log("✅ HABIT ARCHIVE TITAN LOADED");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchItems = async () => {
         setLoading(true);
+        // Force mock data if mode is library for immediate visibility
         const { data } = await supabase.from('habits').select('*').is('user_id', null);
-        // Use DB data if available, else Mock
-        setItems((data && data.length > 0) ? data : MOCK_TEMPLATES);
+
+        // If DB is empty, use Mock Data
+        const finalData = (data && data.length > 0) ? data : MOCK_TEMPLATES;
+        setItems(finalData);
         setLoading(false);
     };
     fetchItems();
@@ -45,25 +49,25 @@ export function HabitArchive({ onAdopt, mode = 'library' }: HabitArchiveProps) {
           <div
             key={t.id}
             onClick={() => onAdopt && onAdopt({ ...t, id: undefined, is_active: true })}
-            // ✅ FORCED HEIGHT (h-full) TO ALIGN ROWS
-            className="h-full p-5 rounded-xl bg-[#0b0c10] border border-white/5 hover:border-white/20 cursor-pointer transition-all group relative overflow-hidden flex flex-col justify-between"
+            // ✅ FORCED HEIGHT & ALIGNMENT
+            className="h-full min-h-[140px] p-5 rounded-xl bg-[#0b0c10] border border-white/5 hover:border-white/20 cursor-pointer transition-all group relative overflow-hidden flex flex-col justify-between"
           >
             <div>
-                <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center transition-colors" style={{ color: theme.primary }}>
-                    <IconComponent size={20} />
-                </div>
-                <div className="px-2 py-1 rounded bg-white/5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    PROTOCOL
-                </div>
+                <div className="flex justify-between items-start mb-3">
+                   <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center" style={{ color: theme.primary }}>
+                      <IconComponent size={20} />
+                   </div>
+                   <div className="px-2 py-1 rounded bg-white/5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                       PROTOCOL
+                   </div>
                 </div>
 
                 <h3 className="text-sm font-bold text-slate-200 mb-1 group-hover:text-white transition-colors">
-                {t.title}
+                  {t.title}
                 </h3>
-                {/* ✅ DATA UNAVAILABLE FIX */}
-                <p className="text-xs text-slate-500 line-clamp-2 mb-4">
-                {t.description || t.why_instruction || "System Protocol. Click to initialize."}
+                {/* ✅ DESCRIPTION FIX */}
+                <p className="text-xs text-slate-500 line-clamp-2 mb-2">
+                  {t.description || t.why_instruction || "Standard operational protocol."}
                 </p>
             </div>
 
