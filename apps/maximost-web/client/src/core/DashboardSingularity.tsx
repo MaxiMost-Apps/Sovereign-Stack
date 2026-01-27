@@ -295,19 +295,22 @@ export default function DashboardSingularity() {
      setLogs(newLogs);
 
      try {
-        // FIX: Ensure payload matches backend expectation (habit_id, date, status/value)
-        // Backend expects: habit_id, user_id (from token), date (YYYY-MM-DD), value (number)
+        // PRECISION UPDATE: Send 'status' as 'completed'/pending along with habit_id
         const payload = {
             habit_id: habitId,
             date: dateStr,
+            status: newVal > 0 ? 'completed' : 'pending',
             value: parseInt(String(newVal))
         };
 
-        await fetch(getApiUrl('/api/completions/toggle'), {
+        const response = await fetch(getApiUrl('/api/completions/toggle'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
             body: JSON.stringify(payload)
         });
+
+        if (!response.ok) console.error("Server rejected toggle:", response.status);
+
      } catch (error) { console.error("Sync Error", error); }
   };
 
@@ -349,13 +352,56 @@ export default function DashboardSingularity() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 {viewMode === 'daily' && (
                     <div className="space-y-3">
-                        <SortableContext items={safeHabits.map((h: any) => h.id)} strategy={verticalListSortingStrategy}>
-                            {safeHabits.map((h: any) => (
-                                <SortableItem key={h.id} id={h.id} disabled={!isSortMode}>
-                                    <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} />
+                        {/* MASTER FILE ITERATION (Precision Update) */}
+                        {/* We map SOVEREIGN_LIBRARY to ensure visual consistency, checking user state for adoption */}
+                        {SOVEREIGN_LIBRARY.slice(0, 10).map((masterHabit: any) => {
+                            // Find the user's status for this habit (Active Check)
+                            // We match by Title or ID. DB habits usually have 'h_...' ID if adopted from Master, or UUID.
+                            // Safer to match by Title for legacy support.
+                            const userState = habits.find((h: any) => h.title === masterHabit.title || h.habit_id === masterHabit.id);
+
+                            // If user hasn't adopted, do we show it?
+                            // "Daily Routine" usually implies active.
+                            // BUT the instruction says "Change it to iterate over the Master File".
+                            // If I only show active, it looks like before.
+                            // If I show ALL 10, it's a "Roster".
+                            // I will show ALL, but dim inactive?
+                            // Or maybe the user *wants* to see the Master List as the daily view?
+                            // Let's assume we render the DailyHabitRow for *Active* ones found in Master + any custom ones?
+                            // No, "Replace your old .map...".
+                            // I'll render the Master list items that correspond to user habits, merging data.
+                            // If userState is undefined, it means user hasn't adopted.
+                            // I will ONLY render if userState exists (Active), OR if I should show available.
+                            // The instruction snippet: `habit={{...masterHabit, ...userState}}`.
+                            // If userState is missing, it renders Master habit with no ID?
+                            // `toggleCheck` needs ID.
+                            // So I will render ONLY if `userState` exists (Active).
+                            if (!userState) return null;
+
+                            return (
+                                <SortableItem key={userState.id || masterHabit.id} id={userState.id || masterHabit.id} disabled={!isSortMode}>
+                                    <DailyHabitRow
+                                        habit={{ ...masterHabit, ...userState }}
+                                        isSystemLocked={isSystemLocked}
+                                        isSortMode={isSortMode}
+                                        isCompleted={!!logs[`${userState.id}_${toISODate(selectedDate)}`]}
+                                        logEntry={logs[`${userState.id}_${toISODate(selectedDate)}`]}
+                                        onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)}
+                                        onEdit={() => handleEdit(userState)}
+                                        onDelete={handleDelete}
+                                        date={toISODate(selectedDate)}
+                                    />
                                 </SortableItem>
-                            ))}
-                        </SortableContext>
+                            );
+                        })}
+
+                        {/* Render Custom Habits (Not in Master) */}
+                        {habits.filter((h: any) => !SOVEREIGN_LIBRARY.some(m => m.title === h.title)).map((h: any) => (
+                             <SortableItem key={h.id} id={h.id} disabled={!isSortMode}>
+                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} />
+                            </SortableItem>
+                        ))}
+
                         {safeHabits.length === 0 && <div className="text-center py-10 text-slate-500 text-sm">No active protocols. <button onClick={() => { setEditingHabit(null); setIsModalOpen(true); }} className="text-blue-500 underline">Create one.</button></div>}
                     </div>
                 )}
