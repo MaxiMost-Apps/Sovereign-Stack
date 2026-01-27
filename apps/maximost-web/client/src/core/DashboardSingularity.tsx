@@ -106,7 +106,9 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
                 {/* Z-INDEX FIX: Allow clicks to pass through text */}
                 <span className={cn("font-bold text-sm text-slate-200 relative z-[1] pointer-events-none", isFullyComplete && "text-white")}>{habit.title}</span>
                 {!isSystemLocked && !isSortMode && (
-                <div className="relative z-10 habit-actions">
+                <div className="relative z-10 habit-actions flex items-center gap-1">
+                    {/* RESTORED INFO BUTTON */}
+                    <button onClick={(e) => { e.stopPropagation(); /* onOpenInfo(habit) - Placeholder */ }} className="p-1 text-slate-600 hover:text-blue-400 transition-colors"><Info size={16} /></button>
                     <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-1 text-slate-600 hover:text-white"><MoreVertical size={16} /></button>
                     {showMenu && (
                         <div className="absolute left-0 top-8 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
@@ -292,7 +294,14 @@ export default function DashboardSingularity() {
      setLogs(newLogs);
 
      try {
-        const payload = { habit_id: habitId, date: dateStr, target_date: dateStr, value: parseInt(String(newVal)) };
+        // FIX: Ensure payload matches backend expectation (habit_id, date, status/value)
+        // Backend expects: habit_id, user_id (from token), date (YYYY-MM-DD), value (number)
+        const payload = {
+            habit_id: habitId,
+            date: dateStr,
+            value: parseInt(String(newVal))
+        };
+
         await fetch(getApiUrl('/api/completions/toggle'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` },
