@@ -9,6 +9,7 @@ import MonthlyCalendar from './components/MonthlyCalendar';
 import ConsoleOverlay from './components/ConsoleOverlay';
 import { Inspector } from './components/Inspector';
 import { useToast } from './components/Toast';
+import { EditProtocolModal } from '../components/habits/EditHabitModal';
 // ✅ FIXED IMPORTS: Added 'Save', 'GripVertical', 'Trash2', etc.
 import { Lock, Unlock, ArrowUpDown, Plus, Check, MoreVertical, Edit2, Trash2, Info, Flame, X, GripVertical, Save, Activity, Zap, Brain, Droplet, Moon, Sun, Coffee, Dumbbell, Book, Briefcase, Heart, Calendar, FileText, ArrowRight, Layout } from 'lucide-react';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
@@ -73,7 +74,9 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
   const [showInput, setShowInput] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const theme = getThemeStyles(habit.color || 'maximost_blue');
+  // COLOR LOGIC FIX: Absolute = RED, Frequency = BLUE
+  const activeColor = habit.frequency_type === 'weekly' ? '#2563EB' : '#EF4444'; // Blue : Red
+
   const IconComponent = ICON_MAP[habit.icon] || Activity;
   const target = habit.daily_goal || 1;
   const isQuantified = target > 1;
@@ -91,18 +94,19 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
 
   return (
     <div className={cn("relative flex items-center justify-between p-4 rounded-xl border transition-all mb-3 bg-[#0b0c10] border-white/5", isFullyComplete ? "opacity-100" : "opacity-90")}
-    style={{ height: '80px', borderColor: isFullyComplete ? theme.primary : (isSortMode ? '#1e3a8a' : 'rgba(255,255,255,0.05)'), boxShadow: isFullyComplete ? `0 0 15px -10px ${theme.primary}` : 'none' }}>
+    style={{ height: '80px', borderColor: isFullyComplete ? activeColor : (isSortMode ? '#1e3a8a' : 'rgba(255,255,255,0.05)'), boxShadow: isFullyComplete ? `0 0 15px -10px ${activeColor}` : 'none' }}>
 
       <div className="flex items-center gap-4 flex-1">
         {/* GRIPPER VISIBLE ONLY IN SORT MODE */}
         {isSortMode && <div className="text-slate-500"><GripVertical size={24} /></div>}
 
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-all bg-white/5" style={{ color: theme.primary }}><IconComponent size={24} /></div>
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-all bg-white/5" style={{ color: activeColor }}><IconComponent size={24} /></div>
         <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-                <span className={cn("font-bold text-sm text-slate-200", isFullyComplete && "text-white")}>{habit.title}</span>
+                {/* Z-INDEX FIX: Allow clicks to pass through text */}
+                <span className={cn("font-bold text-sm text-slate-200 relative z-[1] pointer-events-none", isFullyComplete && "text-white")}>{habit.title}</span>
                 {!isSystemLocked && !isSortMode && (
-                <div className="relative z-10">
+                <div className="relative z-10 habit-actions">
                     <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-1 text-slate-600 hover:text-white"><MoreVertical size={16} /></button>
                     {showMenu && (
                         <div className="absolute left-0 top-8 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
@@ -114,7 +118,7 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
                 )}
             </div>
             <div className="flex items-center gap-2 text-[10px] font-bold tracking-wider uppercase text-slate-500">
-                {isQuantified && <span style={{ color: theme.secondary }}>Goal: {target} {habit.unit}</span>}
+                {isQuantified && <span style={{ color: activeColor }}>Goal: {target} {habit.unit}</span>}
                 {habit.frequency_type === 'weekly' && <span className="text-blue-400">Weekly Target</span>}
             </div>
         </div>
@@ -124,7 +128,7 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
            <div className="relative flex items-center justify-center">
                <button onClick={() => !isSystemLocked && (isQuantified ? setShowInput(true) : onToggle(habit.id, date, isFullyComplete ? 0 : 1))}
                  className={cn("w-12 h-12 rounded-full flex items-center justify-center transition-all border-2", isFullyComplete ? "bg-opacity-100 text-black shadow-lg" : "bg-transparent text-transparent hover:border-slate-500")}
-                 style={{ borderColor: isFullyComplete ? theme.primary : '#334155', backgroundColor: isFullyComplete ? theme.primary : 'transparent', boxShadow: isFullyComplete ? `0 0 15px ${theme.primary}` : 'none', opacity: isSystemLocked ? 0.5 : 1 }}>
+                 style={{ borderColor: isFullyComplete ? activeColor : '#334155', backgroundColor: isFullyComplete ? activeColor : 'transparent', boxShadow: isFullyComplete ? `0 0 15px ${activeColor}` : 'none', opacity: isSystemLocked ? 0.5 : 1 }}>
                  {isQuantified && !isFullyComplete ? <span className="text-xs text-slate-500 font-bold">{currentValue > 0 ? currentValue : '+'}</span> : <Check size={24} strokeWidth={4} color="black" />}
                </button>
                {showInput && (
@@ -330,23 +334,25 @@ export default function DashboardSingularity() {
            </div>
         </div>
 
-        {/* CONTENT */}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            {viewMode === 'daily' && (
-                <div className="space-y-3">
-                    <SortableContext items={safeHabits.map((h: any) => h.id)} strategy={verticalListSortingStrategy}>
-                        {safeHabits.map((h: any) => (
-                            <SortableItem key={h.id} id={h.id} disabled={!isSortMode}>
-                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} />
-                            </SortableItem>
-                        ))}
-                    </SortableContext>
-                    {safeHabits.length === 0 && <div className="text-center py-10 text-slate-500 text-sm">No active protocols. <button onClick={() => { setEditingHabit(null); setIsModalOpen(true); }} className="text-blue-500 underline">Create one.</button></div>}
-                </div>
-            )}
-            {viewMode === 'weekly' && <WeeklyMatrix habits={safeHabits} currentDate={selectedDate} logs={logs} onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete} isSystemLocked={isSystemLocked} isSortMode={isSortMode} startOfWeek={0} adjustedToday={subHours(new Date(), 0)} />}
-            {viewMode === 'monthly' && <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />}
-        </DndContext>
+        {/* CONTENT - LOCKED STATE VISUAL */}
+        <div className={cn("transition-all duration-500", isSystemLocked && "opacity-50 grayscale pointer-events-none select-none filter blur-[1px]")}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                {viewMode === 'daily' && (
+                    <div className="space-y-3">
+                        <SortableContext items={safeHabits.map((h: any) => h.id)} strategy={verticalListSortingStrategy}>
+                            {safeHabits.map((h: any) => (
+                                <SortableItem key={h.id} id={h.id} disabled={!isSortMode}>
+                                    <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} />
+                                </SortableItem>
+                            ))}
+                        </SortableContext>
+                        {safeHabits.length === 0 && <div className="text-center py-10 text-slate-500 text-sm">No active protocols. <button onClick={() => { setEditingHabit(null); setIsModalOpen(true); }} className="text-blue-500 underline">Create one.</button></div>}
+                    </div>
+                )}
+                {viewMode === 'weekly' && <WeeklyMatrix habits={safeHabits} currentDate={selectedDate} logs={logs} onToggle={toggleCheck} onEdit={handleEdit} onDelete={handleDelete} isSystemLocked={isSystemLocked} isSortMode={isSortMode} startOfWeek={0} adjustedToday={subHours(new Date(), 0)} />}
+                {viewMode === 'monthly' && <MonthlyCalendar habits={safeHabits} currentDate={selectedDate} logs={logs} />}
+            </DndContext>
+        </div>
 
         <div className="mt-8 pt-4 border-t border-gray-800 flex justify-between">
             <button onClick={() => { setEditingHabit(null); setInitialForm({}); setIsModalOpen(true); }} className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 text-blue-400 rounded text-[10px] font-bold uppercase"><Plus className="w-3 h-3" /> Create Habit</button>
@@ -373,10 +379,19 @@ export default function DashboardSingularity() {
         </div>
 
         {isModalOpen && (
-           <ConsoleOverlay isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingHabit ? "EDIT" : "NEW"}>
-               {/* ✅ FIXED: Use RichHabitForm instead of InlineHabitForm */}
-               <RichHabitForm initialData={initialForm} onSubmit={async (data: any) => { setIsModalOpen(false); await supabase.from('habits').upsert(data); fetchData(); }} onCancel={() => setIsModalOpen(false)} mode={editingHabit ? 'edit' : 'create'} />
-           </ConsoleOverlay>
+            // USE NEW MODAL - REPLACES ConsoleOverlay/RichHabitForm
+           <EditProtocolModal
+              habit={editingHabit || {}}
+              onClose={() => setIsModalOpen(false)}
+              onSave={async (data: any) => {
+                  setIsModalOpen(false);
+                  await supabase.from('habits').upsert({
+                      ...data,
+                      user_id: user.id // Ensure ownership
+                  });
+                  fetchData();
+              }}
+           />
         )}
       </div>
     </Inspector>
