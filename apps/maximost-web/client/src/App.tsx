@@ -10,7 +10,7 @@ import LibraryPage from './core/pages/LibraryPage';
 import AIWarRoomPage from './core/pages/AIWarRoomPage';
 import AccountabilityMirror from './pages/mirror'; // The new Mirror
 import TheMirror from './core/pages/TheMirror';
-import TheArchitect from './core/pages/TheArchitect';
+import { ArchitectPage } from './core/pages/ArchitectPage';
 import BioTelemetryPage from './core/pages/BioTelemetryPage';
 import { LandingPage } from './core/pages/LandingPage';
 import ManifestoPage from './core/pages/ManifestoPage';
@@ -72,7 +72,7 @@ function App() {
                 <Route path="/body-hud" element={<BioTelemetryPage />} />
                 <Route path="/coach" element={<AIWarRoomPage />} />
                 {/* <Route path="/mirror" element={<TheMirror />} /> Replaced by Campaign Mirror */}
-                <Route path="/architect" element={<TheArchitect />} />
+                <Route path="/architect" element={<ArchitectPage />} />
                 <Route path="/admin" element={<AdminDiagnostics />} />
                 <Route path="/admin/diagnostics" element={<AdminDiagnostics />} />
 
