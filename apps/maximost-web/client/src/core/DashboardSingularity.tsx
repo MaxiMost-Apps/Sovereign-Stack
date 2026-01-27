@@ -41,6 +41,13 @@ const ICONS = [
 ];
 const ICON_MAP: any = { Activity, Zap, Brain, Flame, Droplet, Moon, Sun, Coffee, Dumbbell, Book, Briefcase, Heart };
 
+// --- HELPER FOR NEW LAYOUT ---
+const AVAILABLE_ICONS = ICONS.map(i => i.id);
+const IconByName = ({ name, size }: { name: string, size: number }) => {
+  const Icon = ICON_MAP[name] || Activity;
+  return <Icon size={size} />;
+};
+
 const MOCK_TEMPLATES = [
     { id: 't1', title: 'Morning Sunlight', icon: 'Sun', color: 'maximost_blue', description: 'Anchor your circadian clock with 10m outdoor light.' },
     { id: 't2', title: 'Zone 2 Cardio', icon: 'Activity', color: 'emerald_city', description: '45 mins of steady state movement.' },
@@ -169,20 +176,44 @@ function RichHabitForm({ initialData = {}, onSubmit, onCancel, mode }: any) {
           </div>
       </div>
 
-      {/* VISUALS */}
-      <div className="grid grid-cols-12 gap-6 pt-6 border-t border-white/5">
-          <div className="col-span-4 border-r border-white/5 pr-4">
-             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Theme</label>
-             <div className="grid grid-cols-3 gap-3">
-                {COLORS.map(c => ( <button key={c} type="button" onClick={() => setFormData({ ...formData, color: c })} className={`w-8 h-8 rounded-full transition-all ${formData.color === c ? 'ring-2 ring-white scale-110 shadow-lg' : 'opacity-30 hover:opacity-100'}`} style={{ backgroundColor: getThemeStyles(c).primary }} /> ))}
-             </div>
+      {/* REPLACE THE ICON/COLOR SECTION WITH THIS GRID */}
+      <div className="grid grid-cols-12 gap-4 pt-4 border-t border-white/10">
+
+        {/* LEFT FLANK: COLORS (Col Span 4) */}
+        <div className="col-span-4 border-r border-white/10 pr-2">
+          <label className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2 block">Identity Color</label>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.entries(THEMES).map(([key, theme]: any) => (
+              <button
+                type="button"
+                key={key}
+                onClick={() => setFormData({ ...formData, color: key })}
+                className={`h-8 w-full rounded ${formData.color === key ? 'ring-2 ring-white' : 'opacity-50 hover:opacity-100'}`}
+                style={{ backgroundColor: theme.bg }}
+              />
+            ))}
           </div>
-          <div className="col-span-8 pl-2">
-             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-3">Icon</label>
-             <div className="grid grid-cols-6 gap-2">
-                {ICONS.map(({ id, icon: Icon }) => ( <button key={id} type="button" onClick={() => setFormData({ ...formData, icon: id })} className={`p-2 rounded-lg flex items-center justify-center transition-all ${formData.icon === id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-600 hover:text-slate-300 hover:bg-white/5'}`}><Icon size={18} /></button> ))}
-             </div>
+        </div>
+
+        {/* RIGHT FLANK: ICONS (Col Span 8) */}
+        <div className="col-span-8 pl-2">
+          <label className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2 block">Tactical Icon</label>
+          <div className="grid grid-cols-5 gap-2 h-32 overflow-y-auto pr-1 custom-scrollbar">
+            {AVAILABLE_ICONS.map((iconName) => (
+              <button
+                type="button"
+                key={iconName}
+                onClick={() => setFormData({ ...formData, icon: iconName })}
+                className={`p-2 rounded flex items-center justify-center transition-all ${
+                  formData.icon === iconName ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-500 hover:bg-zinc-800'
+                }`}
+              >
+                {/* Dynamic Icon Render Helper */}
+                <IconByName name={iconName} size={16} />
+              </button>
+            ))}
           </div>
+        </div>
       </div>
 
       {/* FOOTER */}
@@ -215,9 +246,13 @@ export default function DashboardSingularity() {
 
   useEffect(() => {
       localStorage.setItem('isSystemLocked', String(isSystemLocked));
-      fetchData();
-      fetchLibrary();
-  }, [user, isSystemLocked]);
+
+      // Only fetch if we actually have a user ID
+      if (user?.id) {
+          fetchData();
+          fetchLibrary();
+      }
+  }, [user?.id, isSystemLocked]);
 
   const fetchData = async () => {
     if (!user) return;

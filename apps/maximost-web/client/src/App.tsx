@@ -8,6 +8,7 @@ import LoginCore from './core/LoginCore'; // Mapped from LoginPage
 import AdminDiagnostics from './core/pages/AdminDiagnostics';
 import LibraryPage from './core/pages/LibraryPage';
 import AIWarRoomPage from './core/pages/AIWarRoomPage';
+import AccountabilityMirror from './pages/mirror'; // The new Mirror
 import TheMirror from './core/pages/TheMirror';
 import TheArchitect from './core/pages/TheArchitect';
 import BioTelemetryPage from './core/pages/BioTelemetryPage';
@@ -61,13 +62,16 @@ function App() {
               <Route path="/terms" element={<LegalPage title="Terms of Service" content={`1. The Code: Maximost is a tool for self-mastery. Use it responsibly.\n2. Liability: We are not doctors. Do not use this for medical diagnosis.`} />} />
               <Route path="/support" element={<LegalPage title="Support Frequency" content={`Contact the command center at: support@maximost.com\n\nExpected response time: 24-48 hours.`} />} />
 
+              {/* PUBLIC CAMPAIGN ROUTES */}
+              <Route path="/mirror" element={<AccountabilityMirror />} />
+
               {/* PROTECTED */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<DashboardCore />} />
                 <Route path="/archive" element={<LibraryPage />} />
                 <Route path="/body-hud" element={<BioTelemetryPage />} />
                 <Route path="/coach" element={<AIWarRoomPage />} />
-                <Route path="/mirror" element={<TheMirror />} />
+                {/* <Route path="/mirror" element={<TheMirror />} /> Replaced by Campaign Mirror */}
                 <Route path="/architect" element={<TheArchitect />} />
                 <Route path="/admin" element={<AdminDiagnostics />} />
                 <Route path="/admin/diagnostics" element={<AdminDiagnostics />} />

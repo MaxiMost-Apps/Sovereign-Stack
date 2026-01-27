@@ -89,6 +89,7 @@ router.post('/toggle', async (c) => {
 });
 
 // Prevent 404s on stats calls
+router.get('/feed', (c) => c.json([], 200));
 router.get('/', (c) => c.json([], 200));
 
 export default router;
