@@ -10,6 +10,7 @@ import ConsoleOverlay from './components/ConsoleOverlay';
 import { Inspector } from './components/Inspector';
 import { useToast } from './components/Toast';
 import EditHabitModal from '../components/habits/EditHabitModal';
+import { SOVEREIGN_LIBRARY } from '../data/sovereign_library';
 // ✅ FIXED IMPORTS: Added 'Save', 'GripVertical', 'Trash2', etc.
 import { Lock, Unlock, ArrowUpDown, Plus, Check, MoreVertical, Edit2, Trash2, Info, Flame, X, GripVertical, Save, Activity, Zap, Brain, Droplet, Moon, Sun, Coffee, Dumbbell, Book, Briefcase, Heart, Calendar, FileText, ArrowRight, Layout } from 'lucide-react';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
@@ -274,8 +275,8 @@ export default function DashboardSingularity() {
   };
 
   const fetchLibrary = async () => {
-      const { data } = await supabase.from('habits').select('*').is('user_id', null);
-      if (data && data.length > 0) setLibraryItems(data);
+      // CODE-FIRST: Use Sovereign Library (60 Items) directly
+      setLibraryItems(SOVEREIGN_LIBRARY);
   };
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }), useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }));
@@ -372,15 +373,35 @@ export default function DashboardSingularity() {
              <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-slate-700"></span> HABIT LIBRARY</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {libraryItems.map((t) => {
-                    const th = getThemeStyles(t.color || 'maximost_blue');
-                    const Ic = ICON_MAP[t.icon] || Activity;
+                    // Check if Active (Match by Title)
+                    const isActive = habits.some((h: any) => h.title === t.title);
+
+                    // Handle Component Icons (from Sovereign Library) vs Strings
+                    const Ic = (typeof t.icon === 'function' || typeof t.icon === 'object') ? t.icon : (ICON_MAP[t.icon] || Activity);
+
+                    // Handle Theme (DB 'color' vs Sovereign 'base_color' class)
+                    // If t.base_color is 'bg-amber-500', we need to map it or use it.
+                    // getThemeStyles now handles 'bg-...' via our patch.
+                    const colorInput = t.color || t.base_color || 'maximost_blue';
+                    const th = getThemeStyles(colorInput);
+
                     return (
-                        <div key={t.id} onClick={() => handleEdit({ ...t, id: undefined, is_active: true })} className="p-5 rounded-xl bg-[#0b0c10] border border-white/5 hover:border-white/20 cursor-pointer transition-all relative overflow-hidden">
-                            <div className="flex justify-between items-start mb-4"><div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center" style={{ color: th.primary }}><Ic size={20} /></div><div className="px-2 py-1 rounded bg-white/5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">TEMPLATE</div></div>
+                        <div key={t.id} onClick={() => !isActive && handleEdit({ ...t, id: undefined, is_active: true })} className={`p-5 rounded-xl bg-[#0b0c10] border transition-all relative overflow-hidden ${isActive ? 'border-emerald-500/30 opacity-50 cursor-default' : 'border-white/5 hover:border-white/20 cursor-pointer'}`}>
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center" style={{ color: th.primary }}>
+                                    <Ic size={20} />
+                                </div>
+                                <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${isActive ? 'bg-emerald-900/20 text-emerald-500' : 'bg-white/5 text-slate-500'}`}>
+                                    {isActive ? 'ACTIVE' : 'PROTOCOL'}
+                                </div>
+                            </div>
                             <h3 className="text-sm font-bold text-slate-200 mb-1">{t.title}</h3>
-                            <p className="text-xs text-slate-500 line-clamp-2 mb-4">{t.description || "System Protocol."}</p>
-                            <div className="flex items-center gap-2 text-[10px] font-bold" style={{ color: th.secondary }}>INITIALIZE <ArrowRight size={12} /></div>
-                            <div className="absolute bottom-0 left-0 w-full h-[2px]" style={{ background: th.primary }} />
+                            <p className="text-xs text-slate-500 line-clamp-2 mb-4">{t.description || t.lenses?.FORTITUDE?.why || "System Protocol."}</p>
+
+                            {!isActive && (
+                                <div className="flex items-center gap-2 text-[10px] font-bold" style={{ color: th.secondary }}>INITIALIZE <ArrowRight size={12} /></div>
+                            )}
+                            <div className="absolute bottom-0 left-0 w-full h-[2px]" style={{ background: isActive ? '#10B981' : th.primary }} />
                         </div>
                     );
                 })}
