@@ -9,7 +9,7 @@ import MonthlyCalendar from './components/MonthlyCalendar';
 import ConsoleOverlay from './components/ConsoleOverlay';
 import { Inspector } from './components/Inspector';
 import { useToast } from './components/Toast';
-import { EditProtocolModal } from '../components/habits/EditHabitModal';
+import EditHabitModal from '../components/habits/EditHabitModal';
 // ✅ FIXED IMPORTS: Added 'Save', 'GripVertical', 'Trash2', etc.
 import { Lock, Unlock, ArrowUpDown, Plus, Check, MoreVertical, Edit2, Trash2, Info, Flame, X, GripVertical, Save, Activity, Zap, Brain, Droplet, Moon, Sun, Coffee, Dumbbell, Book, Briefcase, Heart, Calendar, FileText, ArrowRight, Layout } from 'lucide-react';
 import { DndContext, closestCenter, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
@@ -380,8 +380,8 @@ export default function DashboardSingularity() {
 
         {isModalOpen && (
             // USE NEW MODAL - REPLACES ConsoleOverlay/RichHabitForm
-           <EditProtocolModal
-              habit={editingHabit || {}}
+           <EditHabitModal
+              habitData={editingHabit || {}}
               onClose={() => setIsModalOpen(false)}
               onSave={async (data: any) => {
                   setIsModalOpen(false);

@@ -1,75 +1,70 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Save, Calendar, BarChart2 } from 'lucide-react';
+import { SOVEREIGN_LIBRARY } from '../../data/sovereign_library';
 
-// styles/theme.ts (Define the Sovereign Colors)
-const SOVEREIGN_COLORS = {
-  bg: "bg-[#0B1221]", // The Deep Navy Background
-  panel: "bg-[#131B2C]", // The Input Fields
-  accent: "bg-[#2563EB]", // The Electric Blue Active State
-  textSub: "text-slate-400",
-  border: "border-white/5"
-};
+export default function EditHabitModal({ habitData, onClose, onSave }: any) {
+  // Hydrate visual data from Master File if available, fallback to DB data
+  const masterDef = SOVEREIGN_LIBRARY.find(h => h.id === habitData.habit_id);
 
-export const EditProtocolModal = ({ habit, onClose, onSave }: any) => {
-  const [mode, setMode] = useState<'ABSOLUTE' | 'FREQUENCY'>(habit.frequency_type === 'weekly' ? 'FREQUENCY' : 'ABSOLUTE');
-  const [title, setTitle] = useState(habit.title || '');
-  const [description, setDescription] = useState(habit.description || '');
-  const [targetDays, setTargetDays] = useState(habit.target_days || 4); // Default to 4
-
-  const handleSave = () => {
-      onSave({
-          ...habit,
-          title,
-          description,
-          frequency_type: mode === 'FREQUENCY' ? 'weekly' : 'daily',
-          daily_goal: mode === 'FREQUENCY' ? targetDays : (habit.daily_goal || 1)
-      });
-  };
+  const [mode, setMode] = useState(habitData.frequency_type || 'FREQUENCY');
+  const [targetDays, setTargetDays] = useState(habitData.target_days || 4);
+  const [formData, setFormData] = useState({
+    title: masterDef?.title || habitData.title,
+    description: masterDef?.lenses['FORTITUDE'].why || habitData.description, // Default to Fortitude text
+    unit: habitData.unit || 'reps',
+    goal: habitData.goal || 1
+  });
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center ${SOVEREIGN_COLORS.bg}/90 backdrop-blur-xl`}>
-      <div className={`w-full max-w-2xl ${SOVEREIGN_COLORS.bg} border ${SOVEREIGN_COLORS.border} shadow-2xl rounded-xl overflow-hidden`}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+      <div className="w-full max-w-2xl bg-[#0B1221] border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
         {/* HEADER */}
-        <div className="flex justify-between items-center p-6 border-b border-white/5">
-          <h2 className="text-xl font-black tracking-widest text-white uppercase">Edit Protocol</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-white"><X size={20}/></button>
+        <div className="flex justify-between items-center p-6 border-b border-white/5 bg-[#0B1221]">
+          <div className="flex items-center gap-3">
+            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+            <h2 className="text-sm font-black tracking-[0.2em] text-white uppercase">Edit Protocol</h2>
+          </div>
+          <button onClick={onClose} className="text-slate-600 hover:text-white transition-colors"><X size={18}/></button>
         </div>
 
-        <div className="p-8 space-y-8">
+        <div className="p-8 space-y-6">
 
-          {/* TITLE INPUT */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase">Habit Title</label>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className={`w-full p-4 rounded-lg ${SOVEREIGN_COLORS.panel} text-white font-mono focus:ring-1 focus:ring-blue-500 outline-none`}
-            />
+          {/* TITLE & DESCRIPTION */}
+          <div className="space-y-4">
+            <div className="group">
+              <label className="text-[10px] font-bold tracking-widest text-slate-500 uppercase mb-2 block group-focus-within:text-blue-500">Habit Title</label>
+              <input
+                value={formData.title}
+                onChange={e => setFormData({...formData, title: e.target.value})}
+                className="w-full bg-[#131B2C] border border-white/5 rounded p-4 text-lg font-mono text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+              />
+            </div>
+
+            <div className="group">
+              <label className="text-[10px] font-bold tracking-widest text-slate-500 uppercase mb-2 block group-focus-within:text-blue-500">Mission Description</label>
+              <textarea
+                rows={2}
+                value={formData.description}
+                onChange={e => setFormData({...formData, description: e.target.value})}
+                className="w-full bg-[#131B2C] border border-white/5 rounded p-4 text-sm font-mono text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all resize-none"
+              />
+            </div>
           </div>
 
-          {/* MISSION DESCRIPTION */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase">Mission Description</label>
-            <textarea
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className={`w-full p-4 rounded-lg ${SOVEREIGN_COLORS.panel} text-white font-mono outline-none resize-none`}
-            />
-          </div>
-
-          {/* THE TOGGLE (ABSOLUTE VS FREQUENCY) */}
-          <div className="grid grid-cols-2 bg-black/40 p-1 rounded-lg">
+          {/* THE TOGGLE: ABSOLUTE VS FREQUENCY */}
+          <div className="grid grid-cols-2 bg-black/50 p-1.5 rounded-lg border border-white/5">
             <button
               onClick={() => setMode('ABSOLUTE')}
-              className={`py-3 text-xs font-bold tracking-widest uppercase transition-all rounded-md ${mode === 'ABSOLUTE' ? 'bg-red-900/50 text-red-500 shadow-lg' : 'text-slate-600 hover:text-slate-400'}`}
+              className={`py-3 text-[10px] font-black tracking-[0.2em] uppercase transition-all rounded-md flex items-center justify-center gap-2
+                ${mode === 'ABSOLUTE' ? 'bg-red-900/20 text-red-500 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.15)]' : 'text-slate-600 hover:text-slate-400'}`}
             >
               Absolute
             </button>
             <button
               onClick={() => setMode('FREQUENCY')}
-              className={`py-3 text-xs font-bold tracking-widest uppercase transition-all rounded-md ${mode === 'FREQUENCY' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-600 hover:text-slate-400'}`}
+              className={`py-3 text-[10px] font-black tracking-[0.2em] uppercase transition-all rounded-md flex items-center justify-center gap-2
+                ${mode === 'FREQUENCY' ? 'bg-blue-600 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)]' : 'text-slate-600 hover:text-slate-400'}`}
             >
               Frequency
             </button>
@@ -77,9 +72,9 @@ export const EditProtocolModal = ({ habit, onClose, onSave }: any) => {
 
           {/* FREQUENCY SELECTOR (1-7) */}
           {mode === 'FREQUENCY' && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase">Target Days / Week</label>
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-1">
+              <div className="flex justify-between items-end">
+                <label className="text-[10px] font-bold tracking-widest text-slate-500 uppercase">Target Days / Week</label>
                 <span className="text-blue-400 font-mono text-xs">{targetDays}</span>
               </div>
               <div className="grid grid-cols-7 gap-2">
@@ -87,8 +82,10 @@ export const EditProtocolModal = ({ habit, onClose, onSave }: any) => {
                   <button
                     key={num}
                     onClick={() => setTargetDays(num)}
-                    className={`h-10 rounded border border-white/5 flex items-center justify-center font-mono text-sm transition-all
-                      ${targetDays === num ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.5)]' : 'bg-[#131B2C] text-slate-500 hover:bg-white/5'}
+                    className={`h-10 rounded border flex items-center justify-center font-mono text-sm transition-all
+                      ${targetDays === num
+                        ? 'bg-blue-600 border-blue-400 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)]'
+                        : 'bg-[#131B2C] border-white/5 text-slate-600 hover:border-white/20 hover:text-slate-300'}
                     `}
                   >
                     {num}
@@ -99,10 +96,15 @@ export const EditProtocolModal = ({ habit, onClose, onSave }: any) => {
           )}
 
           {/* ACTION FOOTER */}
-          <div className="flex justify-end gap-4 pt-6 border-t border-white/5">
-            <button onClick={onClose} className="px-6 py-3 text-xs font-bold tracking-widest text-slate-500 hover:text-white uppercase">Cancel</button>
-            <button onClick={handleSave} className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-widest uppercase rounded shadow-lg shadow-blue-900/20">
-              Update Habit
+          <div className="flex justify-end gap-6 pt-6 border-t border-white/5 mt-4">
+            <button onClick={onClose} className="text-[10px] font-bold tracking-widest text-slate-500 hover:text-white uppercase transition-colors">
+              Cancel
+            </button>
+            <button
+              onClick={() => onSave({ ...habitData, ...formData, frequency_type: mode, target_days: targetDays })}
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black tracking-[0.2em] uppercase rounded shadow-lg shadow-blue-900/20 transform active:scale-95 transition-all"
+            >
+              Update Protocol
             </button>
           </div>
 
@@ -110,4 +112,4 @@ export const EditProtocolModal = ({ habit, onClose, onSave }: any) => {
       </div>
     </div>
   );
-};
+}
