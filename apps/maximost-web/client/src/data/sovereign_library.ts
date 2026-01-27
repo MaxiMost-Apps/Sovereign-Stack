@@ -2,7 +2,7 @@ import { Sun, Brain, Activity, Droplets, Moon, Zap, Flame, Shield, Dumbbell, Hea
 
 // 1. DEFINE THE LENSES (The "Filters")
 export const SOVEREIGN_LENSES = {
-  FORTITUDE: { color: 'bg-emerald-600', label: 'Resilience & Grit' },
+  FORTITUDE: { color: 'bg-slate-800', label: 'Resilience & Grit' },
   REASON: { color: 'bg-blue-600', label: 'Logic & Analysis' },
   VISIONARY: { color: 'bg-purple-600', label: 'Future & Strategy' },
   ANALYTICAL: { color: 'bg-slate-100 text-black', label: 'Data & Precision' }

@@ -50,6 +50,13 @@ const IconByName = ({ name, size }: { name: string, size: number }) => {
   return <Icon size={size} />;
 };
 
+const FrequencyBadge = ({ type, target }: any) => {
+  if (!type || type === 'ABSOLUTE') {
+    return <span className="text-[9px] font-black text-red-500 tracking-widest border border-red-500/20 px-1.5 py-0.5 rounded bg-red-900/10">ABSOLUTE</span>;
+  }
+  return <span className="text-[9px] font-black text-blue-400 tracking-widest border border-blue-400/20 px-1.5 py-0.5 rounded bg-blue-900/10">FREQ: {target}/WK</span>;
+};
+
 const MOCK_TEMPLATES = [
     { id: 't1', title: 'Morning Sunlight', icon: 'Sun', color: 'maximost_blue', description: 'Anchor your circadian clock with 10m outdoor light.' },
     { id: 't2', title: 'Zone 2 Cardio', icon: 'Activity', color: 'emerald_city', description: '45 mins of steady state movement.' },
@@ -73,6 +80,7 @@ function SortableItem({ id, children, disabled }: any) {
 function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelete, isSystemLocked, isSortMode, date }: any) {
   const [showMenu, setShowMenu] = useState(false);
   const [showInput, setShowInput] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); // Info Drawer State
   const inputRef = useRef<HTMLInputElement>(null);
 
   // COLOR LOGIC FIX: Absolute = RED, Frequency = BLUE
@@ -106,12 +114,33 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
             <div className="flex items-center gap-3">
                 {/* Z-INDEX FIX: Allow clicks to pass through text */}
                 <span className={cn("font-bold text-sm text-slate-200 relative z-[1] pointer-events-none", isFullyComplete && "text-white")}>{habit.title}</span>
-                {!isSystemLocked && !isSortMode && (
-                <div className="relative z-10 habit-actions flex items-center gap-1">
-                    {/* RESTORED INFO BUTTON */}
-                    <button onClick={(e) => { e.stopPropagation(); /* onOpenInfo(habit) - Placeholder */ }} className="p-1 text-slate-600 hover:text-blue-400 transition-colors"><Info size={16} /></button>
-                    <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-1 text-slate-600 hover:text-white"><MoreVertical size={16} /></button>
-                    {showMenu && (
+            </div>
+            <div className="flex items-center gap-2">
+                <FrequencyBadge type={habit.frequency_type} target={habit.target_days || habit.daily_goal} />
+                {isQuantified && <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500">Goal: {target} {habit.unit}</span>}
+            </div>
+        </div>
+      </div>
+
+      <div className="pl-4 border-l border-white/5 relative h-12 flex items-center z-20 gap-4">
+           {/* ACTION GROUP */}
+           {!isSystemLocked && !isSortMode && (
+               <div className="flex items-center gap-2">
+                   <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className={cn("p-2 rounded-lg transition-colors", isExpanded ? "bg-blue-500/10 text-blue-400" : "text-slate-600 hover:text-white")}><Info size={18} /></button>
+                   <div className="relative">
+                       <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-2 text-slate-600 hover:text-white"><MoreVertical size={18} /></button>
+                       {showMenu && (
+                           <div className="absolute right-0 top-8 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
+                               <button onClick={() => { onEdit(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 flex items-center gap-3"><Edit2 size={14} /> Edit Habit</button>
+                               <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3"><Trash2 size={14} /> Delete</button>
+                           </div>
+                       )}
+                   </div>
+               </div>
+           )}
+
+           <div className="relative flex items-center justify-center">
+               <button onClick={() => !isSystemLocked && (isQuantified ? setShowInput(true) : onToggle(habit.id, date, isFullyComplete ? 0 : 1))}
                         <div className="absolute left-0 top-8 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
                             <button onClick={() => { onEdit(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 flex items-center gap-3"><Edit2 size={14} /> Edit Habit</button>
                             <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3"><Trash2 size={14} /> Delete</button>
@@ -120,16 +149,74 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
                 </div>
                 )}
             </div>
-            <div className="flex items-center gap-2 text-[10px] font-bold tracking-wider uppercase text-slate-500">
-                {isQuantified && <span style={{ color: activeColor }}>Goal: {target} {habit.unit}</span>}
-                {habit.frequency_type === 'weekly' && <span className="text-blue-400">Weekly Target</span>}
+      </div>
+    </div>
+
+    {/* INFO DRAWER */}
+    {isExpanded && (
+        <div className="mx-4 mb-4 p-4 bg-[#0B1121] border border-white/5 border-t-0 rounded-b-xl -mt-2 animate-in slide-in-from-top-2">
+            <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                    <h4 className="font-bold text-slate-500 uppercase tracking-widest mb-1">Tactical</h4>
+                    <p className="text-slate-300 leading-relaxed">{habit.description || habit.lenses?.FORTITUDE?.how || "Execute the protocol."}</p>
+                </div>
+                <div>
+                    <h4 className="font-bold text-slate-500 uppercase tracking-widest mb-1">Identity</h4>
+                    <p className="text-slate-300 leading-relaxed">{habit.lenses?.FORTITUDE?.why || "Forge your character."}</p>
+                </div>
             </div>
         </div>
-      </div>
+    )}
+    </> // Wrap return in Fragment? No, DailyHabitRow returns a div.
+    // I need to change the root element to a Fragment or div wrapper.
+    // DailyHabitRow returns <div className="relative ...">
+    // I will wrap everything in a Fragment implicitly by returning an array or just changing the root.
+    // BUT DailyHabitRow is used inside SortableItem which expects a single child ref?
+    // SortableItem: return <div ref={setNodeRef} ...>{children}</div>
+    // So DailyHabitRow can return a Fragment?
+    // React components can return Fragments.
+    // However, the `ref` in `SortableItem` attaches to the child?
+    // SortableItem (inline):
+    // function SortableItem({ id, children, disabled }: any) { ... return <div ref={setNodeRef} ...>{children}</div> }
+    // It wraps children in a div. So DailyHabitRow can be whatever.
+    // I will change DailyHabitRow to return a Fragment <></>.
+    // But I can't use short syntax in some envs? I'll use React.Fragment or just <> if TSX.
+    // `DailyHabitRow` starts with `return (`.
+    // I will wrap the existing div and the new drawer in `<> ... </>`.
+    // Wait, the merge block handles the start of `return (`?
+    // No, I am replacing the internal content.
+    // I should check where `return (` starts.
+    // It starts at line 94.
+    // My replace block handles the END of the main div.
+    // I need to wrap the whole thing.
+    // This is hard with `replace_with_git_merge_diff`.
+    // I will rewrite the `return` statement entirely?
+    // Too big.
+    // I will make the root div a container that holds the Row and the Drawer.
+    // The current root div has `className="relative flex items-center..."`.
+    // If I add the drawer inside it, it might break flex layout.
+    // I should wrap the Row Content in a div, and the Drawer in another div, inside a parent div.
+    // But the current root div has styling for the row (border, shadow).
+    // If I change the root, I change the styling.
+    // I will append the drawer *after* the flex container, but *inside* the root div?
+    // No, the root div has `items-center` and `h-80px` (via style).
+    // If I put the drawer inside, it will be squashed.
+    // I MUST change the structure.
 
-      <div className="pl-4 border-l border-white/5 relative h-12 flex items-center z-20">
-           <div className="relative flex items-center justify-center">
-               <button onClick={() => !isSystemLocked && (isQuantified ? setShowInput(true) : onToggle(habit.id, date, isFullyComplete ? 0 : 1))}
+    // Structure:
+    // <div className="mb-3"> {/* Margin wrapper */}
+    //    <div className="relative flex ... row ..."> ... </div>
+    //    {isExpanded && <div className="drawer ..."> ... </div>}
+    // </div>
+
+    // This requires changing the root element.
+    // I will try to rewrite the component return.
+
+    // Actually, I can just make the drawer absolute/overlay?
+    // No, drawer pushes content.
+    // Since `DailyHabitRow` is inline, I can replace the WHOLE function easily.
+    // It's lines 70 to 142.
+    // I will replace the whole function `DailyHabitRow`.
                  className={cn("w-12 h-12 rounded-full flex items-center justify-center transition-all border-2", isFullyComplete ? "bg-opacity-100 text-black shadow-lg" : "bg-transparent text-transparent hover:border-slate-500")}
                  style={{ borderColor: isFullyComplete ? activeColor : '#334155', backgroundColor: isFullyComplete ? activeColor : 'transparent', boxShadow: isFullyComplete ? `0 0 15px ${activeColor}` : 'none', opacity: isSystemLocked ? 0.5 : 1 }}>
                  {isQuantified && !isFullyComplete ? <span className="text-xs text-slate-500 font-bold">{currentValue > 0 ? currentValue : '+'}</span> : <Check size={24} strokeWidth={4} color="black" />}
