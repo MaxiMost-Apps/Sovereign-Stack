@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from './core/AuthSystem';
 import { ToastProvider } from './core/components/Toast';
 import { AIProvider } from './core/context/AIContext';
 import { LensProvider } from './core/context/LensContext';
-import DashboardCore from './core/DashboardV3';
+import DashboardCore from './core/DashboardSingularity';
 import LoginCore from './core/LoginCore'; // Mapped from LoginPage
 import AdminDiagnostics from './core/pages/AdminDiagnostics';
 import LibraryPage from './core/pages/LibraryPage';
