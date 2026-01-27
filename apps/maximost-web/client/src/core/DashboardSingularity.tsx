@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { supabase } from './supabase';
 import { useAuth } from './AuthSystem';
-import { getApiUrl } from '../config';
 import { calculateStreak } from './utils/streakLogic';
 import { toISODate } from './utils/dateUtils';
 import WeeklyMatrix from './components/WeeklyMatrix';
@@ -15,9 +14,32 @@ import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-ki
 import SortableHabitRow from './components/SortableHabitRow';
 import { subHours, addMonths, subMonths, addDays, subDays, format, isSameDay } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { getThemeStyles } from '../config/themeConfig';
 
-// --- CONSTANTS & MAPPERS ---
+// --- 1. INLINED CONFIG & THEME LOGIC (Fixes Build Error) ---
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://sovereign-stack.onrender.com';
+
+const getApiUrl = (endpoint: string) => {
+  return `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+};
+
+const THEMES: any = {
+  maximost_blue: { primary: '#3b82f6', secondary: '#60a5fa', bg: 'rgba(59, 130, 246, 0.1)' },
+  emerald_city: { primary: '#10b981', secondary: '#34d399', bg: 'rgba(16, 185, 129, 0.1)' },
+  fuji_purple: { primary: '#a855f7', secondary: '#c084fc', bg: 'rgba(168, 85, 247, 0.1)' },
+  mars_orange: { primary: '#f97316', secondary: '#fb923c', bg: 'rgba(249, 115, 22, 0.1)' },
+  obsidian_dark: { primary: '#ffffff', secondary: '#94a3b8', bg: 'rgba(255, 255, 255, 0.05)' },
+  red: { primary: '#ef4444', secondary: '#f87171', bg: 'rgba(239, 68, 68, 0.1)' },
+  yellow: { primary: '#eab308', secondary: '#facc15', bg: 'rgba(234, 179, 8, 0.1)' },
+  pink: { primary: '#ec4899', secondary: '#f472b6', bg: 'rgba(236, 72, 153, 0.1)' },
+  cyan: { primary: '#06b6d4', secondary: '#22d3ee', bg: 'rgba(6, 182, 212, 0.1)' },
+  gray: { primary: '#94a3b8', secondary: '#cbd5e1', bg: 'rgba(148, 163, 184, 0.1)' }
+};
+
+const getThemeStyles = (colorName: string) => {
+  return THEMES[colorName] || THEMES['maximost_blue'];
+};
+
+// --- 2. CONSTANTS & MAPPERS ---
 const COLORS = ['maximost_blue', 'emerald_city', 'fuji_purple', 'mars_orange', 'obsidian_dark', 'red', 'yellow', 'pink', 'cyan', 'gray'];
 const ICONS = [
   { id: 'Activity', icon: Activity }, { id: 'Zap', icon: Zap }, { id: 'Brain', icon: Brain },
@@ -38,7 +60,7 @@ const MOCK_TEMPLATES = [
     { id: 't4', title: 'Cold Plunge', icon: 'Droplet', color: 'cyan', description: 'Metabolic reset via thermal shock.' }
 ];
 
-// --- COMPONENT: DAILY ROW (INLINE) ---
+// --- 3. INLINE COMPONENT: DAILY ROW ---
 function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelete, isSystemLocked, isSortMode, date }: any) {
   const [showMenu, setShowMenu] = useState(false);
   const [showInput, setShowInput] = useState(false);
@@ -109,7 +131,7 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
   );
 }
 
-// --- COMPONENT: HABIT FORM (INLINE) ---
+// --- 4. INLINE COMPONENT: HABIT FORM ---
 function InlineHabitForm({ initialData = {}, onSubmit, onCancel, mode }: any) {
   const [formData, setFormData] = useState({
     title: initialData.title || '', color: initialData.color || 'maximost_blue', icon: initialData.icon || 'Activity',
@@ -152,9 +174,9 @@ function InlineHabitForm({ initialData = {}, onSubmit, onCancel, mode }: any) {
   );
 }
 
-// --- MAIN DASHBOARD COMPONENT ---
+// --- 5. MAIN COMPONENT: DASHBOARD SINGULARITY ---
 export default function DashboardSingularity() {
-  console.log("🌟 DASHBOARD SINGULARITY ACTIVE - ALL SYSTEMS INTEGRATED");
+  console.log("🌟 DASHBOARD SINGULARITY V4.0 - FULLY INLINED");
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
 
