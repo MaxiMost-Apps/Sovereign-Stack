@@ -29,10 +29,17 @@ export const HabitCard = ({ habit, mode = 'dashboard', onToggle, onQuickImport, 
 
   // Icon Logic
   let Icon = LucideIcons.Activity;
-  const iconName = habit.metadata?.visuals?.icon ?? habit.metadata?.tactical?.icon ?? habit.icon ?? 'Activity';
-  if (iconName && typeof iconName === 'string') {
-      const ResolvedIcon = (LucideIcons as any)[iconName];
-      if (ResolvedIcon) Icon = ResolvedIcon;
+  const iconSource = habit.metadata?.visuals?.icon ?? habit.metadata?.tactical?.icon ?? habit.icon ?? 'Activity';
+
+  if (iconSource) {
+      if (typeof iconSource === 'function' || typeof iconSource === 'object') {
+          // Direct Component (Sovereign Library)
+          Icon = iconSource as any;
+      } else if (typeof iconSource === 'string') {
+          // String Lookup
+          const ResolvedIcon = (LucideIcons as any)[iconSource];
+          if (ResolvedIcon) Icon = ResolvedIcon;
+      }
   }
 
   // REPAIR ORDER: Hide Goal/Time Display in Library Trays (Archive Mode)

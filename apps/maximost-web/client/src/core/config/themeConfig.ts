@@ -116,6 +116,25 @@ export const getThemeStyles = (colorId: string) => {
       };
   }
 
+  // 1.5 Tailwind Class Support (Green Bug Fix)
+  // Maps 'bg-blue-600' -> 'maximost_blue' logic
+  if (colorId && colorId.startsWith('bg-')) {
+      const parts = colorId.split('-'); // e.g., ['bg', 'blue', '600']
+      if (parts.length > 1) {
+          const colorName = parts[1]; // 'blue'
+          const match = THEME_COLORS.find(c => c.tailwind.startsWith(colorName));
+          if (match) {
+              return {
+                  bg: `bg-${match.tailwind}`,
+                  text: `text-${match.tailwind}`,
+                  border: `border-${match.tailwind}`,
+                  glow: match.glow,
+                  hex: match.hex
+              };
+          }
+      }
+  }
+
   // Alias mapping for Big Bang Payload
   const aliasMap: any = { 'maxi_blue': 'maximost_blue' };
   const targetId = aliasMap[colorId] || colorId;
