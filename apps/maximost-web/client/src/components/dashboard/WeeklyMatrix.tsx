@@ -2,7 +2,12 @@ import React from 'react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { Check } from 'lucide-react';
 
-export const WeeklyMatrix = ({ habits }) => {
+interface WeeklyMatrixProps {
+  habits: any[];
+  isLocked?: boolean;
+}
+
+export const WeeklyMatrix: React.FC<WeeklyMatrixProps> = ({ habits, isLocked }) => {
   const today = new Date();
   const startDate = startOfWeek(today, { weekStartsOn: 1 }); // Monday start
   const weekDays = [...Array(7)].map((_, i) => addDays(startDate, i));

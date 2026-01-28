@@ -6,49 +6,60 @@ import { HabitLibrary } from '@/components/library/HabitLibrary';
 import { HabitDetailModal } from '@/components/habits/HabitDetailModal';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useHabits } from '@/hooks/useHabits';
-import { LayoutGrid, Calendar, BarChart3, Menu } from 'lucide-react';
+import { LayoutGrid, Calendar, BarChart3, Lock, Unlock, Shield, Activity, Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function DashboardSingularity() {
   const [view, setView] = useState<'day' | 'week' | 'month'>('day');
+  const [isLocked, setIsLocked] = useState(false); // THE LOCK STATE
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
 
   const { library } = useLibrary();
   const { habits: userHabits, toggleHabit, updateHabitConfig } = useHabits();
 
-  // MERGE LOGIC
   const activeHabits = library.map(master => {
     const userState = userHabits.find(h => h.habit_id === master.id);
     if (!userState || userState.status === 'archived') return null;
     return { ...master, ...userState, status: userState.status || 'active', is_completed: userState.status === 'completed' };
   }).filter(Boolean);
 
+  const absoluteHabits = activeHabits.filter(h => h.default_config.frequency_type === 'ABSOLUTE');
+  const frequencyHabits = activeHabits.filter(h => h.default_config.frequency_type === 'FREQUENCY');
+
   return (
     <div className="min-h-screen bg-[#0B1221] pb-32">
-      {/* 1. HEADER */}
-      <div className="sticky top-0 z-40 bg-[#0B1221]/80 backdrop-blur-md border-b border-white/5 px-4 py-4">
+      {/* HEADER */}
+      <div className="sticky top-0 z-40 bg-[#0B1221]/90 backdrop-blur-md border-b border-white/5 px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-black tracking-[0.2em] uppercase text-white">Mission Control</h1>
-            <p className="text-[10px] text-blue-400 font-bold tracking-widest uppercase">
+            <p className="text-[10px] text-blue-500 font-bold tracking-widest uppercase">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </p>
           </div>
-          <Link to="/preferences" className="p-2 text-slate-500 hover:text-white transition-colors">
-            <Menu size={24} />
-          </Link>
+          <div className="flex items-center gap-2">
+            {/* LOCK BUTTON */}
+            <button
+              onClick={() => setIsLocked(!isLocked)}
+              className={`p-2 rounded-lg transition-colors ${isLocked ? 'text-red-500 bg-red-500/10' : 'text-slate-600 hover:text-white'}`}
+            >
+              {isLocked ? <Lock size={20} /> : <Unlock size={20} />}
+            </button>
+            <Link to="/preferences" className="p-2 text-slate-500 hover:text-white transition-colors">
+              <Menu size={24} />
+            </Link>
+          </div>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto p-4 mt-4">
-
-        {/* 2. SLIDER TABS */}
-        <div className="flex bg-[#131B2C] p-1 rounded-xl border border-white/5 shadow-inner mb-8 relative">
-          {[
+        {/* TABS */}
+        <div className="flex bg-[#131B2C] p-1 rounded-xl border border-white/5 mb-8 relative">
+           {[
             { id: 'day', icon: LayoutGrid, label: 'DAY' },
             { id: 'week', icon: Calendar, label: 'WEEK' },
             { id: 'month', icon: BarChart3, label: 'MONTH' }
-          ].map(tab => (
+           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setView(tab.id as any)}
@@ -67,13 +78,12 @@ export default function DashboardSingularity() {
                 <tab.icon size={14} /> {tab.label}
               </span>
             </button>
-          ))}
+           ))}
         </div>
 
-        {/* 3. CONTENT AREA */}
+        {/* CONTENT AREA */}
         <AnimatePresence mode='wait'>
-
-          {/* VIEW: DAY (Unified List) */}
+          {/* DAY VIEW */}
           {view === 'day' && (
             <motion.div
               key="day"
@@ -81,28 +91,43 @@ export default function DashboardSingularity() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ duration: 0.2 }}
-              className="space-y-3"
+              className="space-y-8"
             >
-               {/* Just the habits. No headers. No separation. */}
-               {activeHabits.length > 0 ? (
-                 activeHabits.map((habit, i) => (
-                    <DailyHabitRow
-                      key={habit.id}
-                      habit={habit}
-                      index={i}
-                      onToggle={toggleHabit}
-                      onOpenInfo={() => setSelectedHabit(habit)}
-                    />
-                 ))
-               ) : (
+              {/* ABSOLUTE SECTION */}
+              {absoluteHabits.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 mb-2 pl-2">
+                     <Shield size={12} className="text-slate-500" />
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Absolute Habits</span>
+                  </div>
+                  {absoluteHabits.map((h, i) => (
+                    <DailyHabitRow key={h.id} habit={h} index={i} isLocked={isLocked} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(h)} />
+                  ))}
+                </div>
+              )}
+
+              {/* FREQUENCY SECTION */}
+              {frequencyHabits.length > 0 && (
+                <div className="space-y-3">
+                   <div className="flex items-center gap-2 mb-2 pl-2 border-t border-white/5 pt-6">
+                     <Activity size={12} className="text-slate-500" />
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Frequency Targets</span>
+                  </div>
+                  {frequencyHabits.map((h, i) => (
+                    <DailyHabitRow key={h.id} habit={h} index={i} isLocked={isLocked} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(h)} />
+                  ))}
+                </div>
+              )}
+
+              {activeHabits.length === 0 && (
                  <div className="p-12 text-center border border-dashed border-white/10 rounded-2xl bg-slate-900/20">
                    <p className="text-xs text-slate-500">No active atoms. Deploy from Archive.</p>
                  </div>
-               )}
+              )}
             </motion.div>
           )}
 
-          {/* VIEW: WEEK */}
+          {/* WEEK VIEW */}
           {view === 'week' && (
             <motion.div
               key="week"
@@ -111,11 +136,11 @@ export default function DashboardSingularity() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
             >
-              <WeeklyMatrix habits={activeHabits} />
+              <WeeklyMatrix habits={activeHabits} isLocked={isLocked} />
             </motion.div>
           )}
 
-          {/* VIEW: MONTH */}
+          {/* MONTH VIEW */}
           {view === 'month' && (
             <motion.div
               key="month"
@@ -131,13 +156,12 @@ export default function DashboardSingularity() {
           )}
         </AnimatePresence>
 
-        {/* ARCHIVE LINK */}
+        {/* ARCHIVE */}
         <div className="mt-20 border-t border-white/5 pt-10">
           <HabitLibrary />
         </div>
       </div>
 
-      {/* DRAWER / EDIT MODAL */}
       <AnimatePresence>
         {selectedHabit && (
           <HabitDetailModal
