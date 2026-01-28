@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Hono } from 'hono';
-import { supabase } from '../services/supabase';
+import { supabase } from '../supabase';
 import { AppEnv } from '../hono';
 
 const router = new Hono<AppEnv>();
