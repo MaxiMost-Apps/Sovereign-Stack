@@ -63,32 +63,45 @@ export default function DashboardSingularity() {
       {/* VIEW: DAY */}
       {view === 'day' && (
         <div className="animate-in fade-in space-y-8">
-          {/* ABSOLUTE */}
-          <div>
-            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 pl-1">Absolute Habits</h3>
-            <div className="space-y-2 border-l-2 border-blue-600 pl-4 py-1">
+          {/* SECTOR 1: ABSOLUTE HABITS */}
+          {absoluteHabits.length > 0 && (
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4 ml-2">
+                <Shield size={16} className="text-red-600" />
+                <h3 className="text-[11px] font-black tracking-[0.3em] text-red-600/80 uppercase">Absolute Habits</h3>
+                <div className="h-px flex-1 bg-gradient-to-r from-red-900/50 to-transparent" />
+              </div>
+              <div className="space-y-2">
               {absoluteHabits.map(habit => (
                 <DailyHabitRow key={habit.id} habit={habit} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(habit)} onOpenMenu={() => {}} />
               ))}
-              {absoluteHabits.length === 0 && <p className="text-slate-600 text-xs italic">No absolute protocols active.</p>}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* FREQUENCY */}
-          <div>
-            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 pl-1">Frequency Habits</h3>
-            <div className="space-y-2 border-l-2 border-emerald-500 pl-4 py-1">
+          {/* SECTOR 2: FREQUENCY TARGETS */}
+          {frequencyHabits.length > 0 && (
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4 ml-2">
+                <Activity size={16} className="text-blue-500" />
+                <h3 className="text-[11px] font-black tracking-[0.3em] text-blue-500/80 uppercase">Frequency Targets</h3>
+                <div className="h-px flex-1 bg-gradient-to-r from-blue-900/50 to-transparent" />
+              </div>
+              <div className="space-y-2">
               {frequencyHabits.map(habit => (
                 <DailyHabitRow key={habit.id} habit={habit} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(habit)} onOpenMenu={() => {}} />
               ))}
-               {frequencyHabits.length === 0 && <p className="text-slate-600 text-xs italic">No frequency targets set.</p>}
+              </div>
             </div>
+          )}
 
-            {/* INITIALIZE BUTTON */}
-            <div className="mt-8 border border-white/10 rounded-lg p-4 flex justify-center border-dashed hover:border-blue-500/50 hover:bg-blue-500/5 transition-all cursor-pointer">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">+ Initialize New Habit</span>
+          {/* EMPTY STATE */}
+          {activeHabits.length === 0 && (
+            <div className="p-12 text-center border border-dashed border-white/10 rounded-2xl">
+              <h3 className="text-slate-500 font-bold uppercase tracking-widest">No Active Protocols</h3>
+              <p className="text-xs text-slate-600 mt-2">Access the Library below to deploy habits.</p>
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -113,14 +126,13 @@ export default function DashboardSingularity() {
         <HabitEditModal
           habit={selectedHabit}
           onClose={() => setSelectedHabit(null)}
-          onSave={(id: any, updates: any) => {
+          onSave={(updatedHabit: any) => {
             // Connect the UI to the Database
-            updateHabitConfig(id, {
-              frequency_type: updates.frequency_type,
-              target_days: updates.target, // Mapped from formData.target
-              visuals: { icon: updates.icon, color: updates.color }, // Re-constructing visuals object
-              custom_title: updates.title !== selectedHabit.title ? updates.title : undefined,
-              custom_description: updates.description !== selectedHabit.description ? updates.description : undefined
+            updateHabitConfig(updatedHabit.id, {
+              frequency_type: updatedHabit.default_config.frequency_type,
+              target_days: updatedHabit.default_config.target_days,
+              visuals: updatedHabit.visuals,
+              // We can also sync title/description overrides if supported by schema/backend
             });
             setSelectedHabit(null);
           }}
