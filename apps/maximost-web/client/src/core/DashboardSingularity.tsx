@@ -142,19 +142,39 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
             )}
 
             <div className="relative flex items-center justify-center gap-3">
-                {/* CHECKMARK / INPUT */}
+                {/* 1. ACTION MENU (Three Dots) - Sibling, not child */}
+                <div className="relative">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+                        className="p-2 text-slate-600 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                        <MoreVertical size={16} />
+                    </button>
+
+                    {showMenu && (
+                        <div className="absolute right-0 top-8 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
+                            <button onClick={() => { onEdit(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 flex items-center gap-3">
+                                <Edit2 size={14} /> Edit
+                            </button>
+                            <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3">
+                                <Trash2 size={14} /> Delete
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* 2. THE CHECKMARK BUTTON (Identity Color Logic) */}
+                {/* Note: This logic is now passed down to DailyHabitRow, but if rendering here: */}
                 <button
-                    onClick={() => !isSystemLocked && onToggle(habit.id, date, isFullyComplete ? 0 : 1)}
-                    className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-all border-2", isFullyComplete ? "bg-opacity-100 text-black shadow-lg" : "bg-transparent text-transparent hover:border-slate-500")}
-                    style={{ borderColor: isFullyComplete ? activeColor : '#334155', backgroundColor: isFullyComplete ? activeColor : 'transparent', boxShadow: isFullyComplete ? `0 0 15px ${activeColor}` : 'none', opacity: isSystemLocked ? 0.5 : 1 }}>
-                    {isQuantified && !isFullyComplete ? <span className="text-xs text-slate-500 font-bold">{currentValue > 0 ? currentValue : '+'}</span> : <Check size={24} strokeWidth={4} color="black" />}
+                    onClick={(e) => { e.stopPropagation(); !isSystemLocked && onToggle(habit.id, date, isFullyComplete ? 0 : 1); }}
+                    className={`w-12 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                        isFullyComplete
+                        ? `${habit.base_color || 'bg-slate-700'} text-white shadow-lg shadow-current` // Active: Uses Habit Color + Glow
+                        : 'bg-[#0B1221] border border-white/10 text-slate-800 hover:border-white/30' // Inactive: Dark
+                    }`}
+                >
+                    {isFullyComplete && <Check size={18} strokeWidth={3} />}
                 </button>
-                {showInput && (
-                    <div className="absolute right-14 top-1/2 -translate-y-1/2 w-48 bg-[#1a1d24] border border-white/20 p-2 rounded-xl shadow-2xl z-[100] flex gap-2 animate-in slide-in-from-right-2">
-                        <input ref={inputRef} type="number" placeholder="#" className="w-full bg-black border border-white/10 rounded px-2 py-2 text-white font-bold text-center outline-none focus:border-blue-500" onKeyDown={handleInputSubmit} />
-                        <button onClick={() => setShowInput(false)} className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-500 p-2 rounded border border-emerald-500/50"><Check size={16} /></button>
-                    </div>
-                )}
             </div>
         </div>
         </div>
