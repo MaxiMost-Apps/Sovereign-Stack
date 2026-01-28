@@ -60,6 +60,17 @@ export default function WeeklyMatrix({ habits, currentDate, logs = {}, onToggle,
   );
 
   const renderRow = (habit: any) => {
+    // Determine cell rendering inside the matrix based on 'habit.base_color'
+    // WeeklyHabitRow likely maps 'weekDays' to render multiple cells.
+    // The instructions say "Find the grid cell div and replace with this".
+    // WeeklyHabitRow is imported. I need to modify WeeklyHabitRow, OR inline the logic if WeeklyMatrix handled it.
+    // But WeeklyMatrix delegates to WeeklyHabitRow.
+    // I will modify WeeklyHabitRow in the next step or modify the render function here if it was inline.
+    // Wait, the file I read is WeeklyMatrix.tsx and it USES WeeklyHabitRow.
+    // The instruction says "Target: apps/maximost-web/client/src/components/dashboard/WeeklyMatrix.tsx".
+    // If the grid cell is inside WeeklyHabitRow, I must target that.
+    // Let's assume the user meant WeeklyHabitRow.tsx OR the inline logic used to be here.
+    // I will read WeeklyHabitRow next.
     return (
         <WeeklyHabitRow
             habit={habit}
@@ -70,7 +81,7 @@ export default function WeeklyMatrix({ habits, currentDate, logs = {}, onToggle,
             weekDays={weekDays}
             isTodayCol={checkIsToday}
             isSystemLocked={isSystemLocked}
-            isEditMode={isSortMode} // Map Sort Mode to Edit Mode
+            isEditMode={isSortMode}
         />
     );
   };
