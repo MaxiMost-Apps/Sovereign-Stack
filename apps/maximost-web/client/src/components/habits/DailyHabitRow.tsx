@@ -1,20 +1,27 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Info, MoreHorizontal, GripVertical } from 'lucide-react';
+import { Check, Info, MoreHorizontal, GripVertical, Plus } from 'lucide-react';
 import { ICON_MAP } from '@/data/sovereign_library';
 
 interface DailyHabitRowProps {
   habit: any;
   index: number;
+  isReordering: boolean;
   isLocked: boolean;
-  onToggle: (id: string) => void;
+  onToggle: (id: string, val?: number) => void;
   onOpenInfo: (habit: any) => void;
-  onOpenEdit: (habit: any) => void; // New prop for 3-dots
+  onOpenEdit: (habit: any) => void;
 }
 
-export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isLocked, onToggle, onOpenInfo, onOpenEdit }) => {
+export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isReordering, isLocked, onToggle, onOpenInfo, onOpenEdit }) => {
   const Icon = habit.visuals?.icon ? (ICON_MAP[habit.visuals.icon] || Info) : Info;
   const isCompleted = habit.status === 'completed';
+
+  // Logic for measurable habits (e.g. Water 0/3)
+  // Check metadata config or root props (since we might sync it differently)
+  const targetVal = habit.metadata?.config?.target_value || habit.target_value || 1;
+  const isMeasurable = targetVal > 1;
+  const currentVal = habit.current_value || 0;
 
   return (
     <motion.div
@@ -24,57 +31,70 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isLo
       className="group flex items-center p-3 bg-[#0B1221] border border-white/5 rounded-2xl hover:border-white/10 transition-all select-none gap-3"
     >
 
-      {/* 1. GRIPPER (Leftmost - Hidden when Locked) */}
-      {!isLocked && (
+      {/* 1. GRIPPER (Controlled by Sort Toggle) */}
+      {isReordering && (
         <div className="text-slate-700 cursor-grab hover:text-slate-500 shrink-0">
           <GripVertical size={16} />
         </div>
       )}
 
-      {/* 2. ICON (Always Visible) */}
+      {/* 2. ICON */}
       <div className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-        isCompleted ? 'bg-green-500 text-white' : `${habit.visuals.color || 'bg-slate-700'} text-white shadow-lg`
+        isCompleted ? 'bg-green-500 text-white' : `${habit.visuals.color} text-white shadow-lg opacity-90`
       }`}>
         {isCompleted ? <Check size={18} strokeWidth={3} /> : <Icon size={18} strokeWidth={2} />}
       </div>
 
-      {/* 3. NAME & DESCRIPTION + INLINE ACTIONS */}
+      {/* 3. CENTER CONTENT */}
       <div className="flex flex-col justify-center flex-1 min-w-0">
-
-        {/* ROW 1: Title + Action Buttons */}
         <div className="flex items-center gap-2">
-          <h3 className={`text-sm font-bold truncate transition-colors ${isCompleted ? 'text-slate-500 line-through' : 'text-white'}`}>
+          {/* Title */}
+          <h3 className={`text-sm font-bold truncate transition-colors ${isCompleted ? 'text-slate-500 line-through decoration-slate-600' : 'text-white'}`}>
             {habit.title}
           </h3>
 
-          {/* THE BUTTONS (Next to name, Hidden when Locked) */}
+          {/* ACTIONS (i and ...) - Next to Name, Hidden on Lock */}
           {!isLocked && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-               <button onClick={(e) => { e.stopPropagation(); onOpenInfo(habit); }} className="p-1 text-slate-500 hover:text-blue-400 transition-colors">
-                 <Info size={14} />
-               </button>
-               <button onClick={(e) => { e.stopPropagation(); onOpenEdit(habit); }} className="p-1 text-slate-500 hover:text-white transition-colors">
-                 <MoreHorizontal size={14} />
-               </button>
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+               <button onClick={(e) => { e.stopPropagation(); onOpenInfo(habit); }} className="p-1 text-slate-600 hover:text-blue-400 transition-colors"><Info size={14} /></button>
+               <button onClick={(e) => { e.stopPropagation(); onOpenEdit(habit); }} className="p-1 text-slate-600 hover:text-white transition-colors"><MoreHorizontal size={14} /></button>
             </div>
           )}
         </div>
 
-        {/* ROW 2: Description */}
-        <p className="text-[10px] text-slate-500 truncate">{habit.description}</p>
+        {/* Progress Bar or Desc */}
+        {isMeasurable ? (
+           <div className="flex items-center gap-2 mt-1">
+             <div className="h-1 w-24 bg-slate-800 rounded-full overflow-hidden">
+               <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${(currentVal/targetVal)*100}%` }} />
+             </div>
+             <span className="text-[9px] font-mono text-slate-400">{currentVal}/{targetVal} {habit.default_config?.unit || habit.metadata?.config?.unit || 'reps'}</span>
+           </div>
+        ) : (
+           <p className="text-[10px] text-slate-500 truncate mt-0.5 font-medium">{habit.description}</p>
+        )}
       </div>
 
-      {/* 4. CHECK BUTTON (Far Right - Always Visible) */}
-      <button
-        onClick={() => onToggle(habit.habit_id)}
-        className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
-          isCompleted
-            ? 'bg-green-500/10 text-green-500 border border-green-500/20'
-            : 'bg-slate-800/30 text-slate-600 border border-white/5 hover:bg-slate-700 hover:text-white'
-        }`}
-      >
-        {isCompleted && <div className="w-2.5 h-2.5 rounded-full bg-green-500" />}
-      </button>
+      {/* 4. COMPLETION ACTION (Pulsing Circle or Plus) */}
+      {isMeasurable && !isCompleted ? (
+        <button
+          onClick={() => onToggle(habit.habit_id, 1)}
+          className="shrink-0 w-10 h-10 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all active:scale-95"
+        >
+          <Plus size={18} />
+        </button>
+      ) : (
+        <button
+          onClick={() => onToggle(habit.habit_id)}
+          className={`shrink-0 w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
+            isCompleted
+              ? 'bg-green-500 border-green-500 shadow-[0_0_10px_#22c55e] animate-pulse' // PULSING CIRCLE
+              : 'border-slate-700 bg-transparent hover:border-slate-500'
+          }`}
+        >
+          {isCompleted && <div className="w-full h-full rounded-full bg-green-500" />}
+        </button>
+      )}
 
     </motion.div>
   );

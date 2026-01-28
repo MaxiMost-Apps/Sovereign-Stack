@@ -24,22 +24,34 @@ export const useHabits = () => {
     }
   };
 
-  const toggleHabit = async (habitId: string) => {
+  const toggleHabit = async (habitId: string, value?: number) => {
     // 1. GET DEFINITION
     const def = SOVEREIGN_LIBRARY.find(h => h.id === habitId);
     if (!def) return;
 
-    // 2. OPTIMISTIC UPDATE (Instant Feedback)
     const previousHabits = [...habits];
     const exists = habits.find(h => h.habit_id === habitId);
 
+    // 2. OPTIMISTIC UPDATE
     if (exists) {
-      // Toggle Status Immediately
-      setHabits(prev => prev.map(h =>
-        h.habit_id === habitId
-          ? { ...h, status: h.status === 'completed' ? 'active' : 'completed', streak: h.status === 'completed' ? h.streak : h.streak + 1 }
-          : h
-      ));
+      setHabits(prev => prev.map(h => {
+        if (h.habit_id === habitId) {
+          // If it's a value-based habit (like water/sauna), add to the count
+          if (typeof value === 'number') {
+             const currentVal = h.current_value || 0;
+             // Use metadata config if available, otherwise default
+             const target = h.metadata?.config?.target_value || h.target_value || 1;
+             const newVal = currentVal + value;
+             // Complete if target reached
+             const isComplete = newVal >= target;
+             return { ...h, current_value: newVal, status: isComplete ? 'completed' : 'active' };
+          }
+          // Standard boolean toggle
+          const isCompleted = h.status === 'completed';
+          return { ...h, status: isCompleted ? 'active' : 'completed', streak: isCompleted ? h.streak : h.streak + 1 };
+        }
+        return h;
+      }));
     } else {
       // Deploy Immediately
       setHabits(prev => [...prev, {
@@ -49,7 +61,8 @@ export const useHabits = () => {
         visuals: def.visuals,
         default_config: def.default_config,
         status: 'active',
-        streak: 0
+        streak: 0,
+        current_value: 0
       }]);
     }
 
@@ -58,15 +71,22 @@ export const useHabits = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user');
 
-      const { data: existing } = await supabase.from('habits').select('id, status, streak').eq('user_id', user.id).eq('habit_id', habitId).maybeSingle();
+      const { data: existing } = await supabase.from('habits').select('*').eq('user_id', user.id).eq('habit_id', habitId).maybeSingle();
 
       if (existing) {
-        const newStatus = existing.status === 'completed' ? 'active' : 'completed';
-        await supabase.from('habits').update({
-          status: newStatus,
-          last_completed: newStatus === 'completed' ? new Date().toISOString() : null,
-          streak: newStatus === 'completed' ? existing.streak + 1 : Math.max(0, existing.streak - 1)
-        }).eq('id', existing.id);
+        if (typeof value === 'number') {
+           const newVal = (existing.current_value || 0) + value;
+           const target = existing.metadata?.config?.target_value || 1;
+           const newStatus = newVal >= target ? 'completed' : 'active';
+           await supabase.from('habits').update({ current_value: newVal, status: newStatus }).eq('id', existing.id);
+        } else {
+           const newStatus = existing.status === 'completed' ? 'active' : 'completed';
+           await supabase.from('habits').update({
+             status: newStatus,
+             last_completed: newStatus === 'completed' ? new Date().toISOString() : null,
+             streak: newStatus === 'completed' ? existing.streak + 1 : Math.max(0, existing.streak - 1)
+           }).eq('id', existing.id);
+        }
       } else {
         await supabase.from('habits').insert({
           user_id: user.id,
@@ -79,41 +99,27 @@ export const useHabits = () => {
       }
     } catch (err) {
       console.error('Sync failed', err);
-      toast.error('Sync failed - reverting');
-      setHabits(previousHabits); // Revert only on actual error
+      toast.error('Sync failed');
+      setHabits(previousHabits);
     }
   };
 
-  // Add updateHabitConfig to support the Dashboard editing
+  // Keep updateHabitConfig for compatibility
   const updateHabitConfig = async (habitId: string, updates: any) => {
       try {
-        // Optimistic Update
         setHabits(prev => prev.map(h => h.habit_id === habitId ? { ...h, ...updates } : h));
-
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Sync to DB
-        // Determine what to update. If it's visual/config, it likely goes into metadata or specific columns if they exist.
-        // The migration added `metadata`.
-        const { error } = await supabase
-          .from('habits')
-          .update({
+        await supabase.from('habits').update({
              title: updates.title,
-             metadata: {
-                 visuals: updates.visuals,
-                 config: updates.default_config
-             }
-          })
-          .eq('user_id', user.id)
-          .eq('habit_id', habitId);
-
-        if (error) throw error;
+             metadata: { visuals: updates.visuals, config: updates.default_config }
+          }).eq('user_id', user.id).eq('habit_id', habitId);
         toast.success('Protocol Updated');
       } catch (error) {
         console.error('Update failed', error);
         toast.error('Update Failed');
-        fetchHabits(); // Revert
+        fetchHabits();
       }
   };
 
