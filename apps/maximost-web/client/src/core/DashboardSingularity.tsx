@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
-import { WeeklyMatrix } from '@/core/components/WeeklyMatrix';
+import { WeeklyMatrix } from '@/components/dashboard/WeeklyMatrix';
 import { HabitLibrary } from '@/components/library/HabitLibrary';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useHabits } from '@/hooks/useHabits';
