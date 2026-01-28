@@ -2,22 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { ShieldAlert, Biohazard, Hourglass, Lock, Zap, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- THE SAVAGE VAULT (Frontend Mirror of your SQL) ---
+// --- ASSETS ---
+const CRACK_OVERLAY = `data:image/svg+xml,%3Csvg width='100%25' height='100%25' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50L20 20M50 50L80 20M50 50L20 80M50 50L80 80M50 50L50 10M50 50L50 90' stroke='white' stroke-width='0.5' stroke-opacity='0.3'/%3E%3Cpath d='M45 45L30 10M55 45L70 10M45 55L30 90M55 55L70 90' stroke='white' stroke-width='0.2' stroke-opacity='0.2'/%3E%3C/svg%3E`;
+
+// --- THE SAVAGE VAULT (Long Form) ---
 const ROAST_DB = {
   lie: [
-    "Tired is a ghost. It isn't real. You are bored because you have no mission. The enemy is training while you negotiate with your pillow.",
-    "You have the exact same 24 hours as the Titans who built the world. You don't lack time; you lack priority.",
-    "Pain is information. It tells you that you are alive. If you treat every ache like a stop sign, you will park your life in the driveway of mediocrity."
+    "Tired is a ghost. It isn't real. You are bored because you have no mission. The enemy is training while you negotiate with your pillow. You are prioritizing comfort over your own life. Wake the f*ck up. Tired is just your brain trying to save calories for a famine that isn't coming.",
+    "You have the exact same 24 hours as the Titans who built the world. You don't lack time; you lack priority. You are 'busy' being average. Stop letting the world steal your time and start stealing the morning. 0500 belongs to the Sovereign.",
+    "Pain is information. It tells you that you are alive. If you treat every ache like a stop sign, you will park your life in the driveway of mediocrity. Duct tape it. Ice it. Move around it. But do not stop. Adapt or decay."
   ],
   poison: [
-    "You are grinding for XP in a fake world while your real life character is Level 1. The real game has no respawns.",
-    "You are donating your soul to an algorithm. Every swipe is a vote for mediocrity. Turn it off. Face the void.",
-    "You are borrowing happiness from tomorrow with high interest. If you hate your life enough to numb it, change the life. Don't drown it."
+    "You are grinding for XP in a fake world while your real life character is Level 1. You are trading your legacy for pixels. You feel accomplished because the game gave you a badge, but outside that screen, you haven't built sh*t.",
+    "You are donating your soul to an algorithm. Every swipe is a vote for mediocrity. You are consuming other men's lives instead of architecting your own. You are a spectator in the arena. Turn it off. Face the void.",
+    "You are borrowing happiness from tomorrow with high interest. You are literally drinking poison to escape the reality you built. If you hate your life enough to numb it, change the life. Don't drown it."
   ],
   drift: [
-    "The first decision you made today was a lie. You broke a contract with yourself before your feet hit the floor.",
-    "You are waiting for the 'perfect time.' It doesn't exist. Chaos is the standard. Move.",
-    "Your environment is a reflection of your mind. You live in chaos because you think in chaos. Clean your damn room."
+    "The first decision you made today was a lie. You broke a contract with yourself before your feet hit the floor. You started the day with a defeat. If you can't beat a plastic clock, how do you expect to beat the world?",
+    "You are waiting for the 'perfect time.' It doesn't exist. Chaos is the standard. You are sitting on the sidelines waiting for a clear path while the savages are hacking through the jungle. Move.",
+    "Your environment is a reflection of your mind. You live in chaos because you think in chaos. Clean your damn room. You cannot order the world if you cannot order your own perimeter."
   ]
 };
 
@@ -27,8 +30,6 @@ export default function TitanMirror() {
   const [attempts, setAttempts] = useState(3);
   const [isLocked, setIsLocked] = useState(false);
   const [loading, setLoading] = useState<Category | null>(null);
-
-  // State for the active roast display
   const [activeRoast, setActiveRoast] = useState<{ category: Category; text: string } | null>(null);
 
   useEffect(() => {
@@ -45,13 +46,11 @@ export default function TitanMirror() {
 
     setLoading(category);
 
-    // SIMULATE "THINKING" TIME
     setTimeout(() => {
       const newAttempts = attempts - 1;
       setAttempts(newAttempts);
       localStorage.setItem('mirror_attempts', newAttempts.toString());
 
-      // SELECT ROAST BASED ON CATEGORY
       const roasts = ROAST_DB[category];
       const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
 
@@ -59,7 +58,8 @@ export default function TitanMirror() {
       setLoading(null);
 
       if (newAttempts === 0) {
-        setTimeout(() => setIsLocked(true), 4000); // Delay lockout to read
+        // DELAY LOCKOUT TO 8 SECONDS (Long enough to read paragraph)
+        setTimeout(() => setIsLocked(true), 8000);
       }
     }, 1500);
   };
@@ -77,7 +77,7 @@ export default function TitanMirror() {
 
       {/* HEADER */}
       <header className="relative z-10 max-w-7xl mx-auto mb-12 text-center space-y-4 pt-8">
-        <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white glitch-text" data-text="THE MIRROR">
+        <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white glitch-text">
           THE MIRROR
         </h1>
         <div className="flex items-center justify-center gap-4 text-sm font-bold tracking-widest">
@@ -142,16 +142,20 @@ export default function TitanMirror() {
 
       </div>
 
-      {/* LOCKOUT OVERLAY */}
+      {/* LOCKOUT OVERLAY (FIXED POSITION) */}
       <AnimatePresence>
         {isLocked && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl"
           >
             <div className="max-w-lg w-full border-y-2 border-red-600 bg-zinc-950/50 p-12 text-center relative overflow-hidden">
               <div className="absolute inset-0 bg-red-500/5 animate-pulse pointer-events-none" />
+
+              {/* CRACK EFFECT ON LOCKOUT */}
+              <div className="absolute inset-0 opacity-20 mix-blend-overlay pointer-events-none" style={{ backgroundImage: `url("${CRACK_OVERLAY}")`, backgroundSize: 'cover' }} />
+
               <Lock className="w-20 h-20 text-red-600 mx-auto mb-8" />
               <h2 className="text-5xl font-black uppercase tracking-tighter text-white mb-6">SOUL EXPOSED</h2>
               <p className="text-red-400 font-mono text-sm mb-10 leading-relaxed">
@@ -159,7 +163,7 @@ export default function TitanMirror() {
                 You have exhausted your excuses. The Mirror has seen enough.
               </p>
               <button className="w-full py-5 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-[0.2em] text-lg transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(220,38,38,0.4)]">
-                JOIN THE ORDER
+                ACCESS COMMAND
               </button>
             </div>
           </motion.div>
@@ -174,7 +178,7 @@ const MirrorCard = ({ category, title, icon: Icon, prompt, placeholder, accent, 
   const [input, setInput] = useState('');
 
   return (
-    <div className={`relative bg-[#0B1221]/50 backdrop-blur-sm border ${accent} p-8 flex flex-col h-[550px] transition-all duration-500 group ${glow}`}>
+    <div className={`relative bg-[#0B1221]/50 backdrop-blur-sm border ${accent} p-8 flex flex-col h-[600px] transition-all duration-500 group ${glow}`}>
 
       {/* HEADER */}
       <div className="flex items-center gap-4 mb-8 opacity-60 group-hover:opacity-100 transition-opacity">
@@ -195,8 +199,8 @@ const MirrorCard = ({ category, title, icon: Icon, prompt, placeholder, accent, 
               exit={{ opacity: 0 }}
               className="absolute inset-0 flex flex-col justify-center"
             >
-              <div className="border-l-4 border-white/20 pl-6 py-2">
-                <p className="text-lg md:text-xl font-bold text-white leading-relaxed font-mono">
+              <div className="border-l-4 border-white/20 pl-6 py-4 bg-white/5 rounded-r-lg">
+                <p className="text-base md:text-lg font-bold text-white leading-relaxed font-mono">
                   "{roast}"
                 </p>
               </div>
