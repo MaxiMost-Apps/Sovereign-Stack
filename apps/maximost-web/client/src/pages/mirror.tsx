@@ -13,7 +13,7 @@ interface MirrorState {
 }
 
 // --- COMPONENT ---
-// Build Timestamp: 1769568172
+// Build Timestamp: 1769568173 (Bumped)
 export default function TriptychMirror() {
   const [state, setState] = useState<MirrorState>({
     attempts: 3,
@@ -35,40 +35,49 @@ export default function TriptychMirror() {
     localStorage.setItem('mirror_state', JSON.stringify(state));
   }, [state]);
 
+  // --- UPDATED LOGIC (Smart Matching + Simulation) ---
   const handleStrike = async (category: Category, input: string) => {
-    if (state.attempts <= 0) return;
+    if (state.attempts <= 0 || !input.trim()) return;
 
     setLoading(category);
 
-    try {
-        const response = await fetch(getApiUrl('/api/mirror/roast'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ category, text: input })
+    // SIMULATE API LATENCY (Client-Side Robustness)
+    setTimeout(() => {
+        const newAttempts = state.attempts - 1;
+        const lowerInput = input.toLowerCase();
+
+        // 1. SMART MATCHING LOGIC
+        let responseText = "Your discipline is leaking. Plug the hole or drown."; // Default
+
+        if (lowerInput.includes('tired') || lowerInput.includes('sleep') || lowerInput.includes('exhausted')) {
+        responseText = "You are not tired; you are unconditioned. The body has another gear. Shift up.";
+        } else if (lowerInput.includes('busy') || lowerInput.includes('time')) {
+        responseText = "You have time to scroll, you have time to suffer. Prioritize the mission.";
+        } else if (lowerInput.includes('pain') || lowerInput.includes('hurt')) {
+        responseText = "Pain is the only thing that's real. It unlocks the secret doorway. Enter it.";
+        }
+
+        // 2. SHOW THE ROAST
+        setRoast({
+        category,
+        text: responseText
         });
-        const data = await response.json();
-
-        // Short delay for "Glitch" effect perception
-        setTimeout(() => {
-            const newAttempts = state.attempts - 1;
-            setState(prev => ({
-                ...prev,
-                attempts: newAttempts,
-                isLocked: newAttempts === 0,
-                history: [...prev.history, input]
-            }));
-
-            setRoast({
-                category,
-                text: data.roast || "Silence. The void stares back."
-            });
-            setLoading(null);
-        }, 800);
-
-    } catch (e) {
-        console.error(e);
         setLoading(null);
-    }
+
+        // 3. UPDATE STATE
+        setState(prev => ({
+        ...prev,
+        attempts: newAttempts,
+        history: [...prev.history, input]
+        }));
+
+        // 4. TRIGGER LOCKOUT ONLY AFTER DELAY (If it was the last strike)
+        if (newAttempts === 0) {
+        setTimeout(() => {
+            setState(prev => ({ ...prev, isLocked: true }));
+        }, 4000);
+        }
+    }, 1500);
   };
 
   return (
@@ -137,24 +146,34 @@ export default function TriptychMirror() {
           locked={state.isLocked}
         />
 
-        {/* THE LOCKOUT OVERLAY (CTA) */}
+        {/* --- UPDATED OVERLAY STYLE --- */}
         {state.isLocked && (
-          <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 animate-in fade-in duration-1000">
-            <Lock className="w-16 h-16 text-red-600 mb-6" />
-            <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white mb-4">
-              SOUL EXPOSED
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-1000">
+            <div className="max-w-lg w-full bg-zinc-950 border-2 border-red-600 p-8 text-center shadow-[0_0_50px_rgba(220,38,38,0.3)] relative overflow-hidden">
+
+            {/* SCANLINE EFFECT */}
+            <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(255,0,0,0.1)_50%)] bg-[length:100%_4px] pointer-events-none" />
+
+            <Lock className="w-16 h-16 text-red-600 mx-auto mb-6 animate-pulse" />
+
+            <h2 className="text-4xl font-black uppercase tracking-tighter text-white mb-4 glitch-text">
+                SOUL EXPOSED
             </h2>
-            <p className="text-zinc-400 max-w-lg mb-8 text-lg">
-              You have exhausted your excuses. The Mirror has seen enough.
-              It is time to stop typing and start executing.
+
+            <p className="text-red-200 font-mono text-sm mb-8 leading-relaxed">
+                SYSTEM LOCKDOWN INITIATED.<br/>
+                You have exhausted your excuses. The Mirror has seen enough.
             </p>
-            <a href="/login" className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-lg transition-all hover:scale-105 shadow-[0_0_30px_rgba(220,38,38,0.5)]">
-              JOIN THE ORDER
+
+            <a href="/login" className="block w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-lg transition-all hover:scale-105 shadow-lg">
+                JOIN THE ORDER
             </a>
+
             <button className="mt-6 text-zinc-500 hover:text-white text-xs uppercase tracking-widest underline underline-offset-4">
-              Share My Roast to Reddit
+                Share My Roast to Reddit
             </button>
-          </div>
+            </div>
+        </div>
         )}
 
       </div>
