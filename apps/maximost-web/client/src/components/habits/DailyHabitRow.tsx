@@ -53,7 +53,7 @@ export const DailyHabitRow = ({ habit, onToggle, onOpenInfo, onOpenMenu }) => {
         className={`
           relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
           ${isCompleted
-            ? `${habit.base_color || 'bg-slate-600'} text-white shadow-[0_0_15px_rgba(255,255,255,0.15)] scale-105`
+            ? `${habit.visuals?.color || habit.base_color || 'bg-slate-600'} text-white shadow-[0_0_15px_rgba(255,255,255,0.15)] scale-105`
             : 'bg-[#131B2C] border-2 border-white/5 text-transparent hover:border-white/20'
           }
         `}

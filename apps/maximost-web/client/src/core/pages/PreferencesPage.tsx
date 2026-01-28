@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import { Save, RefreshCw, Lock, Shield, Activity, Heart } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function Preferences() {
   const [profile, setProfile] = useState({
@@ -46,9 +47,10 @@ export default function Preferences() {
       const { error } = await supabase.from('profiles').upsert(updates);
       if (error) throw error;
 
-      alert('PROTOCOL CALIBRATED.');
+      toast.success('PROTOCOL CALIBRATED.');
     } catch (error: any) {
-      alert(`ERROR: ${error.message}`);
+      console.error('Save failed:', error);
+      toast.error(`ERROR: ${error.message}`);
     } finally {
       setLoading(false);
     }
