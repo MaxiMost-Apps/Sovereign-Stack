@@ -36,9 +36,17 @@ export default function Preferences() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 pt-12 pb-40">
-      <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-white mb-8 transition-colors">
-        <ArrowLeft size={16} /> <span className="text-xs font-bold tracking-widest uppercase">Back to Mission Control</span>
-      </Link>
+
+      {/* HEADER WITH SAVE BUTTON */}
+      <div className="flex items-center justify-between mb-8">
+        <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors group">
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+            <span className="text-xs font-bold tracking-widest uppercase">Return to Mission Control</span>
+        </Link>
+        <button onClick={() => toast.success('Settings Saved')} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-colors">
+            Save Settings
+        </button>
+      </div>
 
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-black text-white tracking-widest uppercase">System Preferences</h1>
@@ -57,131 +65,91 @@ export default function Preferences() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { id: 'OPERATOR', label: 'The Operator', desc: 'Tactical Execution', img: '/coaches/operator.jpg' },
-            { id: 'STOIC', label: 'The Stoic', desc: 'Resilience & Logic', img: '/coaches/stoic.jpg' },
-            { id: 'ALLY', label: 'The Ally', desc: 'Sustainability', img: '/coaches/ally.jpg' }
+            { id: 'STOIC', label: 'The Stoic', desc: 'Endure. The obstacle is the way.', img: '/coaches/stoic.jpg' },
+            { id: 'OPERATOR', label: 'The Operator', desc: 'Execute. Mission parameters set.', img: '/coaches/operator.jpg' },
+            { id: 'ALLY', label: 'The Ally', desc: 'Support. We go far together.', img: '/coaches/ally.jpg' },
           ].map(coach => (
             <button
               key={coach.id}
               onClick={() => updateProfile('coach_mode', coach.id)}
-              className={`relative h-48 rounded-2xl border overflow-hidden flex flex-col justify-end transition-all group ${
+              className={`relative group overflow-hidden rounded-2xl border transition-all text-left h-48 ${
                 profile?.coach_mode === coach.id
-                  ? 'border-white ring-2 ring-white shadow-2xl scale-[1.02]'
-                  : 'border-white/5 hover:border-white/20 hover:scale-[1.01]'
+                  ? 'border-blue-500 shadow-[0_0_20px_rgba(37,99,235,0.3)]'
+                  : 'border-white/5 hover:border-white/20'
               }`}
             >
+              {/* Background Image with Overlay */}
               <div className="absolute inset-0">
-                 <img
-                   src={coach.img}
-                   alt={coach.label}
-                   className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 opacity-60 group-hover:opacity-80"
-                 />
-                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B1221] via-[#0B1221]/40 to-transparent" />
+                  <img src={coach.img} alt={coach.label} className="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity grayscale group-hover:grayscale-0" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
               </div>
 
-              <div className="relative z-10 p-5 text-left">
-                <div className="flex items-center justify-between">
-                    <span className="text-lg font-black text-white tracking-widest uppercase">{coach.label}</span>
-                    {profile?.coach_mode === coach.id && <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e] animate-pulse" />}
+              <div className="absolute bottom-0 p-4 w-full">
+                <div className="flex justify-between items-center mb-1">
+                   <h3 className={`text-sm font-black uppercase tracking-widest ${profile?.coach_mode === coach.id ? 'text-white' : 'text-slate-300'}`}>{coach.label}</h3>
+                   {profile?.coach_mode === coach.id && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
                 </div>
-                <span className="block text-[10px] text-slate-300 mt-1 font-medium tracking-wider uppercase opacity-80">{coach.desc}</span>
+                <p className="text-[10px] text-slate-400 font-medium leading-tight">{coach.desc}</p>
               </div>
             </button>
           ))}
         </div>
       </div>
 
-      {/* SECTION: IDENTITY LENS */}
-      <div className="bg-[#0B1221] border border-white/5 rounded-2xl p-6 mb-8">
-        <div className="flex items-center gap-3 mb-6">
-          <User className="text-blue-500" size={20} />
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Identity Lens</h2>
+      {/* SECTION: CHRONO-SYNC */}
+      <div className="mb-8 p-6 rounded-2xl border border-white/5 bg-[#0e1422]">
+         <div className="flex items-center gap-3 mb-6">
+          <Clock className="text-blue-500" size={20} />
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Chrono-Sync</h2>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {['FORTITUDE', 'REASON', 'VISIONARY', 'ANALYTICAL'].map(lens => (
-            <button
-              key={lens}
-              onClick={() => updateProfile('lens', lens)}
-              className={`p-4 rounded-xl border text-left transition-all ${
-                profile?.lens === lens
-                  ? 'bg-blue-600 border-blue-400 text-white shadow-lg'
-                  : 'bg-slate-900/50 border-white/5 text-slate-500 hover:border-white/20'
-              }`}
-            >
-              <span className="block text-[10px] font-black tracking-widest uppercase mb-1">LENS</span>
-              <span className="block text-sm font-bold">{lens}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* SECTION: CHRONO SYNCHRONIZATION */}
-      <div className="bg-[#0B1221] border border-white/5 rounded-2xl p-6 mb-8">
-        <div className="flex items-center gap-3 mb-6">
-          <Clock className="text-amber-500" size={20} />
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Chrono Synchronization</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Day Start</label>
-              <input
-                type="time"
-                value={profile?.day_start || '06:00'}
-                onChange={(e) => updateProfile('day_start', e.target.value)}
-                className="w-full bg-slate-900/50 border border-white/10 rounded-lg p-3 text-white font-mono focus:border-amber-500 outline-none"
-              />
-           </div>
-           <div>
-              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Timezone</label>
-              <select
-                value={profile?.timezone || 'UTC'}
-                onChange={(e) => updateProfile('timezone', e.target.value)}
-                className="w-full bg-slate-900/50 border border-white/10 rounded-lg p-3 text-white font-mono focus:border-amber-500 outline-none"
-              >
-                 <option value="UTC">UTC (Universal)</option>
-                 <option value="America/New_York">New York (EST)</option>
-                 <option value="America/Los_Angeles">Los Angeles (PST)</option>
-                 <option value="Europe/London">London (GMT)</option>
-              </select>
-           </div>
-        </div>
-      </div>
-
-      {/* SECTION: SYSTEM MAINTENANCE */}
-      <div className="bg-[#0B1221] border border-white/5 rounded-2xl p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <AlertTriangle className="text-slate-500" size={20} />
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">System Maintenance</h2>
-        </div>
-
-        <div className="space-y-4">
-           <button
-             onClick={() => window.location.reload()}
-             className="w-full flex items-center justify-between p-4 rounded-xl border border-white/5 bg-slate-900/30 hover:bg-slate-800 transition-all group"
-           >
-              <div className="flex items-center gap-3">
-                 <RefreshCw size={18} className="text-slate-500 group-hover:text-blue-400 transition-colors" />
-                 <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">Clear Cache & Reload</span>
-              </div>
-              <span className="text-[10px] text-slate-600 font-mono">V18.5</span>
-           </button>
-
-           <div className="border border-red-900/30 bg-red-900/5 p-4 rounded-xl">
-              <div className="flex justify-between items-center">
-                 <div className="flex items-center gap-3">
-                    <Trash2 size={18} className="text-red-500" />
-                    <div>
-                       <h3 className="text-xs font-bold text-red-500 uppercase tracking-wide">Danger Zone</h3>
-                       <p className="text-[10px] text-red-400/60 mt-0.5">Irreversible data loss.</p>
-                    </div>
+        <div className="grid grid-cols-2 gap-8">
+            <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-3">Active Timezone</label>
+                <div className="p-3 rounded-lg bg-black/20 border border-white/5 text-xs text-white font-mono flex items-center justify-between">
+                    {profile?.timezone || 'UTC'}
+                    <span className="text-[10px] text-green-500 font-bold bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">DETECTED</span>
+                </div>
+            </div>
+            <div>
+                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-3">Lens Filter</label>
+                 <div className="flex bg-black/20 p-1 rounded-lg border border-white/5">
+                    {['FORTITUDE', 'REASON'].map(lens => (
+                        <button
+                            key={lens}
+                            onClick={() => updateProfile('lens', lens)}
+                            className={`flex-1 py-2 text-[10px] font-black uppercase rounded transition-all ${profile?.lens === lens ? 'bg-slate-700 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                        >
+                            {lens}
+                        </button>
+                    ))}
                  </div>
-                 <button className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-[10px] font-black uppercase tracking-widest rounded transition-colors">
-                    Wipe Data
-                 </button>
-              </div>
-           </div>
+            </div>
+        </div>
+      </div>
+
+      {/* SECTION: DANGER ZONE */}
+      <div className="p-6 rounded-2xl border border-red-500/10 bg-red-950/5">
+         <div className="flex items-center gap-3 mb-4">
+          <AlertTriangle className="text-red-500" size={20} />
+          <h2 className="text-sm font-bold text-red-500 uppercase tracking-wider">Danger Zone</h2>
+        </div>
+        <div className="flex items-center justify-between">
+            <div>
+                <h3 className="text-xs font-bold text-white uppercase">Factory Reset</h3>
+                <p className="text-[10px] text-slate-500 mt-1">This will wipe all active protocols and streak data.</p>
+            </div>
+            <button
+                onClick={async () => {
+                    if(confirm("CONFIRM PROTOCOL WIPE? This cannot be undone.")) {
+                         await supabase.rpc('factory_reset'); // Ensure this RPC exists or handle manually
+                         window.location.reload();
+                    }
+                }}
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors flex items-center gap-2"
+            >
+                <Trash2 size={12} /> Initiate Wipe
+            </button>
         </div>
       </div>
 
