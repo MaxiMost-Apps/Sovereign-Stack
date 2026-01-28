@@ -79,12 +79,7 @@ function SortableItem({ id, children, disabled }: any) {
 // --- 3. COMPONENT: DAILY HABIT ROW ---
 function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelete, isSystemLocked, isSortMode, date }: any) {
   const [showMenu, setShowMenu] = useState(false);
-  const [showInput, setShowInput] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false); // Info Drawer State
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // COLOR LOGIC FIX: Absolute = RED, Frequency = BLUE
-  const activeColor = habit.frequency_type === 'weekly' ? '#2563EB' : '#EF4444'; // Blue : Red
 
   const IconComponent = ICON_MAP[habit.icon] || Activity;
   const target = habit.daily_goal || 1;
@@ -92,109 +87,90 @@ function DailyHabitRow({ habit, isCompleted, logEntry, onToggle, onEdit, onDelet
   const currentValue = logEntry?.value || 0;
   const isFullyComplete = currentValue >= target;
 
-  useEffect(() => { if (showInput && inputRef.current) inputRef.current.focus(); }, [showInput]);
-
-  const handleInputSubmit = (e: any) => {
-    if (e.key === 'Enter') {
-        const val = parseInt(e.currentTarget.value);
-        if (!isNaN(val)) { onToggle(habit.id, date, val); setShowInput(false); }
-    } else if (e.key === 'Escape') setShowInput(false);
-  };
-
   return (
-    <div className="mb-3">
-        {/* MAIN ROW */}
-        <div className={cn("relative flex items-center justify-between p-4 rounded-xl border transition-all bg-[#0b0c10] border-white/5", isFullyComplete ? "opacity-100" : "opacity-90")}
-        style={{ height: '80px', borderColor: isFullyComplete ? activeColor : (isSortMode ? '#1e3a8a' : 'rgba(255,255,255,0.05)'), boxShadow: isFullyComplete ? `0 0 15px -10px ${activeColor}` : 'none' }}>
+    <>
+    <div className={cn("relative group flex items-center gap-4 p-4 mb-3 rounded-2xl border transition-all duration-300", isFullyComplete ? 'bg-slate-900/50 border-slate-800' : 'bg-[#0B1221] border-white/5')}>
 
-        <div className="flex items-center gap-4 flex-1">
-            {/* GRIPPER VISIBLE ONLY IN SORT MODE */}
-            {isSortMode && <div className="text-slate-500"><GripVertical size={24} /></div>}
-
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center transition-all bg-white/5" style={{ color: activeColor }}><IconComponent size={24} /></div>
-            <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-3">
-                    {/* Z-INDEX FIX: Allow clicks to pass through text */}
-                    <span className={cn("font-bold text-sm text-slate-200 relative z-[1] pointer-events-none", isFullyComplete && "text-white")}>{habit.title}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <FrequencyBadge type={habit.frequency_type} target={habit.target_days || habit.daily_goal} />
-                    {isQuantified && <span className="text-[10px] font-bold tracking-wider uppercase text-slate-500">Goal: {target} {habit.unit}</span>}
-                </div>
-            </div>
-        </div>
-
-        <div className="pl-4 border-l border-white/5 relative h-12 flex items-center z-20 gap-4">
-            {/* ACTION GROUP */}
-            {!isSystemLocked && !isSortMode && (
-                <div className="flex items-center gap-2">
-                    <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className={cn("p-2 rounded-lg transition-colors", isExpanded ? "bg-blue-500/10 text-blue-400" : "text-slate-600 hover:text-white")}><Info size={18} /></button>
-                    <div className="relative">
-                        <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="p-2 text-slate-600 hover:text-white"><MoreVertical size={18} /></button>
-                        {showMenu && (
-                            <div className="absolute right-0 top-8 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
-                                <button onClick={() => { onEdit(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 flex items-center gap-3"><Edit2 size={14} /> Edit Habit</button>
-                                <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3"><Trash2 size={14} /> Delete</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            <div className="relative flex items-center justify-center gap-3">
-                {/* 1. ACTION MENU (Three Dots) - Sibling, not child */}
-                <div className="relative">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                        className="p-2 text-slate-600 hover:text-white transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                        <MoreVertical size={16} />
-                    </button>
-
-                    {showMenu && (
-                        <div className="absolute right-0 top-8 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
-                            <button onClick={() => { onEdit(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 flex items-center gap-3">
-                                <Edit2 size={14} /> Edit
-                            </button>
-                            <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3">
-                                <Trash2 size={14} /> Delete
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* 2. THE CHECKMARK BUTTON (Identity Color Logic) */}
-                {/* Note: This logic is now passed down to DailyHabitRow, but if rendering here: */}
-                <button
-                    onClick={(e) => { e.stopPropagation(); !isSystemLocked && onToggle(habit.id, date, isFullyComplete ? 0 : 1); }}
-                    className={`w-12 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
-                        isFullyComplete
-                        ? `${habit.base_color || 'bg-slate-700'} text-white shadow-lg shadow-current` // Active: Uses Habit Color + Glow
-                        : 'bg-[#0B1221] border border-white/10 text-slate-800 hover:border-white/30' // Inactive: Dark
-                    }`}
-                >
-                    {isFullyComplete && <Check size={18} strokeWidth={3} />}
-                </button>
-            </div>
-        </div>
-        </div>
-
-        {/* INFO DRAWER */}
-        {isExpanded && (
-            <div className="mx-4 mb-4 p-4 bg-[#0B1121] border border-white/5 border-t-0 rounded-b-xl -mt-2 animate-in slide-in-from-top-2">
-                <div className="grid grid-cols-2 gap-4 text-xs">
-                    <div>
-                        <h4 className="font-bold text-slate-500 uppercase tracking-widest mb-1">Tactical</h4>
-                        <p className="text-slate-300 leading-relaxed">{habit.description || habit.lenses?.FORTITUDE?.how || "Execute the protocol."}</p>
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-slate-500 uppercase tracking-widest mb-1">Identity</h4>
-                        <p className="text-slate-300 leading-relaxed">{habit.lenses?.FORTITUDE?.why || "Forge your character."}</p>
-                    </div>
-                </div>
+        {/* 1. GRIPPER (Left) - Only if sort mode, but snippet implies always? No, keep isSortMode check */}
+        {isSortMode && (
+            <div className="cursor-grab touch-none text-slate-700 hover:text-slate-500">
+                <GripVertical size={20} />
             </div>
         )}
+
+        {/* 2. TITLE & INFO GROUP (Middle) */}
+        <div className="flex-1 flex flex-col justify-center">
+            <div className="flex items-center gap-3">
+                <h3 className={cn("text-sm font-bold tracking-wide", isFullyComplete ? 'text-slate-500 line-through' : 'text-white')}>
+                    {habit.title}
+                </h3>
+
+                {/* MOVED: ACTIONS NEXT TO TITLE */}
+                {!isSystemLocked && !isSortMode && (
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className="text-slate-600 hover:text-blue-400 p-1">
+                            <Info size={14} />
+                        </button>
+                        <div className="relative">
+                            <button onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }} className="text-slate-600 hover:text-white p-1">
+                                <MoreVertical size={14} />
+                            </button>
+                            {showMenu && (
+                                <div className="absolute left-0 top-6 w-40 bg-[#1a1d24] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden ring-1 ring-black">
+                                    <button onClick={() => { onEdit(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-slate-300 hover:bg-white/5 flex items-center gap-3">
+                                        <Edit2 size={14} /> Edit
+                                    </button>
+                                    <button onClick={() => { onDelete(); setShowMenu(false); }} className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 flex items-center gap-3">
+                                        <Trash2 size={14} /> Delete
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* BADGES (Below Title) */}
+            <div className="flex items-center gap-2 mt-1">
+                {habit.frequency_type === 'absolute' ? (
+                    <span className="text-[9px] font-black text-red-600 tracking-[0.2em] uppercase">ABSOLUTE</span>
+                ) : (
+                    <span className="text-[9px] font-black text-blue-500 tracking-[0.2em] uppercase">FREQ: {habit.target_days || 'Daily'}/WK</span>
+                )}
+            </div>
+        </div>
+
+        {/* 3. THE CHECKMARK (Right - STRICT CIRCLE) */}
+        <button
+            onClick={() => !isSystemLocked && onToggle(habit.id, date, isFullyComplete ? 0 : 1)}
+            className={`
+                relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500
+                ${isFullyComplete
+                    ? `${habit.base_color || 'bg-slate-600'} text-white shadow-[0_0_20px_rgba(255,255,255,0.1)]`
+                    : 'bg-[#131B2C] border-2 border-white/5 text-transparent hover:border-white/20'
+                }
+            `}
+        >
+            <Check size={20} strokeWidth={4} className={`transition-all duration-300 ${isFullyComplete ? 'scale-100' : 'scale-0'}`} />
+        </button>
     </div>
+
+    {/* INFO DRAWER */}
+    {isExpanded && (
+        <div className="mx-4 mb-4 p-4 bg-[#0B1121] border border-white/5 border-t-0 rounded-b-xl -mt-2 animate-in slide-in-from-top-2">
+            <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                    <h4 className="font-bold text-slate-500 uppercase tracking-widest mb-1">Tactical</h4>
+                    <p className="text-slate-300 leading-relaxed">{habit.description || habit.lenses?.FORTITUDE?.how || "Execute the protocol."}</p>
+                </div>
+                <div>
+                    <h4 className="font-bold text-slate-500 uppercase tracking-widest mb-1">Identity</h4>
+                    <p className="text-slate-300 leading-relaxed">{habit.lenses?.FORTITUDE?.why || "Forge your character."}</p>
+                </div>
+            </div>
+        </div>
+    )}
+    </>
   );
 }
 
@@ -404,55 +380,45 @@ export default function DashboardSingularity() {
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 {viewMode === 'daily' && (
                     <div className="space-y-3">
-                        {/* MASTER FILE ITERATION (Precision Update) */}
-                        {/* We map SOVEREIGN_LIBRARY to ensure visual consistency, checking user state for adoption */}
-                        {SOVEREIGN_LIBRARY.slice(0, 10).map((masterHabit: any) => {
-                            // Find the user's status for this habit (Active Check)
-                            // We match by Title or ID. DB habits usually have 'h_...' ID if adopted from Master, or UUID.
-                            // Safer to match by Title for legacy support.
-                            const userState = habits.find((h: any) => h.title === masterHabit.title || h.habit_id === masterHabit.id);
-
-                            // If user hasn't adopted, do we show it?
-                            // "Daily Routine" usually implies active.
-                            // BUT the instruction says "Change it to iterate over the Master File".
-                            // If I only show active, it looks like before.
-                            // If I show ALL 10, it's a "Roster".
-                            // I will show ALL, but dim inactive?
-                            // Or maybe the user *wants* to see the Master List as the daily view?
-                            // Let's assume we render the DailyHabitRow for *Active* ones found in Master + any custom ones?
-                            // No, "Replace your old .map...".
-                            // I'll render the Master list items that correspond to user habits, merging data.
-                            // If userState is undefined, it means user hasn't adopted.
-                            // I will ONLY render if userState exists (Active), OR if I should show available.
-                            // The instruction snippet: `habit={{...masterHabit, ...userState}}`.
-                            // If userState is missing, it renders Master habit with no ID?
-                            // `toggleCheck` needs ID.
-                            // So I will render ONLY if `userState` exists (Active).
-                            if (!userState) return null;
-
-                            return (
-                                <SortableItem key={userState.id || masterHabit.id} id={userState.id || masterHabit.id} disabled={!isSortMode}>
+                        {/* ABSOLUTE SECTION */}
+                        <div className="mb-8">
+                            <h3 className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase mb-4 ml-2">Absolute Protocol</h3>
+                            {habits.filter((h: any) => (h.frequency_type === 'absolute' || h.frequency_type === 'ABSOLUTE') && h.is_active !== false).map((habit: any) => (
+                                <SortableItem key={habit.id} id={habit.id} disabled={!isSortMode}>
                                     <DailyHabitRow
-                                        habit={{ ...masterHabit, ...userState }}
+                                        habit={habit}
                                         isSystemLocked={isSystemLocked}
                                         isSortMode={isSortMode}
-                                        isCompleted={!!logs[`${userState.id}_${toISODate(selectedDate)}`]}
-                                        logEntry={logs[`${userState.id}_${toISODate(selectedDate)}`]}
+                                        isCompleted={!!logs[`${habit.id}_${toISODate(selectedDate)}`]}
+                                        logEntry={logs[`${habit.id}_${toISODate(selectedDate)}`]}
                                         onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)}
-                                        onEdit={() => handleEdit(userState)}
+                                        onEdit={() => handleEdit(habit)}
                                         onDelete={handleDelete}
                                         date={toISODate(selectedDate)}
                                     />
                                 </SortableItem>
-                            );
-                        })}
+                            ))}
+                        </div>
 
-                        {/* Render Custom Habits (Not in Master) */}
-                        {habits.filter((h: any) => !SOVEREIGN_LIBRARY.some(m => m.title === h.title)).map((h: any) => (
-                             <SortableItem key={h.id} id={h.id} disabled={!isSortMode}>
-                                <DailyHabitRow habit={h} isSystemLocked={isSystemLocked} isSortMode={isSortMode} isCompleted={!!logs[`${h.id}_${toISODate(selectedDate)}`]} logEntry={logs[`${h.id}_${toISODate(selectedDate)}`]} onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)} onEdit={() => handleEdit(h)} onDelete={handleDelete} date={toISODate(selectedDate)} />
-                            </SortableItem>
-                        ))}
+                        {/* FREQUENCY SECTION */}
+                        <div className="mb-8">
+                            <h3 className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase mb-4 ml-2">Frequency Targets</h3>
+                            {habits.filter((h: any) => (h.frequency_type !== 'absolute' && h.frequency_type !== 'ABSOLUTE') && h.is_active !== false).map((habit: any) => (
+                                <SortableItem key={habit.id} id={habit.id} disabled={!isSortMode}>
+                                    <DailyHabitRow
+                                        habit={habit}
+                                        isSystemLocked={isSystemLocked}
+                                        isSortMode={isSortMode}
+                                        isCompleted={!!logs[`${habit.id}_${toISODate(selectedDate)}`]}
+                                        logEntry={logs[`${habit.id}_${toISODate(selectedDate)}`]}
+                                        onToggle={(id: string, d: any, v: any) => toggleCheck(id, selectedDate, v)}
+                                        onEdit={() => handleEdit(habit)}
+                                        onDelete={handleDelete}
+                                        date={toISODate(selectedDate)}
+                                    />
+                                </SortableItem>
+                            ))}
+                        </div>
 
                         {safeHabits.length === 0 && <div className="text-center py-10 text-slate-500 text-sm">No active protocols. <button onClick={() => { setEditingHabit(null); setIsModalOpen(true); }} className="text-blue-500 underline">Create one.</button></div>}
                     </div>
@@ -468,9 +434,9 @@ export default function DashboardSingularity() {
 
         {/* LIBRARY */}
         <div className="mt-12 border-t border-white/5 pt-12">
-             <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-slate-700"></span> HABIT LIBRARY</h2>
+             <h2 className="text-xl font-black text-slate-700 uppercase tracking-widest mb-6 flex items-center gap-4"><span className="w-2 h-2 rounded-full bg-slate-700"></span> HABIT LIBRARY ({SOVEREIGN_LIBRARY.length})</h2>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {libraryItems.map((t) => {
+                {SOVEREIGN_LIBRARY.map((t: any) => {
                     // Check if Active (Match by Title)
                     const isActive = habits.some((h: any) => h.title === t.title);
 
@@ -478,8 +444,6 @@ export default function DashboardSingularity() {
                     const Ic = (typeof t.icon === 'function' || typeof t.icon === 'object') ? t.icon : (ICON_MAP[t.icon] || Activity);
 
                     // Handle Theme (DB 'color' vs Sovereign 'base_color' class)
-                    // If t.base_color is 'bg-amber-500', we need to map it or use it.
-                    // getThemeStyles now handles 'bg-...' via our patch.
                     const colorInput = t.color || t.base_color || 'maximost_blue';
                     const th = getThemeStyles(colorInput);
 
