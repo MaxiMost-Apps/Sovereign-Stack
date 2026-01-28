@@ -76,18 +76,25 @@ export default function Preferences() {
         </div>
 
         <div className="space-y-3">
-          {['STOIC', 'DRILL_SERGEANT', 'EXECUTIVE', 'EMPATH'].map(mode => (
+          {[
+            { id: 'OPERATOR', label: 'The Operator', desc: 'Tactical Execution & Efficiency' },
+            { id: 'STOIC', label: 'The Stoic', desc: 'Perspective & Resilience' },
+            { id: 'ALLY', label: 'The Ally', desc: 'Well-being & Sustainability' }
+          ].map(coach => (
             <button
-              key={mode}
-              onClick={() => updateProfile('coach_mode', mode)}
+              key={coach.id}
+              onClick={() => updateProfile('coach_mode', coach.id)}
               className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
-                profile?.coach_mode === mode
+                profile?.coach_mode === coach.id
                   ? 'bg-red-900/20 border-red-500/50 text-red-100'
                   : 'bg-slate-900/50 border-white/5 text-slate-500 hover:bg-white/5'
               }`}
             >
-              <span className="text-xs font-bold tracking-wide uppercase">{mode.replace('_', ' ')}</span>
-              {profile?.coach_mode === mode && <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_red]" />}
+              <div className="text-left">
+                <span className="block text-xs font-bold tracking-wide uppercase text-white">{coach.label}</span>
+                <span className="block text-[10px] text-slate-500 uppercase tracking-widest">{coach.desc}</span>
+              </div>
+              {profile?.coach_mode === coach.id && <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_red]" />}
             </button>
           ))}
         </div>

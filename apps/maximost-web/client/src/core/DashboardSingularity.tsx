@@ -13,7 +13,7 @@ export default function DashboardSingularity() {
   const [selectedHabit, setSelectedHabit] = useState<any>(null);
 
   const { library } = useLibrary();
-  const { habits: userHabits, toggleHabit } = useHabits();
+  const { habits: userHabits, toggleHabit, updateHabitConfig } = useHabits();
 
   // MERGE LOGIC
   const activeHabits = library.map(master => {
@@ -114,8 +114,15 @@ export default function DashboardSingularity() {
           habit={selectedHabit}
           onClose={() => setSelectedHabit(null)}
           onSave={(id: any, updates: any) => {
-            console.log('Update', id, updates);
-            // Connect to update logic here
+            // Connect the UI to the Database
+            updateHabitConfig(id, {
+              frequency_type: updates.frequency_type,
+              target_days: updates.target, // Mapped from formData.target
+              visuals: { icon: updates.icon, color: updates.color }, // Re-constructing visuals object
+              custom_title: updates.title !== selectedHabit.title ? updates.title : undefined,
+              custom_description: updates.description !== selectedHabit.description ? updates.description : undefined
+            });
+            setSelectedHabit(null);
           }}
         />
       )}

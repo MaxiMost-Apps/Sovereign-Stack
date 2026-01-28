@@ -6,7 +6,6 @@ export const useHabits = () => {
   const [habits, setHabits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // FETCH ONCE (No Loops)
   useEffect(() => {
     fetchHabits();
   }, []);
@@ -31,13 +30,19 @@ export const useHabits = () => {
     }
   };
 
-  // THE MISSING LINK: WRITE TO DB
+  // 1. TOGGLE (Checkmark)
   const toggleHabit = async (habitId: string) => {
-    // 1. Optimistic Update (Instant UI)
     const today = new Date().toISOString().split('T')[0];
+
+    // Optimistic UI
     setHabits(prev => prev.map(h => {
       if (h.habit_id === habitId) {
-        return { ...h, status: h.status === 'completed' ? 'active' : 'completed' };
+        const isCompleted = h.status === 'completed';
+        return {
+          ...h,
+          status: isCompleted ? 'active' : 'completed',
+          streak: isCompleted ? Math.max(0, h.streak - 1) : h.streak + 1
+        };
       }
       return h;
     }));
@@ -46,8 +51,6 @@ export const useHabits = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 2. Database Write
-      // Check if row exists
       const { data: existing } = await supabase
         .from('habits')
         .select('*')
@@ -56,29 +59,60 @@ export const useHabits = () => {
         .single();
 
       if (existing) {
-        // Toggle Logic
         const newStatus = existing.status === 'completed' ? 'active' : 'completed';
         await supabase
           .from('habits')
-          .update({ status: newStatus, last_completed: newStatus === 'completed' ? today : existing.last_completed })
+          .update({
+            status: newStatus,
+            last_completed: newStatus === 'completed' ? today : existing.last_completed,
+            streak: newStatus === 'completed' ? existing.streak + 1 : Math.max(0, existing.streak - 1)
+          })
           .eq('id', existing.id);
       } else {
-        // Create Logic
+        // First time activation (Deploy)
         await supabase
           .from('habits')
           .insert({
             user_id: user.id,
             habit_id: habitId,
-            status: 'completed',
-            last_completed: today
+            status: 'active', // Deploy as active, not completed immediately
+            streak: 0
           });
+        toast.success('Protocol Deployed');
+        fetchHabits(); // Refresh to get the real ID
       }
     } catch (error) {
       console.error('Toggle failed:', error);
-      toast.error('Failed to save progress');
-      // Revert optimistic update here if needed
+      toast.error('Sync Failed');
+      fetchHabits(); // Revert
     }
   };
 
-  return { habits, loading, toggleHabit, refresh: fetchHabits };
+  // 2. UPDATE CONFIG (The Edit Modal Save)
+  const updateHabitConfig = async (habitId: string, updates: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // We store custom config in a 'metadata' column or 'custom_config' column
+      // Assuming 'metadata' exists from our SQL fix earlier
+      const { error } = await supabase
+        .from('habits')
+        .update({
+          metadata: updates // Stores target_days, frequency_type, color, etc.
+        })
+        .eq('user_id', user.id)
+        .eq('habit_id', habitId);
+
+      if (error) throw error;
+
+      toast.success('Protocol Updated');
+      fetchHabits(); // Refresh to see changes
+    } catch (error) {
+      console.error('Update failed', error);
+      toast.error('Update Failed');
+    }
+  };
+
+  return { habits, loading, toggleHabit, updateHabitConfig, refresh: fetchHabits };
 };
