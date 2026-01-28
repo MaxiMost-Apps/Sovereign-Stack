@@ -24,17 +24,17 @@ export const useHabits = () => {
       if (error) throw error;
       setHabits(data || []);
     } catch (error) {
-      console.error('Error fetching habits:', error);
+      console.error('❌ FETCH ERROR:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 1. TOGGLE (Checkmark)
   const toggleHabit = async (habitId: string) => {
     const today = new Date().toISOString().split('T')[0];
 
-    // Optimistic UI
+    // Optimistic UI Update
+    const previousHabits = [...habits];
     setHabits(prev => prev.map(h => {
       if (h.habit_id === habitId) {
         const isCompleted = h.status === 'completed';
@@ -49,57 +49,67 @@ export const useHabits = () => {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        toast.error('User not logged in');
+        return;
+      }
 
-      const { data: existing } = await supabase
+      // Check existence
+      const { data: existing, error: fetchError } = await supabase
         .from('habits')
         .select('*')
         .eq('user_id', user.id)
         .eq('habit_id', habitId)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
 
       if (existing) {
+        // UPDATE
         const newStatus = existing.status === 'completed' ? 'active' : 'completed';
-        await supabase
+        const { error: updateError } = await supabase
           .from('habits')
           .update({
             status: newStatus,
             last_completed: newStatus === 'completed' ? today : existing.last_completed,
-            streak: newStatus === 'completed' ? existing.streak + 1 : Math.max(0, existing.streak - 1)
+            streak: newStatus === 'completed' ? (existing.streak || 0) + 1 : Math.max(0, (existing.streak || 0) - 1)
           })
           .eq('id', existing.id);
+
+        if (updateError) throw updateError;
       } else {
-        // First time activation (Deploy)
-        await supabase
+        // INSERT (Deploy)
+        const { error: insertError } = await supabase
           .from('habits')
           .insert({
             user_id: user.id,
             habit_id: habitId,
-            status: 'active', // Deploy as active, not completed immediately
-            streak: 0
+            status: 'active',
+            streak: 0,
+            metadata: {}
           });
+
+        if (insertError) throw insertError;
         toast.success('Protocol Deployed');
-        fetchHabits(); // Refresh to get the real ID
+        // Re-fetch to ensure we have the real DB ID
+        fetchHabits();
       }
-    } catch (error) {
-      console.error('Toggle failed:', error);
-      toast.error('Sync Failed');
-      fetchHabits(); // Revert
+    } catch (error: any) {
+      console.error('❌ TOGGLE ERROR:', error.message || error);
+      toast.error(`Error: ${error.message || 'Sync failed'}`);
+      setHabits(previousHabits); // Revert UI
     }
   };
 
-  // 2. UPDATE CONFIG (The Edit Modal Save)
   const updateHabitConfig = async (habitId: string, updates: any) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // We store custom config in a 'metadata' column or 'custom_config' column
-      // Assuming 'metadata' exists from our SQL fix earlier
       const { error } = await supabase
         .from('habits')
         .update({
-          metadata: updates // Stores target_days, frequency_type, color, etc.
+          metadata: updates
         })
         .eq('user_id', user.id)
         .eq('habit_id', habitId);
@@ -107,7 +117,7 @@ export const useHabits = () => {
       if (error) throw error;
 
       toast.success('Protocol Updated');
-      fetchHabits(); // Refresh to see changes
+      fetchHabits();
     } catch (error) {
       console.error('Update failed', error);
       toast.error('Update Failed');
