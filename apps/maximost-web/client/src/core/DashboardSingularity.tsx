@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyMatrix } from '@/components/dashboard/WeeklyMatrix';
 import { HabitLibrary } from '@/components/library/HabitLibrary';
-import { HabitEditModal as HabitDetailModal } from '@/components/habits/HabitEditModal';
+import { HabitDetailModal } from '@/components/habits/HabitDetailModal';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useHabits } from '@/hooks/useHabits';
 import { LayoutGrid, Calendar, BarChart3, Shield, Activity, Menu } from 'lucide-react';

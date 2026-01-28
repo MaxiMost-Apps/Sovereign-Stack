@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Edit2, Shield, Target, Check } from 'lucide-react';
 import { ICON_MAP } from '@/data/sovereign_library';
 
-export const HabitEditModal = ({ habit, onClose, onSave }: any) => {
+export const HabitDetailModal = ({ habit, onClose, onSave }: any) => {
+  const [isEditing, setIsEditing] = useState(false);
+
+  // EDIT FORM STATE
   const [activeTab, setActiveTab] = useState<'ABSOLUTE' | 'FREQUENCY'>(habit.default_config.frequency_type);
   const [goal, setGoal] = useState(habit.default_config.target_days || 1);
   const [unit, setUnit] = useState('reps');
@@ -18,6 +21,58 @@ export const HabitEditModal = ({ habit, onClose, onSave }: any) => {
     'bg-red-600', 'bg-cyan-600', 'bg-lime-500', 'bg-indigo-600', 'bg-zinc-400'
   ];
 
+  // READ ONLY VIEW
+  if (!isEditing) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in">
+        <div className="w-full max-w-md bg-[#0B1221] border border-white/10 rounded-t-3xl md:rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+
+          {/* HEADER IMAGE / COLOR */}
+          <div className={`h-32 ${habit.visuals.color} relative flex items-end p-6`}>
+             <button onClick={onClose} className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 p-2 rounded-full text-white transition-colors">
+               <X size={18} />
+             </button>
+             <div>
+               <h2 className="text-2xl font-black text-white uppercase tracking-widest">{habit.title}</h2>
+               <span className="text-[10px] font-bold bg-black/20 px-2 py-1 rounded text-white/80 uppercase tracking-wider">
+                 {habit.default_config.frequency_type} • {habit.default_config.target_days} / Wk
+               </span>
+             </div>
+          </div>
+
+          {/* CONTENT */}
+          <div className="p-6 space-y-6 bg-[#0B1221]">
+            <div>
+              <label className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">
+                <Target size={12} /> Tactical Objective
+              </label>
+              <p className="text-sm text-slate-300 leading-relaxed">{habit.description}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+               <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5">
+                 <span className="block text-[10px] text-slate-500 uppercase">Why (Identity)</span>
+                 <p className="text-xs text-white mt-1">"{habit.lenses?.FORTITUDE?.why}"</p>
+               </div>
+               <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5">
+                 <span className="block text-[10px] text-slate-500 uppercase">How (Tactics)</span>
+                 <p className="text-xs text-white mt-1">{habit.lenses?.FORTITUDE?.how}</p>
+               </div>
+            </div>
+          </div>
+
+          {/* FOOTER */}
+          <div className="p-6 pt-0 flex gap-3">
+            <button onClick={() => setIsEditing(true)} className="flex-1 py-3 rounded-xl border border-white/10 text-xs font-bold text-white hover:bg-white/5 uppercase tracking-widest flex items-center justify-center gap-2">
+              <Edit2 size={14} /> Adjust Parameters
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // EDIT MODE
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="w-full max-w-md bg-[#0B1221] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -31,7 +86,7 @@ export const HabitEditModal = ({ habit, onClose, onSave }: any) => {
               <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Atom Active</span>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors">
+          <button onClick={() => setIsEditing(false)} className="text-slate-500 hover:text-white transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -130,8 +185,8 @@ export const HabitEditModal = ({ habit, onClose, onSave }: any) => {
 
         {/* FOOTER */}
         <div className="p-5 border-t border-white/5 bg-slate-950/50 flex justify-end gap-3">
-          <button onClick={onClose} className="px-6 py-3 rounded-lg text-xs font-bold text-slate-500 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-widest">
-            Cancel
+          <button onClick={() => setIsEditing(false)} className="px-6 py-3 rounded-lg text-xs font-bold text-slate-500 hover:text-white hover:bg-white/5 transition-colors uppercase tracking-widest">
+            Back
           </button>
           <button onClick={() => onSave({ ...habit, default_config: { ...habit.default_config, frequency_type: activeTab, target_days: goal }, visuals: { ...habit.visuals, color } })} className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-widest transition-colors shadow-lg shadow-blue-900/20 uppercase">
             Save Habit

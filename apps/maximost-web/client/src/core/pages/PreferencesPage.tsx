@@ -75,26 +75,40 @@ export default function Preferences() {
           <h2 className="text-sm font-bold text-white uppercase tracking-wider">Coach Protocol</h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { id: 'OPERATOR', label: 'The Operator', desc: 'Tactical Execution & Efficiency' },
-            { id: 'STOIC', label: 'The Stoic', desc: 'Perspective & Resilience' },
-            { id: 'ALLY', label: 'The Ally', desc: 'Well-being & Sustainability' }
+            { id: 'OPERATOR', label: 'The Operator', desc: 'Tactical Execution', img: '/coaches/operator.jpg' },
+            { id: 'STOIC', label: 'The Stoic', desc: 'Resilience & Logic', img: '/coaches/stoic.jpg' },
+            { id: 'ALLY', label: 'The Ally', desc: 'Sustainability', img: '/coaches/ally.jpg' }
           ].map(coach => (
             <button
               key={coach.id}
               onClick={() => updateProfile('coach_mode', coach.id)}
-              className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
+              className={`relative h-48 rounded-2xl border overflow-hidden flex flex-col justify-end transition-all group ${
                 profile?.coach_mode === coach.id
-                  ? 'bg-red-900/20 border-red-500/50 text-red-100'
-                  : 'bg-slate-900/50 border-white/5 text-slate-500 hover:bg-white/5'
+                  ? 'border-white ring-2 ring-white shadow-2xl scale-[1.02]'
+                  : 'border-white/5 hover:border-white/20 hover:scale-[1.01]'
               }`}
             >
-              <div className="text-left">
-                <span className="block text-xs font-bold tracking-wide uppercase text-white">{coach.label}</span>
-                <span className="block text-[10px] text-slate-500 uppercase tracking-widest">{coach.desc}</span>
+              {/* BACKGROUND IMAGE */}
+              <div className="absolute inset-0">
+                 <img
+                   src={coach.img}
+                   alt={coach.label}
+                   className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
+                 />
+                 {/* Gradient Overlay for Text Readability */}
+                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B1221] via-[#0B1221]/40 to-transparent" />
               </div>
-              {profile?.coach_mode === coach.id && <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_red]" />}
+
+              {/* TEXT LABEL */}
+              <div className="relative z-10 p-5 text-left">
+                <div className="flex items-center justify-between">
+                    <span className="text-lg font-black text-white tracking-widest uppercase">{coach.label}</span>
+                    {profile?.coach_mode === coach.id && <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e] animate-pulse" />}
+                </div>
+                <span className="block text-[10px] text-slate-300 mt-1 font-medium tracking-wider uppercase opacity-80">{coach.desc}</span>
+              </div>
             </button>
           ))}
         </div>

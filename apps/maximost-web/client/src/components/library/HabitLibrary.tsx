@@ -3,7 +3,7 @@ import { Info, Plus, Check } from 'lucide-react';
 import { useHabits } from '@/hooks/useHabits';
 import { useLibrary } from '@/hooks/useLibrary'; // Uses our new static hook
 import { ICON_MAP } from '@/data/sovereign_library';
-import { HabitEditModal as HabitDetailModal } from '@/components/habits/HabitEditModal';
+import { HabitDetailModal } from '@/components/habits/HabitDetailModal';
 
 export const HabitLibrary = () => {
   const { library } = useLibrary(); // This now returns 60 items instantly
