@@ -1,39 +1,39 @@
-Updated README.md (The Gatekeeper)
-"# MAXIMOST Command Center High-Performance Operating System for Sovereignty.
+# ⚡️ SOVEREIGN STACK (MONOREPO)
 
-"We do not rise to the level of our goals. We fall to the level of our systems." — James Clear
+**Current Build:** Titan V1 (Frontend) + Phoenix V1 (Backend)
+**Status:** ACTIVE DEPLOYMENT
 
-🛑 STOP: READ BEFORE PROCEEDING
-This is a proprietary Behavioral Compiler. To maintain the integrity of the Iron Skeleton and the Lens, all Operators must follow the Order of Operations below.
+---
 
-Step 1: The Tactical Briefing
-Do not touch code until you have digested the mission and the "Zero Guessing" policy. 👉 START HERE: Onboarding Brief
+## 🗺️ THE SYSTEM
+This repository houses the complete Sovereign Stack ecosystem. It is divided into two strict domains:
 
-Step 2: Review the Mission Logs
-Check the "Red Phone" status and the current "Persistence Fracture" bottleneck. 👉 READ: AAR (After Action Review) Log
+### 1. TITAN INTERFACE (Frontend)
+* **Location:** `client/src`
+* **Core:** `DashboardSingularity.tsx` (The only valid dashboard).
+* **Visuals:** "Titan Glass" aesthetic (Deep Navy, Circles, Red/Blue signals).
+* **Law:** NO fetch loops. NO square buttons. Master data is static.
 
-Step 3: MANDATORY PROTOCOL (SDP)
-All developers must acknowledge the Sovereign Developer Protocol (SDP) before any code is pushed to main. 👉 READ: 00_GOVERNANCE.md
+### 2. PHOENIX PROTOCOL (Backend)
+* **Location:** `server/` (or `api/` depending on your specific structure)
+* **Core:** "Bio-Rig" ingestion engine.
+* **Security:** Strict Zod validation, RLS "Bio-Seals", Service Role middleware.
+* **Law:** CommonJS environment.
 
-Hard Refresh Rule: Features must survive a Ctrl+F5 on production.
+---
 
-Direct Table Sync: Front-end HUDs must reflect manual Supabase edits instantly.
+## 📚 DOCUMENTATION (THE LAW)
+Before writing code, you MUST review the Core Technical Standards in `docs/core_technical/`:
 
-Step 4: The Technical Standards
-Review the v12 Metadata keys and the Unified HUD components. 👉 READ: 08_MASTER_TOOLBELT.md 👉 READ: 05_BODY_HUD.md
+* **[00_GOVERNANCE.md](./docs/core_technical/00_GOVERNANCE.md)** - Project hierarchy & decision trees.
+* **[01_VISION.md](./docs/core_technical/01_VISION.md)** - The "Why" (Sovereignty, Biometrics, AI).
+* **[02_ARCHITECTURE.md](./docs/core_technical/02_ARCHITECTURE.md)** - **CRITICAL.** The technical constraints for Phoenix & Titan.
+* **[03_DESIGN_SYSTEM.md](./docs/core_technical/03_DESIGN_SYSTEM.md)** - **CRITICAL.** Visual physics (Circles, Layouts, Colors).
 
-🏗️ CORE ARCHITECTURE
-The Iron Skeleton: Hardened Supabase backend with v12 JSONB metadata and RLS Writing Gates.
+---
 
-The Lens: Unified console with Persistent Navigation, Starting 5 Header, and Slide-In HUDs.
+## 🚀 QUICK START
 
-The Airlock: Proprietary ingestion engine with Mapping Memory and Source Trust Ranking.
-
-⚡ QUICK START (Authorized Only)
-Install Dependencies: npm install
-
-Launch Dev Server: npm run dev
-
-The Handshake Rule: Every PR must include an update to the 99_AAR_LOG.md.
-
-© 2026 MAXIMOST. All Rights Reserved."
+### 1. Install Dependencies
+```bash
+npm install

@@ -1,24 +1,28 @@
-(The Sovereign Developer Protocol)
-This document is the mandatory Quality Assurance standard. No code merges to main without these checks.
+# ⚖️ GOVERNANCE & PROTOCOLS
 
-1. The Persistence Rule
+## 1. THE CHAIN OF COMMAND
+The Sovereign Stack operates under a strict hierarchy to prevent architectural drift.
 
-No task is "Done" until the feature survives a Hard Refresh (Ctrl+F5) on the live production site.
+* **COMMAND (User/Watchman):** The ultimate authority. Holds the vision and approves all deployments.
+* **THE ARCHITECT (Oracle):** Responsible for high-level design, documentation updates, and schema definitions.
+* **THE BUILDER (Jules/Vance):** Responsible for code execution.
+    * *Rule:* The Builder DOES NOT invent architecture. The Builder executes the Architect's plans.
 
-Developers must verify that data is committed to the database, not just held in local browser state.
+## 2. THE "DOCUMENTATION FIRST" PROTOCOL
+Before writing any code, the Builder must:
+1.  **Read:** `02_ARCHITECTURE.md` and `03_DESIGN_SYSTEM.md`.
+2.  **Verify:** Check if the requested change violates a Forbidden Pattern (e.g., polling loops).
+3.  **Execute:** Write the code only after validation.
 
-2. The Table-to-Lens Audit
+## 3. DEPLOYMENT STANDARDS
+* **Branching:**
+    * `main`: Production-ready code only.
+    * `dev`: Active development.
+* **The "Stop Work" Authority:**
+    * If a deployment causes a regression (e.g., Infinite Loop, Broken UI), all forward work stops.
+    * The system reverts to the last known stable state immediately.
+    * A "Root Cause Analysis" (RCA) is performed before coding resumes.
 
-For every Archive or Library item, the developer must manually change a value in the Supabase Table Editor.
-
-They must then confirm the frontend HUD reflects that specific change instantly to prove the "Sync" is live.
-
-3. The Zero-Placeholder Standard
-
-Hard-coded strings like "No description" or "No rationale" are prohibited.
-
-If data is missing from the database, the API must fail gracefully or the Migration must be re-run to hydrate the metadata.
-
-4. The Cache-Bust Requirement
-
-Deployments involving metadata changes must include a version increment in the fetch header to bypass stale browser caches.
+## 4. VERSIONING
+* **TITAN (Frontend):** Current Version `v1.0.2` (Mission Control).
+* **PHOENIX (Backend):** Current Version `v1.1.0` (Bio-Rig Integration).

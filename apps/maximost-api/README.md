@@ -1,39 +1,34 @@
-Updated README.md (The Gatekeeper)
-"# MAXIMOST Command Center High-Performance Operating System for Sovereignty.
+# 🔥 PHOENIX PROTOCOL (BACKEND)
 
-"We do not rise to the level of our goals. We fall to the level of our systems." — James Clear
+**Status:** ACTIVE
+**Role:** Data Ingestion, Sanitation, & Integrity.
 
-🛑 STOP: READ BEFORE PROCEEDING
-This is a proprietary Behavioral Compiler. To maintain the integrity of the Iron Skeleton and the Lens, all Operators must follow the Order of Operations below.
+---
 
-Step 1: The Tactical Briefing
-Do not touch code until you have digested the mission and the "Zero Guessing" policy. 👉 START HERE: Onboarding Brief
+## ⚡️ THE MISSION
+The Phoenix Protocol is the "Bio-Rig" engine. It has two responsibilities:
+1.  **Ingest:** Accept raw biometric data (Webhooks/API) from Oura, Terra, etc.
+2.  **Sanitize:** Validate data against Zod schemas and store it in Supabase.
 
-Step 2: Review the Mission Logs
-Check the "Red Phone" status and the current "Persistence Fracture" bottleneck. 👉 READ: AAR (After Action Review) Log
+---
 
-Step 3: MANDATORY PROTOCOL (SDP)
-All developers must acknowledge the Sovereign Developer Protocol (SDP) before any code is pushed to main. 👉 READ: 00_GOVERNANCE.md
+## 🛠️ THE TOOLBELT
+* **Runtime:** Node.js 22 (CommonJS).
+* **Framework:** Express / Node HTTP.
+* **Database:** Supabase (PostgreSQL 15).
+* **Validation:** Zod (`zod`).
 
-Hard Refresh Rule: Features must survive a Ctrl+F5 on production.
+---
 
-Direct Table Sync: Front-end HUDs must reflect manual Supabase edits instantly.
+## 🔐 SECURITY PROTOCOLS
+1.  **The Airlock:** All incoming data is treated as "Radioactive" until validated.
+2.  **Service Role:** This API uses the `SUPABASE_SERVICE_ROLE_KEY` to bypass RLS for ingestion. Use with extreme caution.
+3.  **Strict Typing:** No `any`. All payloads must match the definitions in `docs/core_technical/04_DATA_SCHEMA.md`.
 
-Step 4: The Technical Standards
-Review the v12 Metadata keys and the Unified HUD components. 👉 READ: 08_MASTER_TOOLBELT.md 👉 READ: 05_BODY_HUD.md
+---
 
-🏗️ CORE ARCHITECTURE
-The Iron Skeleton: Hardened Supabase backend with v12 JSONB metadata and RLS Writing Gates.
-
-The Lens: Unified console with Persistent Navigation, Starting 5 Header, and Slide-In HUDs.
-
-The Airlock: Proprietary ingestion engine with Mapping Memory and Source Trust Ranking.
-
-⚡ QUICK START (Authorized Only)
-Install Dependencies: npm install
-
-Launch Dev Server: npm run dev
-
-The Handshake Rule: Every PR must include an update to the 99_AAR_LOG.md.
-
-© 2026 MAXIMOST. All Rights Reserved."
+## 📂 DOCUMENTATION
+Refer to the `docs/core_technical/` folder for the Law:
+* **[02_ARCHITECTURE.md](./docs/core_technical/02_ARCHITECTURE.md)** - System Rules.
+* **[04_DATA_SCHEMA.md](./docs/core_technical/04_DATA_SCHEMA.md)** - Database Structure.
+* **[07_AIRLOCK_PROTOCOL.md](./docs/core_technical/07_AIRLOCK_PROTOCOL.md)** - Deployment Checklist.

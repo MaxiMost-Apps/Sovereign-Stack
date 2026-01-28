@@ -1,4 +1,0 @@
-- Always use `completed_at` for logging.
-- Use `sonner` for all toast notifications.
-- Never use browser `alert()`.
-- Implementation of "Optimistic UI" is the standard for checkmarks.
