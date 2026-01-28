@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/core/supabase';
 import { toast } from 'sonner';
-import { SOVEREIGN_LIBRARY } from '@/data/sovereign_library'; // Import the Library to look up titles
+import { SOVEREIGN_LIBRARY } from '@/data/sovereign_library'; // The Source of Truth
 
 export const useHabits = () => {
   const [habits, setHabits] = useState<any[]>([]);
@@ -34,97 +34,73 @@ export const useHabits = () => {
   const toggleHabit = async (habitId: string) => {
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. FIND THE HABIT DETAILS (The Missing Link)
-    const habitDef = SOVEREIGN_LIBRARY.find(h => h.id === habitId);
-    if (!habitDef) {
-      console.error('Habit definition not found for:', habitId);
+    // 1. FIND DEFINITION (The Fix)
+    const libraryDef = SOVEREIGN_LIBRARY.find(h => h.id === habitId);
+    if (!libraryDef) {
+      console.error('CRITICAL: Habit ID not found in Library:', habitId);
       return;
     }
 
-    // Optimistic UI Update
+    // Optimistic UI
     const previousHabits = [...habits];
-    // Check if it's already in our local list (even if not saved yet)
-    const existsLocally = habits.find(h => h.habit_id === habitId);
+    const exists = habits.find(h => h.habit_id === habitId);
 
-    if (existsLocally) {
-       setHabits(prev => prev.map(h => {
+    if (exists) {
+      // Toggle Checkmark
+      setHabits(prev => prev.map(h => {
         if (h.habit_id === habitId) {
           const isCompleted = h.status === 'completed';
-          return {
-            ...h,
-            status: isCompleted ? 'active' : 'completed',
-            streak: isCompleted ? Math.max(0, h.streak - 1) : h.streak + 1
-          };
+          return { ...h, status: isCompleted ? 'active' : 'completed' };
         }
         return h;
       }));
     } else {
-      // Add it visually immediately
+      // Add New Habit (Deploy)
       setHabits(prev => [...prev, {
         habit_id: habitId,
-        title: habitDef.title, // Use the title from the library
-        description: habitDef.description,
-        visuals: habitDef.visuals,
-        default_config: habitDef.default_config,
+        title: libraryDef.title,
         status: 'active',
-        streak: 0
+        streak: 0,
+        visuals: libraryDef.visuals
       }]);
     }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('User not logged in');
-        return;
-      }
+      if (!user) return;
 
-      // Check existence in DB
-      const { data: existing, error: fetchError } = await supabase
+      const { data: existing } = await supabase
         .from('habits')
         .select('*')
         .eq('user_id', user.id)
         .eq('habit_id', habitId)
         .maybeSingle();
 
-      if (fetchError) throw fetchError;
-
       if (existing) {
-        // UPDATE EXISTING
+        // Update Status
         const newStatus = existing.status === 'completed' ? 'active' : 'completed';
-        const { error: updateError } = await supabase
-          .from('habits')
-          .update({
-            status: newStatus,
-            last_completed: newStatus === 'completed' ? today : existing.last_completed,
-            streak: newStatus === 'completed' ? (existing.streak || 0) + 1 : Math.max(0, (existing.streak || 0) - 1)
-          })
-          .eq('id', existing.id);
-
-        if (updateError) throw updateError;
+        await supabase.from('habits').update({
+          status: newStatus,
+          last_completed: newStatus === 'completed' ? today : existing.last_completed
+        }).eq('id', existing.id);
       } else {
-        // INSERT NEW (THE FIX IS HERE)
-        const { error: insertError } = await supabase
-          .from('habits')
-          .insert({
-            user_id: user.id,
-            habit_id: habitId,
-            title: habitDef.title, // <--- CRITICAL: Sending the Title now!
-            status: 'active',
-            streak: 0,
-            metadata: {
-                visuals: habitDef.visuals,
-                config: habitDef.default_config
-            }
-          });
-
-        if (insertError) throw insertError;
+        // Insert New (Sending Title to fix error)
+        const { error } = await supabase.from('habits').insert({
+          user_id: user.id,
+          habit_id: habitId,
+          title: libraryDef.title, // <--- CRITICAL FIX
+          status: 'active',
+          streak: 0,
+          metadata: { visuals: libraryDef.visuals, config: libraryDef.default_config }
+        });
+        if (error) throw error;
         toast.success('Protocol Deployed');
-        fetchHabits(); // Refresh ID
+        fetchHabits();
       }
     } catch (error: any) {
-      console.error('❌ TOGGLE ERROR:', error.message || error);
-      toast.error(`Sync failed: ${error.message}`);
-      setHabits(previousHabits); // Revert
+      console.error('Sync Failed:', error);
+      toast.error('Sync Failed');
+      setHabits(previousHabits);
     }
   };
 
@@ -133,12 +109,10 @@ export const useHabits = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // We store custom config in a 'metadata' column or 'custom_config' column
-      // Assuming 'metadata' exists from our SQL fix earlier
       const { error } = await supabase
         .from('habits')
         .update({
-          metadata: updates // Stores target_days, frequency_type, color, etc.
+          metadata: updates
         })
         .eq('user_id', user.id)
         .eq('habit_id', habitId);
@@ -146,7 +120,7 @@ export const useHabits = () => {
       if (error) throw error;
 
       toast.success('Protocol Updated');
-      fetchHabits(); // Refresh to see changes
+      fetchHabits();
     } catch (error) {
       console.error('Update failed', error);
       toast.error('Update Failed');
