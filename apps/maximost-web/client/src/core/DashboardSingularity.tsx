@@ -8,13 +8,13 @@ export default function DashboardSingularity() {
   const { library } = useLibrary();
   const { habits: userHabits, toggleHabit } = useHabits();
 
-  // MERGE & DEFAULT TO ACTIVE
+  // MERGE & FORCE ACTIVE
   const activeHabits = library.map(master => {
     const userState = userHabits.find(h => h.habit_id === master.id);
     return {
       ...master,
       ...userState,
-      status: userState?.status || 'active', // <--- THIS IS THE FIX. Defaults to Active.
+      status: userState?.status || 'active', // Forces display even if DB is empty
       is_completed: userState?.status === 'completed'
     };
   });
@@ -28,6 +28,7 @@ export default function DashboardSingularity() {
         <h1 className="text-xl font-black tracking-[0.3em] uppercase text-white">Mission Control</h1>
       </div>
 
+      {/* ABSOLUTE */}
       <div className="mb-8">
         <div className="flex items-center gap-2 mb-4 ml-2">
           <div className="w-1.5 h-1.5 rounded-full bg-red-600 shadow-[0_0_10px_red]" />
@@ -38,8 +39,9 @@ export default function DashboardSingularity() {
         </div>
       </div>
 
+      {/* FREQUENCY */}
       <div className="mb-12">
-          <div className="flex items-center gap-2 mb-4 ml-2">
+        <div className="flex items-center gap-2 mb-4 ml-2">
           <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_10px_blue]" />
           <h3 className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">Frequency Targets</h3>
         </div>
@@ -49,10 +51,6 @@ export default function DashboardSingularity() {
       </div>
 
       <div className="mt-12 border-t border-white/5 pt-8">
-        <div className="flex items-center gap-2 mb-6 ml-2">
-           <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
-           <h3 className="text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase">Habit Library</h3>
-        </div>
         <HabitLibrary />
       </div>
     </div>
