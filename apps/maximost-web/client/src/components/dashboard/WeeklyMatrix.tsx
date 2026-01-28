@@ -8,7 +8,7 @@ export const WeeklyMatrix = ({ habits }) => {
   const weekDays = [...Array(7)].map((_, i) => addDays(startDate, i));
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto rounded-2xl border border-white/5 bg-[#0B1221] p-4">
       <table className="w-full border-collapse">
         <thead>
           <tr>
@@ -28,24 +28,14 @@ export const WeeklyMatrix = ({ habits }) => {
             <tr key={habit.id} className="group hover:bg-white/5 transition-colors">
               <td className="p-4">
                 <div className="font-bold text-xs text-white">{habit.title}</div>
+                <div className="text-[9px] text-slate-500 uppercase tracking-wider">{habit.default_config?.frequency_type}</div>
               </td>
               {weekDays.map(day => {
-                // Mock logic for matrix view (since we don't have full history loaded yet)
-                // In a real app, you'd check habit.history[dateString]
                 const isDone = isSameDay(day, today) && habit.status === 'completed';
-
                 return (
                   <td key={day.toString()} className="p-2 text-center">
                     <div className="flex items-center justify-center">
-                      <div
-                        className={`
-                          w-8 h-8 flex items-center justify-center rounded-full border transition-all duration-300
-                          ${isDone
-                            ? `${habit.base_color || 'bg-blue-600'} border-transparent text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]`
-                            : 'bg-[#0B1221] border-white/5 text-transparent'
-                          }
-                        `}
-                      >
+                      <div className={`w-8 h-8 flex items-center justify-center rounded-full border transition-all ${isDone ? 'bg-blue-600 border-transparent text-white' : 'bg-[#131B2C] border-white/5'}`}>
                         {isDone && <Check size={14} strokeWidth={4} />}
                       </div>
                     </div>
