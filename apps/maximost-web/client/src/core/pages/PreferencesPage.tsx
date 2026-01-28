@@ -179,16 +179,20 @@ export default function PreferencesPage() {
 
           <h2 className="text-[10px] font-bold uppercase text-zinc-600 tracking-widest">Voice Protocol (Tone)</h2>
           <div className="grid grid-cols-3 gap-4">
-              {coaches.map(coach => (
-                  <button
-                      key={coach.id}
-                      onClick={() => setActiveCoach(coach.id)}
-                      className={`p-4 rounded border text-center transition-all ${activeCoach === coach.id ? `bg-${coach.color}-900/10 border-${coach.color}-500/50` : 'bg-black border-zinc-800 opacity-50 hover:opacity-100'}`}
-                  >
-                      <coach.icon className={`w-6 h-6 mx-auto mb-2 text-${coach.color}-500`} />
-                      <div className="text-[10px] font-bold text-white uppercase">{coach.name}</div>
-                  </button>
-              ))}
+            {['STOIC', 'OPERATOR', 'ALLY'].map(coach => (
+                <button
+                    key={coach}
+                    onClick={() => setActiveCoach(coach.toLowerCase())}
+                    className={`relative p-4 rounded-xl border transition-all ${activeCoach.toUpperCase() === coach ? 'border-blue-500 bg-blue-500/10' : 'border-white/5 bg-[#131B2C]'}`}
+                >
+                    {/* Placeholder for Image - Using Icon for now to prevent breakage if image missing */}
+                    <div className="w-12 h-12 mb-3 rounded-full mx-auto bg-slate-800 flex items-center justify-center">
+                        <span className="text-xs">{coach[0]}</span>
+                    </div>
+                    {/* <img src={`/assets/coaches/${coach.toLowerCase()}.png`} className="w-12 h-12 mb-3 rounded-full mx-auto object-cover" /> */}
+                    <span className="text-[10px] font-bold uppercase tracking-widest block text-center">{coach}</span>
+                </button>
+            ))}
           </div>
       </div>
 
@@ -255,12 +259,11 @@ export default function PreferencesPage() {
               </button>
           </div>
 
-          <div className="bg-red-950/10 border border-red-900/30 p-6 rounded-lg">
-              <h3 className="text-red-500 font-bold uppercase tracking-widest flex items-center gap-2 mb-2">
-                  <Trash2 className="w-4 h-4" /> Danger Zone
-              </h3>
-              <p className="text-zinc-500 text-sm mb-4">
-                  Irreversible action. Wipe all active habits and reset dashboard.
+          <div className="border border-red-900/30 bg-red-900/10 p-6 rounded-xl">
+              <h3 className="text-red-500 font-bold uppercase tracking-widest text-xs mb-2">Danger Zone</h3>
+              <p className="text-slate-400 text-xs mb-4">
+                  Irreversible action. Wipe all active habits and reset dashboard configuration.
+                  <br/><span className="text-white font-bold">You will NOT lose your historical completion logs or data.</span>
               </p>
               <button
                 onClick={async () => {
@@ -273,8 +276,7 @@ export default function PreferencesPage() {
                         }
                     }
                 }}
-                className="w-full py-3 bg-red-600/10 hover:bg-red-600/20 text-red-500 border border-red-900/50 rounded font-bold uppercase text-xs tracking-widest transition-all"
-              >
+                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs rounded">
                   Wipe Dashboard
               </button>
           </div>
