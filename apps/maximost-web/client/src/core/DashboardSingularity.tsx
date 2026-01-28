@@ -4,6 +4,7 @@ import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyMatrix } from '@/components/dashboard/WeeklyMatrix';
 import { HabitLibrary } from '@/components/library/HabitLibrary';
 import { HabitDetailModal } from '@/components/habits/HabitDetailModal';
+import { EditHabitModal } from '@/components/habits/EditHabitModal'; // NEW IMPORT
 import { useLibrary } from '@/hooks/useLibrary';
 import { useHabits } from '@/hooks/useHabits';
 import { LayoutGrid, Calendar, BarChart3, Lock, Unlock, Shield, Activity, Menu } from 'lucide-react';
@@ -11,8 +12,9 @@ import { Link } from 'react-router-dom';
 
 export default function DashboardSingularity() {
   const [view, setView] = useState<'day' | 'week' | 'month'>('day');
-  const [isLocked, setIsLocked] = useState(false); // THE LOCK STATE
-  const [selectedHabit, setSelectedHabit] = useState<any>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [selectedHabit, setSelectedHabit] = useState<any>(null); // For Info
+  const [editingHabit, setEditingHabit] = useState<any>(null); // For Edit
 
   const { library } = useLibrary();
   const { habits: userHabits, toggleHabit, updateHabitConfig } = useHabits();
@@ -101,7 +103,15 @@ export default function DashboardSingularity() {
                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Absolute Habits</span>
                   </div>
                   {absoluteHabits.map((h, i) => (
-                    <DailyHabitRow key={h.id} habit={h} index={i} isLocked={isLocked} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(h)} />
+                    <DailyHabitRow
+                        key={h.id}
+                        habit={h}
+                        index={i}
+                        isLocked={isLocked}
+                        onToggle={toggleHabit}
+                        onOpenInfo={() => setSelectedHabit(h)}
+                        onOpenEdit={() => setEditingHabit(h)}
+                    />
                   ))}
                 </div>
               )}
@@ -114,7 +124,15 @@ export default function DashboardSingularity() {
                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Frequency Targets</span>
                   </div>
                   {frequencyHabits.map((h, i) => (
-                    <DailyHabitRow key={h.id} habit={h} index={i} isLocked={isLocked} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(h)} />
+                    <DailyHabitRow
+                        key={h.id}
+                        habit={h}
+                        index={i}
+                        isLocked={isLocked}
+                        onToggle={toggleHabit}
+                        onOpenInfo={() => setSelectedHabit(h)}
+                        onOpenEdit={() => setEditingHabit(h)}
+                    />
                   ))}
                 </div>
               )}
@@ -168,6 +186,8 @@ export default function DashboardSingularity() {
             habit={selectedHabit}
             onClose={() => setSelectedHabit(null)}
             onSave={(updates: any) => {
+              // Should info modal allow saving? Probably not in this new flow.
+              // But keeping it compatible.
               updateHabitConfig(selectedHabit.id, {
                 frequency_type: updates.default_config.frequency_type,
                 target_days: updates.default_config.target_days,
@@ -176,6 +196,22 @@ export default function DashboardSingularity() {
               setSelectedHabit(null);
             }}
           />
+        )}
+        {editingHabit && (
+            <EditHabitModal
+                habit={editingHabit}
+                onClose={() => setEditingHabit(null)}
+                onSave={(updates: any) => {
+                    updateHabitConfig(editingHabit.id, {
+                        frequency_type: updates.default_config.frequency_type,
+                        target_days: updates.default_config.target_days,
+                        visuals: updates.visuals,
+                        title: updates.title,
+                        description: updates.description
+                    });
+                    setEditingHabit(null);
+                }}
+            />
         )}
       </AnimatePresence>
     </div>
