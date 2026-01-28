@@ -1,218 +1,250 @@
 import React, { useState, useEffect } from 'react';
-import { Ghost, Copy, Hammer, Brain, Flame, Shield, Activity, Lock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { ShieldAlert, Biohazard, Hourglass, Lock, Zap, Terminal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// --- ASSETS & DATA ---
-const CRACK_OVERLAY = `data:image/svg+xml,%3Csvg width='100%25' height='100%25' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 50L20 20M50 50L80 20M50 50L20 80M50 50L80 80M50 50L50 10M50 50L50 90' stroke='white' stroke-width='0.5' stroke-opacity='0.3'/%3E%3Cpath d='M45 45L30 10M55 45L70 10M45 55L30 90M55 55L70 90' stroke='white' stroke-width='0.2' stroke-opacity='0.2'/%3E%3C/svg%3E`;
-
-// --- THE GOGGINS ENGINE ---
-const getRoast = (input: string) => {
-  const lower = input.toLowerCase();
-  if (lower.includes('tired') || lower.includes('sleep') || lower.includes('exhausted')) {
-    return "You're tired? Good. That means the weak part of your brain is finally shutting up. Your limbic system is begging for a warm blanket and a participation trophy. You are operating at 40% capacity. The other 60% is locked behind a wall of pain you're too soft to climb. Lace up your shoes. We are taking souls today.";
-  }
-  if (lower.includes('scroll') || lower.includes('phone') || lower.includes('game') || lower.includes('porn')) {
-    return "Doom scrolling? You are trading your finite human life for pixels. You are a dopamine addict hooked to a glowing rectangle while your legacy rots. The algorithm owns your mind. Put the phone in a drawer, drop and give me 50, and reclaim your sovereignty. Stay hard.";
-  }
-  if (lower.includes('time') || lower.includes('busy') || lower.includes('work')) {
-    return "Busy is a myth. Busy is what civilians say when they can't manage their own minds. You have the same 24 hours as the people building empires. You're not out of time, you're out of discipline. Audit your day, cut the fat, and execute.";
-  }
-  return "That is a biological safety mechanism, not a valid reason. Your ancestors hunted mammoths in the snow; you are complaining about air conditioning. Discomfort is the price of admission to a meaningful life. Do it anyway.";
+// --- THE SAVAGE VAULT (Frontend Mirror of your SQL) ---
+const ROAST_DB = {
+  lie: [
+    "Tired is a ghost. It isn't real. You are bored because you have no mission. The enemy is training while you negotiate with your pillow.",
+    "You have the exact same 24 hours as the Titans who built the world. You don't lack time; you lack priority.",
+    "Pain is information. It tells you that you are alive. If you treat every ache like a stop sign, you will park your life in the driveway of mediocrity."
+  ],
+  poison: [
+    "You are grinding for XP in a fake world while your real life character is Level 1. The real game has no respawns.",
+    "You are donating your soul to an algorithm. Every swipe is a vote for mediocrity. Turn it off. Face the void.",
+    "You are borrowing happiness from tomorrow with high interest. If you hate your life enough to numb it, change the life. Don't drown it."
+  ],
+  drift: [
+    "The first decision you made today was a lie. You broke a contract with yourself before your feet hit the floor.",
+    "You are waiting for the 'perfect time.' It doesn't exist. Chaos is the standard. Move.",
+    "Your environment is a reflection of your mind. You live in chaos because you think in chaos. Clean your damn room."
+  ]
 };
 
-// --- MAIN COMPONENT ---
-export default function AccountabilityMirror() {
-  const [excuse, setExcuse] = useState('');
-  const [roast, setRoast] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [isCracked, setIsCracked] = useState(false);
+type Category = 'lie' | 'poison' | 'drift';
 
-  // 3-STRIKE STATE
+export default function TitanMirror() {
   const [attempts, setAttempts] = useState(3);
   const [isLocked, setIsLocked] = useState(false);
+  const [loading, setLoading] = useState<Category | null>(null);
 
-  // Load state
+  // State for the active roast display
+  const [activeRoast, setActiveRoast] = useState<{ category: Category; text: string } | null>(null);
+
   useEffect(() => {
-    const savedAttempts = localStorage.getItem('mirror_attempts');
-    if (savedAttempts) {
-      const count = parseInt(savedAttempts);
+    const saved = localStorage.getItem('mirror_attempts');
+    if (saved) {
+      const count = parseInt(saved);
       setAttempts(count);
       if (count <= 0) setIsLocked(true);
     }
   }, []);
 
-  const handleRoast = async () => {
-    if (!excuse.trim() || attempts <= 0) return;
-    setLoading(true);
-    setRoast('');
-    setIsCracked(false);
+  const handleStrike = (category: Category, input: string) => {
+    if (attempts <= 0 || !input.trim()) return;
 
-    // SIMULATE API & CRACK
+    setLoading(category);
+
+    // SIMULATE "THINKING" TIME
     setTimeout(() => {
-      setIsCracked(true);
-      setRoast(getRoast(excuse));
-      setLoading(false);
-
       const newAttempts = attempts - 1;
       setAttempts(newAttempts);
       localStorage.setItem('mirror_attempts', newAttempts.toString());
 
-      // TRIGGER LOCKOUT AFTER DELAY
+      // SELECT ROAST BASED ON CATEGORY
+      const roasts = ROAST_DB[category];
+      const randomRoast = roasts[Math.floor(Math.random() * roasts.length)];
+
+      setActiveRoast({ category, text: randomRoast });
+      setLoading(null);
+
       if (newAttempts === 0) {
-        setTimeout(() => setIsLocked(true), 5000); // 5 seconds to read the final roast
+        setTimeout(() => setIsLocked(true), 4000); // Delay lockout to read
       }
     }, 1500);
   };
 
   const resetMirror = () => {
-    setExcuse('');
-    setRoast('');
-    setIsCracked(false);
+    setActiveRoast(null);
   };
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 p-4 md:p-8 flex flex-col items-center font-sans selection:bg-red-900 selection:text-white relative">
+    <div className="min-h-screen bg-[#050a14] text-zinc-100 p-4 md:p-8 font-mono relative overflow-hidden selection:bg-red-900 selection:text-white">
 
-      {/* THE LOCKOUT OVERLAY */}
-      {isLocked && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md animate-in fade-in duration-1000">
-          <div className="max-w-lg w-full bg-zinc-950 border-2 border-red-600 p-8 text-center shadow-[0_0_50px_rgba(220,38,38,0.3)] relative overflow-hidden">
-            <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(255,0,0,0.1)_50%)] bg-[length:100%_4px] pointer-events-none" />
-            <Lock className="w-16 h-16 text-red-600 mx-auto mb-6 animate-pulse" />
-            <h2 className="text-4xl font-black uppercase tracking-tighter text-white mb-4">SOUL EXPOSED</h2>
-            <p className="text-red-200 font-mono text-sm mb-8 leading-relaxed">
-              SYSTEM LOCKDOWN INITIATED.<br/>
-              You have exhausted your excuses. The Mirror has seen enough.
-            </p>
-            <button className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest text-lg transition-all hover:scale-105 shadow-lg">
-              JOIN THE ORDER
-            </button>
+      {/* BACKGROUND FX */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 pointer-events-none bg-[length:100%_2px,3px_100%]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-transparent to-black opacity-80 z-0 pointer-events-none" />
+
+      {/* HEADER */}
+      <header className="relative z-10 max-w-7xl mx-auto mb-12 text-center space-y-4 pt-8">
+        <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white glitch-text" data-text="THE MIRROR">
+          THE MIRROR
+        </h1>
+        <div className="flex items-center justify-center gap-4 text-sm font-bold tracking-widest">
+          <span className="text-zinc-500">ATTEMPTS REMAINING:</span>
+          <div className="flex gap-1">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 1 }}
+                animate={{ scale: i < attempts ? 1 : 0.8, opacity: i < attempts ? 1 : 0.3 }}
+                className={`w-3 h-3 rounded-sm ${i < attempts ? 'bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.8)]' : 'bg-zinc-800'}`}
+              />
+            ))}
           </div>
         </div>
-      )}
+      </header>
 
-      <div className="max-w-6xl w-full space-y-12">
-        {/* HEADER */}
-        <div className="text-center space-y-4 pt-8">
-            <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter flex items-center justify-center gap-4">
-                <Ghost className="w-10 h-10 text-zinc-500" />
-                <span>The Accountability <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 via-zinc-400 to-zinc-100">Mirror</span></span>
-            </h1>
-            <div className="flex items-center justify-center gap-2 text-sm font-mono text-zinc-500">
-              <span>ATTEMPTS REMAINING:</span>
-              <div className="flex gap-1">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className={`w-3 h-3 rounded-sm ${i < attempts ? 'bg-red-600' : 'bg-zinc-800'}`} />
-                ))}
-              </div>
-            </div>
-        </div>
+      {/* THE TRIPTYCH GRID */}
+      <div className="relative z-10 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* MAIN TACTICAL GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <MirrorCard
+          category="lie"
+          title="THE LIE"
+          icon={ShieldAlert}
+          prompt="Why didn't you do the work?"
+          placeholder="I'm too tired... I'm too busy..."
+          accent="border-zinc-800 hover:border-red-500/30"
+          glow="group-hover:shadow-[0_0_30px_rgba(239,68,68,0.1)]"
+          onSubmit={handleStrike}
+          loading={loading === 'lie'}
+          roast={activeRoast?.category === 'lie' ? activeRoast.text : null}
+          onReset={resetMirror}
+        />
 
-            {/* LEFT FLANK: PROTOCOL CARDS */}
-            <div className="lg:col-span-3 space-y-4">
-                <ProtocolCard icon={Flame} accent="orange" title="Iron Mind Protocol" source="David Goggins" quote="The 40% Rule Applies. You are not done when you are tired; you are done when you are finished." />
-                <ProtocolCard icon={Shield} accent="blue" title="Stoic Regulator" source="Marcus Aurelius" quote="You have power over your mind - not outside events. Realize this, and you will find strength." />
-            </div>
+        <MirrorCard
+          category="poison"
+          title="THE POISON"
+          icon={Biohazard}
+          prompt="How do you numb the pain?"
+          placeholder="Scrolling... Gaming... Porn..."
+          accent="border-zinc-800 hover:border-emerald-500/30"
+          glow="group-hover:shadow-[0_0_30px_rgba(16,185,129,0.1)]"
+          onSubmit={handleStrike}
+          loading={loading === 'poison'}
+          roast={activeRoast?.category === 'poison' ? activeRoast.text : null}
+          onReset={resetMirror}
+        />
 
-            {/* CENTER: THE MIRROR (INTERACTIVE) */}
-            <div className="lg:col-span-6">
-                <div className={cn(
-                    "relative bg-gradient-to-br from-zinc-900 via-black to-zinc-900 border-2 border-zinc-800 p-1 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500",
-                    isCracked && "border-zinc-700 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-                )}>
-                    {isCracked && (
-                        <div className="absolute inset-0 z-10 opacity-40 mix-blend-overlay pointer-events-none animate-in" style={{ backgroundImage: `url("${CRACK_OVERLAY}")`, backgroundSize: 'cover' }} />
-                    )}
+        <MirrorCard
+          category="drift"
+          title="THE DRIFT"
+          icon={Hourglass}
+          prompt="Where do you lose time?"
+          placeholder="Snoozing... Daydreaming..."
+          accent="border-zinc-800 hover:border-amber-500/30"
+          glow="group-hover:shadow-[0_0_30px_rgba(245,158,11,0.1)]"
+          onSubmit={handleStrike}
+          loading={loading === 'drift'}
+          roast={activeRoast?.category === 'drift' ? activeRoast.text : null}
+          onReset={resetMirror}
+        />
 
-                    <div className="relative z-20 p-6 md:p-10 bg-black/80 backdrop-blur-md rounded-xl min-h-[400px] flex flex-col justify-center">
-                        {!roast ? (
-                            <div className="space-y-6 animate-in">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-zinc-500 ml-1">State Your Obstacle</label>
-                                    <textarea
-                                        value={excuse}
-                                        onChange={(e) => setExcuse(e.target.value)}
-                                        placeholder="I didn't workout today because..."
-                                        className="w-full bg-zinc-900/50 border border-zinc-800 rounded-lg p-4 text-xl text-white placeholder-zinc-700 focus:outline-none focus:border-white/50 focus:ring-1 focus:ring-white/20 transition-all min-h-[150px] resize-none font-mono"
-                                    />
-                                </div>
-                                <button
-                                    onClick={handleRoast}
-                                    disabled={loading || !excuse}
-                                    className={cn(
-                                        "w-full py-4 rounded-lg font-black uppercase tracking-widest text-sm transition-all relative overflow-hidden group bg-white text-black hover:bg-zinc-200 active:scale-[0.98]",
-                                        loading && "opacity-50 cursor-wait"
-                                    )}
-                                >
-                                    <span className="flex items-center justify-center gap-2 relative z-10">
-                                        {loading ? <Activity className="w-5 h-5 animate-spin" /> : <Hammer className="w-5 h-5" />}
-                                        {loading ? "Analyzing Weakness..." : "Shatter The Excuse"}
-                                    </span>
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="space-y-6 animate-in">
-                                <div className="relative">
-                                    <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <Brain className="w-4 h-4" /> The Raw Truth
-                                    </h3>
-                                    <p className="font-mono text-lg leading-relaxed text-transparent bg-clip-text bg-gradient-to-b from-white via-zinc-200 to-zinc-400 border-l-2 border-white/20 pl-6 py-2">
-                                        "{roast}"
-                                    </p>
-                                </div>
-                                <div className="flex gap-4 pt-6 border-t border-zinc-800/50">
-                                     <button onClick={resetMirror} className="flex-1 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-all">Face Another</button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* RIGHT FLANK: BIOMETRIC REGULATORS */}
-            <div className="lg:col-span-3 space-y-4">
-                <BiometricGauge icon={Brain} accent="purple" title="Limbic Regulator" status={loading ? "SURGING" : isCracked ? "OVERRIDDEN" : "STABLE"} value={loading ? 85 : isCracked ? 10 : 40} />
-                <BiometricGauge icon={Activity} accent="red" title="Governor Status" status={loading ? "DISENGAGING..." : isCracked ? "OFFLINE" : "ACTIVE"} value={loading ? 30 : isCracked ? 0 : 75} reversed />
-            </div>
-        </div>
       </div>
+
+      {/* LOCKOUT OVERLAY */}
+      <AnimatePresence>
+        {isLocked && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl"
+          >
+            <div className="max-w-lg w-full border-y-2 border-red-600 bg-zinc-950/50 p-12 text-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-red-500/5 animate-pulse pointer-events-none" />
+              <Lock className="w-20 h-20 text-red-600 mx-auto mb-8" />
+              <h2 className="text-5xl font-black uppercase tracking-tighter text-white mb-6">SOUL EXPOSED</h2>
+              <p className="text-red-400 font-mono text-sm mb-10 leading-relaxed">
+                SYSTEM LOCKDOWN INITIATED.<br/>
+                You have exhausted your excuses. The Mirror has seen enough.
+              </p>
+              <button className="w-full py-5 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-[0.2em] text-lg transition-all hover:scale-[1.02] shadow-[0_0_30px_rgba(220,38,38,0.4)]">
+                JOIN THE ORDER
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-// --- SUB-COMPONENTS ---
-const ProtocolCard = ({ icon: Icon, accent, title, source, quote }: any) => {
-    const colors = accent === 'orange' ? "text-orange-500 bg-orange-500/10 border-orange-500/20" : "text-blue-500 bg-blue-500/10 border-blue-500/20";
-    return (
-        <div className={`p-4 border rounded-lg ${colors.split(' ')[2]} ${colors.split(' ')[1]} transition-all`}>
-            <div className="flex items-center gap-2 mb-2">
-                <Icon className={`w-4 h-4 ${colors.split(' ')[0]}`} />
-                <h3 className="font-bold uppercase text-xs tracking-wider text-white">{title}</h3>
-            </div>
-            <p className="text-sm font-mono text-zinc-300 italic mb-2">"{quote}"</p>
-            <p className="text-[10px] uppercase tracking-widest text-zinc-500 text-right">— {source}</p>
-        </div>
-    );
-};
+// --- SUB-COMPONENT ---
+const MirrorCard = ({ category, title, icon: Icon, prompt, placeholder, accent, glow, onSubmit, loading, roast, onReset }: any) => {
+  const [input, setInput] = useState('');
 
-const BiometricGauge = ({ icon: Icon, accent, title, status, value, reversed = false }: any) => {
-     const colors = accent === 'purple' ? "text-purple-500 from-purple-500 to-purple-900" : "text-red-500 from-red-500 to-red-900";
-    const displayValue = reversed ? 100 - value : value;
-    return (
-        <div className="p-4 border border-zinc-800 bg-zinc-900/30 rounded-lg space-y-3">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Icon className={`w-4 h-4 ${colors.split(' ')[0]}`} />
-                    <h3 className="font-bold uppercase text-xs tracking-wider text-zinc-300">{title}</h3>
-                </div>
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${colors.split(' ')[0]} animate-pulse`}>{status}</span>
-            </div>
-            <div className="h-2 w-full bg-black rounded-full overflow-hidden border border-zinc-800">
-                <div className={`h-full bg-gradient-to-r ${colors.split(' ')[1]} ${colors.split(' ')[2]} transition-all duration-1000`} style={{ width: `${displayValue}%` }} />
-            </div>
+  return (
+    <div className={`relative bg-[#0B1221]/50 backdrop-blur-sm border ${accent} p-8 flex flex-col h-[550px] transition-all duration-500 group ${glow}`}>
+
+      {/* HEADER */}
+      <div className="flex items-center gap-4 mb-8 opacity-60 group-hover:opacity-100 transition-opacity">
+        <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+          <Icon className="w-6 h-6 text-white" />
         </div>
-    );
+        <h3 className="font-black text-2xl tracking-widest text-white">{title}</h3>
+      </div>
+
+      {/* CONTENT AREA */}
+      <div className="flex-1 relative">
+        <AnimatePresence mode="wait">
+          {roast ? (
+            <motion.div
+              key="roast"
+              initial={{ opacity: 0, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 flex flex-col justify-center"
+            >
+              <div className="border-l-4 border-white/20 pl-6 py-2">
+                <p className="text-lg md:text-xl font-bold text-white leading-relaxed font-mono">
+                  "{roast}"
+                </p>
+              </div>
+              <button onClick={onReset} className="mt-8 text-xs text-zinc-500 hover:text-white uppercase tracking-widest underline underline-offset-4 text-left pl-7">
+                [ RESET TERMINAL ]
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="input"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="h-full flex flex-col"
+            >
+              <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-4 block">{prompt}</label>
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={placeholder}
+                disabled={loading}
+                className="w-full bg-transparent border-b border-zinc-800 text-white text-xl p-2 focus:outline-none focus:border-white/50 transition-colors resize-none h-40 placeholder-zinc-800 font-mono"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* FOOTER ACTION */}
+      {!roast && (
+        <button
+          onClick={() => onSubmit(category, input)}
+          disabled={!input || loading}
+          className="mt-auto w-full py-4 border border-white/10 bg-white/5 hover:bg-white hover:text-black text-zinc-400 font-black uppercase tracking-widest text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 group-hover:border-white/20"
+        >
+          {loading ? (
+            <>
+              <Terminal className="w-4 h-4 animate-spin" />
+              <span>ANALYZING...</span>
+            </>
+          ) : (
+            <>
+              <span>SHATTER EXCUSE</span>
+              <Zap className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
 };

@@ -1,98 +1,42 @@
 // @ts-nocheck
-import { Hono } from 'hono';
-import { createClient } from '@supabase/supabase-js';
+import express from 'express';
+import { supabase } from '../supabaseClient'; // Ensure this client exists and is configured
 
-const router = new Hono();
+const router = express.Router();
 
-// Stub for AI Generation (Token Cost Simulation)
-const generateGeminiRoast = async (text: string, category: string) => {
-    // In a real scenario, this calls Google Gemini API.
-    // For now, we return a generic "AI" response.
-    return `[AI SIMULATION] You said "${text}" in category ${category}. My analysis: You are weak. Fix it.`;
-};
+// POST /api/public/roast
+router.post('/roast', async (req, res) => {
+  const { category, input } = req.body;
 
-// Helper to extract keywords (Naive implementation)
-const extractKeywords = (text: string) => {
-    return text.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-};
+  // 1. TRY TO MATCH KEYWORDS FROM DB
+  // This query finds a roast where the input_keywords array overlaps with the user's input
+  // Note: Using textSearch with simple input for now as per snippet.
+  const { data, error } = await supabase
+    .from('public_roasts')
+    .select('roast_text')
+    .eq('category', category)
+    .textSearch('input_keywords', input) // Simplified logic
+    .limit(1)
+    .single();
 
-// POST /roast
-router.post('/roast', async (c) => {
-    try {
-        const body = await c.req.json();
-        const { category, text } = body;
+  if (data) {
+    return res.json({ roast: data.roast_text });
+  }
 
-        if (!text || !category) {
-            return c.json({ error: 'Missing text or category' }, 400);
-        }
+  // 2. FALLBACK TO AI (If no keyword match)
+  // For now, return a generic fallback if AI isn't hooked up yet, or a specific "AI Simulation" response.
+  // In a real implementation, we would call OpenAI/Gemini here.
 
-        // Initialize Supabase (Admin Client to bypass RLS for public read/write if needed, or use service role)
-        // Ideally we use the client from context or create one.
-        // Assuming env vars are present.
-        const supabaseUrl = process.env.SUPABASE_URL || '';
-        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || '';
-        const supabase = createClient(supabaseUrl, supabaseKey);
+  const FALLBACKS: Record<string, string[]> = {
+      lie: ["You are lying to yourself. The truth is you just don't want it bad enough.", "Excuses are the nails in the coffin of your potential."],
+      poison: ["Numbing the pain only makes the awakening more brutal.", "You are feeding the very thing that is killing your spirit."],
+      drift: ["Time is not refundable. You are spending it like you have an infinite supply.", "Focus is a muscle. Yours is atrophied."]
+  };
 
-        const normalizedInput = text.toLowerCase();
+  const fallbacks = FALLBACKS[category] || ["Silence is also an answer. Look inward."];
+  const randomFallback = fallbacks[Math.floor(Math.random() * fallbacks.length)];
 
-        // 1. CACHE CHECK (The Gatekeeper)
-        // We want to find a roast where 'input_keywords' array contains words found in user input?
-        // OR the user input contains one of the keywords in the DB array?
-        // The prompt says: "We look for a roast where the input contains one of the stored keywords".
-        // DB has `input_keywords` column (array of text).
-        // Example DB: ['tired', 'sleepy']
-        // User Input: "I am tired"
-        // Match condition: Input contains 'tired'.
-
-        // Supabase `contains` works if the column is an array and we pass a value that is contained?
-        // No, `contains` on an array column checks if the column contains the passed array.
-        // We want the reverse or an overlap.
-        // `overlaps` operator: `&&`.
-        // Let's extract words from input and check overlap with `input_keywords`.
-        const userWords = normalizedInput.split(/\s+/);
-
-        // This query checks if `input_keywords` overlaps with `userWords`
-        const { data: cachedRoast, error } = await supabase
-            .from('public_roasts')
-            .select('*')
-            .overlaps('input_keywords', userWords)
-            .eq('category', category)
-            .limit(1)
-            .maybeSingle();
-
-        if (cachedRoast) {
-            // Async hit count increment
-            // supabase.rpc('increment_roast_hit', { row_id: cachedRoast.id });
-
-            return c.json({
-                roast: cachedRoast.roast_text,
-                source: 'VAULT'
-            });
-        }
-
-        // 2. CACHE MISS -> AI GENERATION
-        const aiResponse = await generateGeminiRoast(text, category);
-
-        // 3. SAVE TO VAULT
-        const newKeywords = extractKeywords(text);
-        if (newKeywords.length > 0) {
-             await supabase.from('public_roasts').insert({
-                category,
-                input_keywords: newKeywords,
-                roast_text: aiResponse,
-                is_verified: false
-            });
-        }
-
-        return c.json({
-            roast: aiResponse,
-            source: 'AI'
-        });
-
-    } catch (err: any) {
-        console.error("Roast Error:", err);
-        return c.json({ error: err.message }, 500);
-    }
+  return res.json({ roast: randomFallback });
 });
 
 export default router;
