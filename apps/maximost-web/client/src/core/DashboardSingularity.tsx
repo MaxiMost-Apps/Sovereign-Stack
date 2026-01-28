@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyMatrix } from '@/components/dashboard/WeeklyMatrix';
 import { HabitLibrary } from '@/components/library/HabitLibrary';
-import { HabitEditModal } from '@/components/habits/HabitEditModal'; // Using the NEW Edit Modal
+import { HabitEditModal as HabitDetailModal } from '@/components/habits/HabitEditModal';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useHabits } from '@/hooks/useHabits';
-import { LayoutGrid, Calendar, BarChart3, Shield, Activity, Lock } from 'lucide-react';
-import { format } from 'date-fns';
+import { LayoutGrid, Calendar, BarChart3, Shield, Activity, Menu } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function DashboardSingularity() {
   const [view, setView] = useState<'day' | 'week' | 'month'>('day');
@@ -15,7 +16,6 @@ export default function DashboardSingularity() {
   const { library } = useLibrary();
   const { habits: userHabits, toggleHabit, updateHabitConfig } = useHabits();
 
-  // MERGE LOGIC
   const activeHabits = library.map(master => {
     const userState = userHabits.find(h => h.habit_id === master.id);
     if (!userState || userState.status === 'archived') return null;
@@ -26,118 +26,71 @@ export default function DashboardSingularity() {
   const frequencyHabits = activeHabits.filter(h => h.default_config.frequency_type === 'FREQUENCY');
 
   return (
-    <div className="max-w-4xl mx-auto p-4 pb-40">
-
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 pt-4 gap-4">
-        <div>
-          <h2 className="text-[10px] font-black tracking-[0.2em] text-blue-500 uppercase mb-1">Today's Mission</h2>
-          <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold text-white tracking-tight">{format(new Date(), 'EEEE, MMM d')}</h1>
-            <div className="p-2 rounded-lg border border-white/10 text-slate-500">
-               <Lock size={16} />
-            </div>
+    <div className="min-h-screen bg-[#0B1221] pb-32">
+      <div className="sticky top-0 z-40 glass-panel border-b-0 px-4 py-4 mb-4">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-black tracking-[0.2em] uppercase text-white">Mission Control</h1>
+            <p className="text-[10px] text-blue-400 font-bold tracking-widest uppercase">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </p>
           </div>
+          <Link to="/preferences" className="p-2 text-slate-500 hover:text-white transition-colors">
+            <Menu size={24} />
+          </Link>
         </div>
+      </div>
 
-        {/* TABS (Day/Week/Month) */}
-        <div className="flex bg-[#131B2C] p-1 rounded-lg border border-white/5 w-full md:w-auto">
-          {[
-            { id: 'day', label: 'DAILY' },
-            { id: 'week', label: 'WEEKLY' },
-            { id: 'month', label: 'MONTHLY' }
-          ].map(tab => (
+      <div className="max-w-3xl mx-auto p-4">
+        <div className="flex bg-[#131B2C] p-1 rounded-xl border border-white/5 shadow-inner mb-8 relative">
+          {[{ id: 'day', icon: LayoutGrid, label: 'DAY' }, { id: 'week', icon: Calendar, label: 'WEEK' }, { id: 'month', icon: BarChart3, label: 'MONTH' }].map(tab => (
             <button
               key={tab.id}
               onClick={() => setView(tab.id as any)}
-              className={`flex-1 md:flex-none px-6 py-2 rounded-md text-[10px] font-black tracking-[0.2em] uppercase transition-all ${
-                view === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'
-              }`}
+              className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-3 text-[10px] font-black tracking-widest transition-colors ${view === tab.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
             >
-              {tab.label}
+              {view === tab.id && (
+                <motion.div layoutId="activeTab" className="absolute inset-0 bg-slate-700/80 rounded-lg shadow-lg" transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} />
+              )}
+              <span className="relative z-10 flex items-center gap-2"><tab.icon size={14} /> {tab.label}</span>
             </button>
           ))}
         </div>
+
+        <AnimatePresence mode='wait'>
+          {view === 'day' && (
+            <motion.div key="day" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.2 }} className="space-y-8">
+               {absoluteHabits.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 ml-2 opacity-80"><Shield size={14} className="text-red-500" /><span className="text-[10px] font-black tracking-[0.2em] text-red-500 uppercase text-glow-red">Absolute Habits</span></div>
+                  {absoluteHabits.map((habit: any, i: number) => <DailyHabitRow key={habit.id} habit={habit} index={i} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(habit)} />)}
+                </div>
+              )}
+              {frequencyHabits.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 ml-2 opacity-80"><Activity size={14} className="text-blue-500" /><span className="text-[10px] font-black tracking-[0.2em] text-blue-500 uppercase text-glow-blue">Frequency Targets</span></div>
+                  {frequencyHabits.map((habit: any, i: number) => <DailyHabitRow key={habit.id} habit={habit} index={i} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(habit)} />)}
+                </div>
+              )}
+              {activeHabits.length === 0 && <div className="p-12 text-center border border-dashed border-white/10 rounded-2xl bg-slate-900/20"><p className="text-xs text-slate-500">No active atoms. Deploy from Archive.</p></div>}
+            </motion.div>
+          )}
+          {view === 'week' && <motion.div key="week" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.2 }}><WeeklyMatrix habits={activeHabits} /></motion.div>}
+          {view === 'month' && <motion.div key="month" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="glass-panel rounded-2xl p-12 text-center"><BarChart3 className="w-12 h-12 text-slate-700 mx-auto mb-4" /><h3 className="text-white font-bold tracking-widest uppercase">Macro Analysis</h3><p className="text-slate-500 text-xs mt-2">Aggregating Q1 Data...</p></motion.div>}
+        </AnimatePresence>
+
+        <div className="mt-20 border-t border-white/5 pt-10"><HabitLibrary /></div>
       </div>
 
-      {/* VIEW: DAY */}
-      {view === 'day' && (
-        <div className="animate-in fade-in space-y-8">
-          {/* SECTOR 1: ABSOLUTE HABITS */}
-          {absoluteHabits.length > 0 && (
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-4 ml-2">
-                <Shield size={16} className="text-red-600" />
-                <h3 className="text-[11px] font-black tracking-[0.3em] text-red-600/80 uppercase">Absolute Habits</h3>
-                <div className="h-px flex-1 bg-gradient-to-r from-red-900/50 to-transparent" />
-              </div>
-              <div className="space-y-2">
-              {absoluteHabits.map(habit => (
-                <DailyHabitRow key={habit.id} habit={habit} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(habit)} onOpenMenu={() => {}} />
-              ))}
-              </div>
-            </div>
-          )}
-
-          {/* SECTOR 2: FREQUENCY TARGETS */}
-          {frequencyHabits.length > 0 && (
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-4 ml-2">
-                <Activity size={16} className="text-blue-500" />
-                <h3 className="text-[11px] font-black tracking-[0.3em] text-blue-500/80 uppercase">Frequency Targets</h3>
-                <div className="h-px flex-1 bg-gradient-to-r from-blue-900/50 to-transparent" />
-              </div>
-              <div className="space-y-2">
-              {frequencyHabits.map(habit => (
-                <DailyHabitRow key={habit.id} habit={habit} onToggle={toggleHabit} onOpenInfo={() => setSelectedHabit(habit)} onOpenMenu={() => {}} />
-              ))}
-              </div>
-            </div>
-          )}
-
-          {/* EMPTY STATE */}
-          {activeHabits.length === 0 && (
-            <div className="p-12 text-center border border-dashed border-white/10 rounded-2xl">
-              <h3 className="text-slate-500 font-bold uppercase tracking-widest">No Active Protocols</h3>
-              <p className="text-xs text-slate-600 mt-2">Access the Library below to deploy habits.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* VIEW: WEEK */}
-      {view === 'week' && <WeeklyMatrix habits={activeHabits} />}
-
-      {/* VIEW: MONTH */}
-      {view === 'month' && (
-         <div className="p-12 text-center border border-white/5 rounded-2xl bg-[#0B1221]">
-            <BarChart3 className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-            <h3 className="text-white font-bold tracking-widest uppercase">Macro Analysis</h3>
-         </div>
-      )}
-
-      <div className="mt-16 border-t border-white/5 pt-8">
-        <h3 className="text-xl font-mono font-bold text-white mb-6">Habit Archive</h3>
-        <HabitLibrary />
-      </div>
-
-      {/* EDIT MODAL */}
-      {selectedHabit && (
-        <HabitEditModal
-          habit={selectedHabit}
-          onClose={() => setSelectedHabit(null)}
-          onSave={(updatedHabit: any) => {
-            // Connect the UI to the Database
-            updateHabitConfig(updatedHabit.id, {
-              frequency_type: updatedHabit.default_config.frequency_type,
-              target_days: updatedHabit.default_config.target_days,
-              visuals: updatedHabit.visuals,
-              // We can also sync title/description overrides if supported by schema/backend
-            });
-            setSelectedHabit(null);
-          }}
-        />
-      )}
+      <AnimatePresence>
+        {selectedHabit && (
+          <HabitDetailModal habit={selectedHabit} onClose={() => setSelectedHabit(null)} onSave={(updates: any) => {
+              updateHabitConfig(selectedHabit.id, { frequency_type: updates.default_config.frequency_type, target_days: updates.default_config.target_days, visuals: updates.visuals });
+              setSelectedHabit(null);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

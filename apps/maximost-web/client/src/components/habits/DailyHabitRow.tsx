@@ -1,74 +1,48 @@
 import React from 'react';
-import { Check, GripVertical, MoreVertical, Info, Activity } from 'lucide-react';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { ICON_MAP } from '../../data/sovereign_library';
+import { motion } from 'framer-motion';
+import { Check, Info, Activity } from 'lucide-react';
+import { ICON_MAP } from '@/data/sovereign_library';
 
-export const DailyHabitRow = ({ habit, onToggle, onOpenInfo, onOpenMenu }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: habit.id });
+interface DailyHabitRowProps {
+  habit: any;
+  index: number;
+  onToggle: (id: string) => void;
+  onOpenInfo: (habit: any) => void;
+}
 
-  const style = { transform: CSS.Transform.toString(transform), transition };
+export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, onToggle, onOpenInfo }) => {
+  const Icon = habit.visuals?.icon ? (ICON_MAP[habit.visuals.icon] || Activity) : Activity;
   const isCompleted = habit.status === 'completed';
-  const isAbsolute = habit.default_config?.frequency_type === 'ABSOLUTE';
-
-  // Resolve Icon from string (new schema) or fallback
-  const IconComponent = ICON_MAP[habit.visuals?.icon] || habit.icon || Activity;
+  const isFrequency = habit.default_config.frequency_type === 'FREQUENCY';
+  const target = habit.default_config.target_days || 7;
 
   return (
-    <div ref={setNodeRef} style={style} className={`relative group flex items-center gap-4 p-4 mb-3 rounded-2xl border transition-all duration-300 ${isCompleted ? 'bg-slate-900/50 border-slate-800' : 'bg-[#0B1221] border-white/5 hover:border-white/10'}`}>
-
-      {/* 1. GRIPPER */}
-      <div {...attributes} {...listeners} className="cursor-grab touch-none text-slate-700 hover:text-slate-500 p-1">
-        <GripVertical size={20} />
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.3 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => onToggle(habit.habit_id)}
+      className="group relative flex items-center gap-4 p-4 glass-panel glass-panel-hover rounded-2xl cursor-pointer select-none"
+    >
+      <div className={`relative shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ${isCompleted ? 'bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.4)] scale-105' : `${habit.visuals.color} text-white shadow-lg opacity-90`}`}>
+        <motion.div key={isCompleted ? 'check' : 'icon'} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
+          {isCompleted ? <Check size={24} strokeWidth={3} /> : <Icon size={22} strokeWidth={2.5} />}
+        </motion.div>
       </div>
-
-      {/* 2. TITLE & ACTIONS */}
-      <div className="flex-1 flex flex-col justify-center">
-        <div className="flex items-center gap-3">
-          <h3 className={`text-sm font-bold tracking-wide transition-colors ${isCompleted ? 'text-slate-500 line-through' : 'text-white'}`}>
-            {habit.title}
-          </h3>
-
-          {/* ICON (Visible on Mobile/Desktop if desired, or just used in modal.
-              But let's add it next to title if space permits or just keep text.
-              User screenshot shows text primarily. We'll stick to text but ensure logic doesn't crash.)
-          */}
-
-          {/* ACTIONS (Next to title) */}
-          <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <button onClick={(e) => { e.stopPropagation(); onOpenInfo(habit); }} className="text-slate-600 hover:text-blue-400 p-1 hover:bg-white/5 rounded">
-                <Info size={14} />
-            </button>
-            <button onClick={(e) => { e.stopPropagation(); onOpenMenu(habit); }} className="text-slate-600 hover:text-white p-1 hover:bg-white/5 rounded">
-                <MoreVertical size={14} />
-            </button>
-          </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className={`text-sm font-bold tracking-wide truncate transition-colors ${isCompleted ? 'text-slate-500 line-through decoration-slate-600' : 'text-white'}`}>{habit.title}</h3>
+          <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${isFrequency ? 'bg-blue-500/10 text-blue-400' : 'bg-red-500/10 text-red-400'}`}>{isFrequency ? `${target}/WK` : 'ABS'}</span>
         </div>
-
-        {/* BADGES */}
-        <div className="flex items-center gap-2 mt-1">
-          {isAbsolute ? (
-            <span className="text-[9px] font-black text-red-600 tracking-[0.2em] uppercase border border-red-900/30 px-1.5 py-0.5 rounded bg-red-900/10">ABSOLUTE</span>
-          ) : (
-            <span className="text-[9px] font-black text-blue-500 tracking-[0.2em] uppercase border border-blue-900/30 px-1.5 py-0.5 rounded bg-blue-900/10">FREQ: {habit.target_days || 4}/WK</span>
-          )}
-          {habit.streak > 0 && <span className="text-[9px] font-bold text-orange-500">🔥 {habit.streak}</span>}
+        <p className="text-[10px] text-slate-500 truncate mt-0.5 font-medium">{habit.description}</p>
+      </div>
+      <div className="flex items-center gap-1">
+        <button onClick={(e) => { e.stopPropagation(); onOpenInfo(habit); }} className="p-3 text-slate-600 hover:text-blue-400 hover:bg-white/5 rounded-full transition-colors active:scale-90"><Info size={20} /></button>
+        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${isCompleted ? 'border-green-500 bg-green-500/20' : 'border-slate-700 bg-slate-800/50'}`}>
+          {isCompleted && <div className="w-2.5 h-2.5 rounded-full bg-green-500" />}
         </div>
       </div>
-
-      {/* 3. CHECKMARK (CIRCLE) */}
-      <button
-        onClick={() => onToggle(habit.id)}
-        className={`
-          relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
-          ${isCompleted
-            ? `${habit.visuals?.color || habit.base_color || 'bg-slate-600'} text-white shadow-[0_0_15px_rgba(255,255,255,0.15)] scale-105`
-            : 'bg-[#131B2C] border-2 border-white/5 text-transparent hover:border-white/20'
-          }
-        `}
-      >
-         <Check size={20} strokeWidth={4} className={`transition-all duration-300 ${isCompleted ? 'scale-100' : 'scale-0'}`} />
-      </button>
-    </div>
+    </motion.div>
   );
 };

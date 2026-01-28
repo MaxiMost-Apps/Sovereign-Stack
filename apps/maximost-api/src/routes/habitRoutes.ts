@@ -111,10 +111,14 @@ router.put('/:id', async (c) => {
     const { id: _, created_at, ...updates } = body;
 
     // EXECUTE UPDATE (Using Admin)
+    // FIX: Ensure ID is not double-quoted by being passed as a variable (which it is),
+    // but just in case, trim quotes if present (some clients might send '"123"').
+    const cleanId = id.replace(/^"|"$/g, '');
+
     const { data, error } = await supabaseAdmin
       .from('habits')
       .update(updates)
-      .eq('id', id)
+      .eq('id', cleanId)
       .select()
       .single();
 
