@@ -1,12 +1,13 @@
 // @ts-nocheck
-import express from 'express';
+import { Hono } from 'hono';
 import { supabase } from '../supabaseClient'; // Ensure this client exists and is configured
+import { AppEnv } from '../hono';
 
-const router = express.Router();
+const router = new Hono<AppEnv>();
 
 // POST /api/public/roast
-router.post('/roast', async (req, res) => {
-  const { category, input } = req.body;
+router.post('/roast', async (c) => {
+  const { category, input } = await c.req.json();
 
   // 1. TRY TO MATCH KEYWORDS FROM DB
   // This query finds a roast where the input_keywords array overlaps with the user's input
@@ -20,7 +21,7 @@ router.post('/roast', async (req, res) => {
     .single();
 
   if (data) {
-    return res.json({ roast: data.roast_text });
+    return c.json({ roast: data.roast_text });
   }
 
   // 2. FALLBACK TO AI (If no keyword match)
@@ -36,7 +37,7 @@ router.post('/roast', async (req, res) => {
   const fallbacks = FALLBACKS[category] || ["Silence is also an answer. Look inward."];
   const randomFallback = fallbacks[Math.floor(Math.random() * fallbacks.length)];
 
-  return res.json({ roast: randomFallback });
+  return c.json({ roast: randomFallback });
 });
 
 export default router;

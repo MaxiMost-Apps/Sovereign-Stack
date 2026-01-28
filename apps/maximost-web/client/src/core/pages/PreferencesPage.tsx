@@ -1,108 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabase';
-import { Save, RefreshCw, Lock, Shield, Activity, Heart } from 'lucide-react';
+import { supabase } from '@/core/supabase';
 import { toast } from 'sonner';
+import { ArrowLeft, Save, Shield, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Preferences() {
-  const [profile, setProfile] = useState({
-    lens: 'FORTITUDE',
-    coach_mode: 'STOIC',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    day_start: '06:00',
-    day_end: '22:00',
-    reduce_motion: false
-  });
-  const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // LOAD PROFILE
   useEffect(() => {
-    const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-      if (data) setProfile({ ...profile, ...data });
-    };
-    load();
+    loadProfile();
   }, []);
 
-  // SAVE PROFILE
-  const handleSave = async () => {
-    setLoading(true);
+  const loadProfile = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Fetch profile safely
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+    if (data) setProfile(data);
+    setLoading(false);
+  };
+
+  const updateProfile = async (field: string, value: any) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user');
-
-      const updates = {
-        id: user.id,
-        lens: profile.lens,
-        coach_mode: profile.coach_mode,
-        timezone: profile.timezone,
-        day_start: profile.day_start,
-        day_end: profile.day_end,
-        performance_mode: profile.reduce_motion,
-        updated_at: new Date().toISOString()
-      };
-
-      const { error } = await supabase.from('profiles').upsert(updates);
+      const { error } = await supabase.from('profiles').update({ [field]: value }).eq('id', profile.id);
       if (error) throw error;
-
-      toast.success('PROTOCOL CALIBRATED.');
-    } catch (error: any) {
-      console.error('Save failed:', error);
-      toast.error(`ERROR: ${error.message}`);
-    } finally {
-      setLoading(false);
+      setProfile({ ...profile, [field]: value });
+      toast.success('Protocol Updated');
+    } catch (err) {
+      toast.error('Update Failed');
     }
   };
 
-  return (
-    <div className="max-w-4xl mx-auto p-6 pb-20">
-      <div className="flex justify-between items-center mb-12">
-        <div>
-          <h1 className="text-2xl font-black tracking-[0.2em] text-white uppercase mb-1">Identity Calibration</h1>
-          <p className="text-[10px] text-slate-500 uppercase tracking-widest">Anchor the Machine.</p>
-        </div>
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-widest uppercase rounded shadow-lg shadow-blue-900/20 disabled:opacity-50"
-        >
-          {loading ? <RefreshCw size={14} className="animate-spin" /> : <Save size={14} />}
-          {loading ? 'SAVING...' : 'LOCK PARAMETERS'}
-        </button>
-      </div>
+  if (loading) return <div className="p-8 text-slate-500">Loading Bio-Rig...</div>;
 
-      {/* THE COUNCIL (TITAN CARDS) */}
-      <section className="mb-12">
-        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4 block">Voice Protocol</label>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[
-            { id: 'STOIC', icon: Shield, label: 'The Stoic', desc: 'Endure. The obstacle is the way.' },
-            { id: 'OPERATOR', icon: Activity, label: 'The Operator', desc: 'Execute. Mission parameters set.' },
-            { id: 'ALLY', icon: Heart, label: 'The Ally', desc: 'Recover. Good work today.' }
-          ].map(mode => (
+  return (
+    <div className="max-w-2xl mx-auto p-4 pt-12 pb-40">
+      <Link to="/" className="flex items-center gap-2 text-slate-500 hover:text-white mb-8 transition-colors">
+        <ArrowLeft size={16} /> <span className="text-xs font-bold tracking-widest uppercase">Back to Mission Control</span>
+      </Link>
+
+      <h1 className="text-2xl font-black text-white tracking-widest uppercase mb-8">System Preferences</h1>
+
+      {/* SECTION: IDENTITY */}
+      <div className="bg-[#0B1221] border border-white/5 rounded-2xl p-6 mb-6">
+        <div className="flex items-center gap-3 mb-6">
+          <User className="text-blue-500" size={20} />
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Identity Lens</h2>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          {['FORTITUDE', 'REASON', 'VISIONARY', 'ANALYTICAL'].map(lens => (
             <button
-              key={mode.id}
-              onClick={() => setProfile({ ...profile, coach_mode: mode.id })}
-              className={`p-6 rounded-xl border text-left transition-all relative overflow-hidden group ${profile.coach_mode === mode.id ? 'bg-blue-900/20 border-blue-500/50' : 'bg-[#0B1221] border-white/5 hover:border-white/10'}`}
+              key={lens}
+              onClick={() => updateProfile('lens', lens)}
+              className={`p-4 rounded-xl border text-left transition-all ${
+                profile?.lens === lens
+                  ? 'bg-blue-600 border-blue-400 text-white shadow-lg'
+                  : 'bg-slate-900/50 border-white/5 text-slate-500 hover:border-white/20'
+              }`}
             >
-              <mode.icon size={24} className={`mb-4 ${profile.coach_mode === mode.id ? 'text-blue-400' : 'text-slate-600'}`} />
-              <h3 className="text-xs font-bold text-white uppercase tracking-widest mb-1">{mode.label}</h3>
-              <p className="text-[10px] text-slate-500">{mode.desc}</p>
+              <span className="block text-[10px] font-black tracking-widest uppercase mb-1">LENS</span>
+              <span className="block text-sm font-bold">{lens}</span>
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* SYSTEM CACHE */}
-      <div className="mt-20 border-t border-white/5 pt-8">
-        <div className="border border-red-900/30 bg-red-900/10 p-6 rounded-xl">
-           <h3 className="text-red-500 font-bold uppercase tracking-widest text-xs mb-2">Danger Zone</h3>
-           <p className="text-slate-400 text-xs mb-4">Irreversible action. Wipe all active habits and reset dashboard configuration.</p>
-           <button className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs rounded">
-             Wipe Dashboard
-           </button>
+      {/* SECTION: AI COACH */}
+      <div className="bg-[#0B1221] border border-white/5 rounded-2xl p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <Shield className="text-red-500" size={20} />
+          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Coach Protocol</h2>
+        </div>
+
+        <div className="space-y-3">
+          {['STOIC', 'DRILL_SERGEANT', 'EXECUTIVE', 'EMPATH'].map(mode => (
+            <button
+              key={mode}
+              onClick={() => updateProfile('coach_mode', mode)}
+              className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
+                profile?.coach_mode === mode
+                  ? 'bg-red-900/20 border-red-500/50 text-red-100'
+                  : 'bg-slate-900/50 border-white/5 text-slate-500 hover:bg-white/5'
+              }`}
+            >
+              <span className="text-xs font-bold tracking-wide uppercase">{mode.replace('_', ' ')}</span>
+              {profile?.coach_mode === mode && <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_red]" />}
+            </button>
+          ))}
         </div>
       </div>
     </div>

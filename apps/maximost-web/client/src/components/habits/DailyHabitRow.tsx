@@ -1,7 +1,8 @@
 import React from 'react';
-import { Check, GripVertical, MoreVertical, Info } from 'lucide-react';
+import { Check, GripVertical, MoreVertical, Info, Activity } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ICON_MAP } from '../../data/sovereign_library';
 
 export const DailyHabitRow = ({ habit, onToggle, onOpenInfo, onOpenMenu }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: habit.id });
@@ -9,6 +10,9 @@ export const DailyHabitRow = ({ habit, onToggle, onOpenInfo, onOpenMenu }) => {
   const style = { transform: CSS.Transform.toString(transform), transition };
   const isCompleted = habit.status === 'completed';
   const isAbsolute = habit.default_config?.frequency_type === 'ABSOLUTE';
+
+  // Resolve Icon from string (new schema) or fallback
+  const IconComponent = ICON_MAP[habit.visuals?.icon] || habit.icon || Activity;
 
   return (
     <div ref={setNodeRef} style={style} className={`relative group flex items-center gap-4 p-4 mb-3 rounded-2xl border transition-all duration-300 ${isCompleted ? 'bg-slate-900/50 border-slate-800' : 'bg-[#0B1221] border-white/5 hover:border-white/10'}`}>
@@ -24,6 +28,11 @@ export const DailyHabitRow = ({ habit, onToggle, onOpenInfo, onOpenMenu }) => {
           <h3 className={`text-sm font-bold tracking-wide transition-colors ${isCompleted ? 'text-slate-500 line-through' : 'text-white'}`}>
             {habit.title}
           </h3>
+
+          {/* ICON (Visible on Mobile/Desktop if desired, or just used in modal.
+              But let's add it next to title if space permits or just keep text.
+              User screenshot shows text primarily. We'll stick to text but ensure logic doesn't crash.)
+          */}
 
           {/* ACTIONS (Next to title) */}
           <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
