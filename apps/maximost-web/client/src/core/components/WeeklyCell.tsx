@@ -81,14 +81,20 @@ export default function WeeklyCell({ dayStr, logVal, target, unit, isNumeric, is
                       )}
                   </div>
              ) : (
-                // BOOLEAN STATE
-                <CheckCircle
-                    checked={isComplete}
-                    color={theme.hex}
-                    disabled={isDisabled}
-                    size="lg"
-                    onClick={(e: any) => { e.stopPropagation(); onToggle(dayStr); }}
-                />
+                // BOOLEAN STATE (FORCED CIRCLE OVERWRITE)
+                <button
+                    onClick={(e) => { e.stopPropagation(); onToggle(dayStr); }}
+                    className={`
+                        w-8 h-8 flex items-center justify-center rounded-full border transition-all duration-300
+                        ${isComplete
+                        ? `${theme.bg?.replace('bg-', 'bg-') || 'bg-blue-600'} border-transparent text-white shadow-[0_0_10px_rgba(255,255,255,0.2)]`
+                        : 'bg-[#0B1221] border-white/5 text-transparent hover:border-white/20'
+                        }
+                    `}
+                    style={isComplete ? { backgroundColor: theme.hex } : {}}
+                >
+                    {isComplete && <div className="w-2 h-2 bg-white rounded-full animate-pulse" />}
+                </button>
              )}
         </div>
     );
