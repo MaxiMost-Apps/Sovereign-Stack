@@ -14,23 +14,15 @@ export const HabitLibrary = () => {
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
 
-      {/* TABS HEADER */}
+      {/* TABS */}
       <div className="flex items-center justify-between border-b border-white/5 pb-4">
-        <h2 className="text-xl font-black tracking-[0.2em] uppercase text-white">
-          Armory
-        </h2>
+        <h2 className="text-xl font-black tracking-[0.2em] uppercase text-white">Habit Library</h2>
         <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/5">
-          <button
-            onClick={() => setActiveTab('atoms')}
-            className={`flex items-center gap-2 px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'atoms' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-          >
-            <Atom size={14} /> Atoms ({SOVEREIGN_LIBRARY.length})
+          <button onClick={() => setActiveTab('atoms')} className={`flex items-center gap-2 px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'atoms' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>
+            <Atom size={14} /> Atoms
           </button>
-          <button
-            onClick={() => setActiveTab('stacks')}
-            className={`flex items-center gap-2 px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'stacks' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-          >
-            <Layers size={14} /> Stacks ({PROTOCOL_STACKS.length})
+          <button onClick={() => setActiveTab('stacks')} className={`flex items-center gap-2 px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'stacks' ? 'bg-blue-600 text-white' : 'text-slate-500'}`}>
+            <Layers size={14} /> Stacks
           </button>
         </div>
       </div>
@@ -41,38 +33,18 @@ export const HabitLibrary = () => {
           {SOVEREIGN_LIBRARY.map(habit => {
             const Icon = ICON_MAP[habit.visuals.icon] || Info;
             const active = isAdopted(habit.id);
-            // Defaulting to "Slate" style colors for cleaner look if not active
-            const colorClass = active ? habit.visuals.color : 'bg-slate-800';
-
             return (
-              <div
-                key={habit.id}
-                className={`group relative flex items-center gap-4 p-3 rounded-xl border transition-all ${
-                  active
-                    ? 'bg-[#0B1221] border-blue-500/30'
-                    : 'bg-[#0B1221] border-white/5 hover:border-white/10 opacity-60 hover:opacity-100'
-                }`}
-              >
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} text-white shadow-inner`}>
+              <div key={habit.id} className={`group relative flex items-center gap-4 p-3 rounded-xl border transition-all ${active ? 'bg-[#0B1221] border-blue-500/30' : 'bg-[#0B1221] border-white/5 hover:border-white/10 opacity-70 hover:opacity-100'}`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${active ? habit.visuals.color : 'bg-slate-800'} text-white shadow-inner`}>
                   <Icon size={18} strokeWidth={2} />
                 </div>
-
                 <div className="flex-1 min-w-0">
-                  <h3 className={`text-xs font-bold truncate ${active ? 'text-white' : 'text-slate-400'}`}>
-                    {habit.title}
-                  </h3>
-                  <p className="text-[10px] text-slate-600 line-clamp-1 mt-0.5">
-                    {habit.description}
-                  </p>
+                  <h3 className="text-xs font-bold text-white truncate">{habit.title}</h3>
+                  <p className="text-[10px] text-slate-500 line-clamp-1">{habit.description}</p>
                 </div>
-
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setSelectedHabit(habit)} className="p-2 text-slate-600 hover:text-white transition-colors">
-                    <Info size={16} />
-                  </button>
-                  <button onClick={() => toggleHabit(habit.id)} className={`p-2 rounded-lg transition-all ${active ? 'text-blue-400' : 'text-slate-600 hover:text-white'}`}>
-                    {active ? <Check size={16} /> : <Plus size={16} />}
-                  </button>
+                <div className="flex gap-1">
+                  <button onClick={() => setSelectedHabit(habit)} className="p-2 text-slate-600 hover:text-white"><Info size={16} /></button>
+                  <button onClick={() => toggleHabit(habit.id)} className={`p-2 rounded-lg ${active ? 'text-blue-400' : 'text-slate-600 hover:text-white'}`}>{active ? <Check size={16} /> : <Plus size={16} />}</button>
                 </div>
               </div>
             );
@@ -80,32 +52,21 @@ export const HabitLibrary = () => {
         </div>
       )}
 
-      {/* STACKS GRID */}
+      {/* STACKS GRID (3x3) */}
       {activeTab === 'stacks' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PROTOCOL_STACKS.map(stack => (
-            <div key={stack.id} className="p-6 bg-slate-900/20 border border-white/5 rounded-2xl hover:border-blue-500/30 transition-all group">
-               <div className="flex justify-between items-start mb-4">
-                 <div>
-                   <h3 className="text-sm font-black text-white uppercase tracking-widest">{stack.title}</h3>
-                   <p className="text-xs text-slate-500 mt-1">{stack.description}</p>
+            <div key={stack.id} className="p-6 bg-slate-900/20 border border-white/5 rounded-2xl hover:border-blue-500/30 transition-all flex flex-col justify-between h-48 group">
+               <div>
+                 <h3 className="text-xs font-black text-white uppercase tracking-widest mb-2">{stack.title}</h3>
+                 <p className="text-[10px] text-slate-500 leading-relaxed">{stack.description}</p>
+                 <div className="flex gap-1 mt-4 flex-wrap">
+                    {stack.habit_ids.slice(0, 3).map(id => <div key={id} className="w-1 h-1 rounded-full bg-slate-600" />)}
+                    <span className="text-[9px] text-slate-600 ml-1">{stack.habit_ids.length} Atoms</span>
                  </div>
-                 <Layers className="text-slate-700 group-hover:text-blue-500 transition-colors" size={20} />
                </div>
-               <div className="flex flex-wrap gap-2 mb-6">
-                 {stack.habit_ids.slice(0, 4).map(hid => {
-                    const h = SOVEREIGN_LIBRARY.find(lib => lib.id === hid);
-                    return h ? (
-                      <span key={hid} className="text-[9px] font-bold bg-white/5 px-2 py-1 rounded text-slate-400 border border-white/5">{h.title}</span>
-                    ) : null;
-                 })}
-                 {stack.habit_ids.length > 4 && <span className="text-[9px] text-slate-600 px-2 py-1">+{stack.habit_ids.length - 4} more</span>}
-               </div>
-               <button
-                 onClick={() => stack.habit_ids.forEach(id => toggleHabit(id))}
-                 className="w-full py-3 bg-blue-600/10 border border-blue-500/50 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-600 hover:text-white transition-all"
-               >
-                 Deploy Protocol
+               <button onClick={() => stack.habit_ids.forEach(id => toggleHabit(id))} className="w-full py-3 bg-blue-600/10 border border-blue-500/50 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                 Deploy
                </button>
             </div>
           ))}
