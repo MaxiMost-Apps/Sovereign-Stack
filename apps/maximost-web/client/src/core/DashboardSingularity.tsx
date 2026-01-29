@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyMatrix } from '@/components/dashboard/WeeklyMatrix';
 import { HabitLibrary } from '@/components/library/HabitLibrary';
-import { HabitDetailModal } from '@/components/habits/HabitDetailModal'; // Use Read-Only modal for Info
+import { HabitInfoDrawer } from '@/components/habits/HabitInfoDrawer';
 import { EditHabitModal } from '@/components/habits/EditHabitModal';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useHabits } from '@/hooks/useHabits';
@@ -14,8 +14,8 @@ export default function DashboardSingularity() {
   const [view, setView] = useState<'day' | 'week' | 'month'>('day');
   const [isLocked, setIsLocked] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
-  const [drawerHabit, setDrawerHabit] = useState<any>(null); // Read Only
-  const [editHabit, setEditHabit] = useState<any>(null); // Edit
+  const [drawerHabit, setDrawerHabit] = useState<any>(null);
+  const [editHabit, setEditHabit] = useState<any>(null);
 
   const { library } = useLibrary();
   const { habits: userHabits, toggleHabit, updateHabitConfig } = useHabits();
@@ -23,32 +23,19 @@ export default function DashboardSingularity() {
   const activeHabits = library.map(master => {
     const userState = userHabits.find(h => h.habit_id === master.id);
     if (!userState || userState.status === 'archived') return null;
-
-    // Merge Saved Config with Default Config
-    const mergedConfig = { ...master.default_config, ...userState.metadata?.config };
-    const mergedVisuals = { ...master.visuals, ...userState.metadata?.visuals };
-
-    return {
-      ...master,
-      ...userState,
-      default_config: mergedConfig,
-      visuals: mergedVisuals,
-      status: userState.status || 'active',
-      is_completed: userState.status === 'completed'
-    };
+    return { ...master, ...userState, status: userState.status || 'active', is_completed: userState.status === 'completed' };
   }).filter(Boolean);
 
   const absoluteHabits = activeHabits.filter(h => h.default_config.frequency_type === 'ABSOLUTE');
   const frequencyHabits = activeHabits.filter(h => h.default_config.frequency_type === 'FREQUENCY');
 
   return (
-    <div className="min-h-screen bg-[#0B1221] pb-32">
+    <div className="min-h-screen bg-deep-space pb-32">
       {/* HEADER */}
-      <div className="sticky top-0 z-40 bg-[#0B1221]/90 backdrop-blur-md border-b border-white/5 px-4 py-4">
+      <div className="sticky top-0 z-40 bg-[#050A14]/90 backdrop-blur-md border-b border-white/5 px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-black tracking-[0.2em] uppercase text-white">Mission Control</h1>
-            {/* DATE NAVIGATOR */}
             <div className="flex items-center gap-3 mt-1">
                <button className="text-slate-600 hover:text-white p-1 rounded hover:bg-white/5"><ChevronLeft size={16}/></button>
                <p className="text-[10px] text-blue-500 font-bold tracking-widest uppercase">
@@ -77,7 +64,7 @@ export default function DashboardSingularity() {
 
       <div className="max-w-3xl mx-auto p-4 mt-4">
         {/* TABS */}
-        <div className="flex bg-[#131B2C] p-1 rounded-xl border border-white/5 mb-8 relative">
+        <div className="flex bg-[#0B1221] p-1 rounded-xl border border-white/5 mb-8 relative">
            {[
             { id: 'day', icon: LayoutGrid, label: 'DAY' },
             { id: 'week', icon: Calendar, label: 'WEEK' },
@@ -108,57 +95,59 @@ export default function DashboardSingularity() {
         {view === 'day' && (
           <div className="space-y-4 animate-in fade-in">
             {/* ABSOLUTE */}
-            {absoluteHabits.length > 0 && (
-              <div className="space-y-2">
+            <div className="space-y-3">
                 <div className="flex items-center gap-2 mb-2 pl-2">
                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Absolute Habits</span>
                 </div>
                 {absoluteHabits.map((h, i) => (
-                  <DailyHabitRow key={h.id} habit={h} index={i} isReordering={isReordering} isLocked={isLocked} onToggle={toggleHabit} onOpenInfo={() => setDrawerHabit(h)} onOpenEdit={() => setEditHabit(h)} />
+                  <DailyHabitRow
+                    key={h.id}
+                    habit={h}
+                    index={i}
+                    isReordering={isReordering} isLocked={isLocked}
+                    onToggle={toggleHabit}
+                    onOpenInfo={() => setDrawerHabit(h)}
+                    onOpenEdit={() => setEditHabit(h)}
+                  />
                 ))}
-              </div>
-            )}
+            </div>
 
-            {/* FREQUENCY (Spacing Fixed) */}
-            {frequencyHabits.length > 0 && (
-              <div className="space-y-2 pt-2">
-                 <div className="flex items-center gap-2 mb-2 pl-2 border-t border-white/5 pt-4">
+            {/* FREQUENCY */}
+            <div className="space-y-3 pt-6">
+                 <div className="flex items-center gap-2 mb-2 pl-2 border-t border-white/5 pt-6">
                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Frequency Habits</span>
                 </div>
                 {frequencyHabits.map((h, i) => (
-                  <DailyHabitRow key={h.id} habit={h} index={i} isReordering={isReordering} isLocked={isLocked} onToggle={toggleHabit} onOpenInfo={() => setDrawerHabit(h)} onOpenEdit={() => setEditHabit(h)} />
+                  <DailyHabitRow
+                    key={h.id}
+                    habit={h}
+                    index={i}
+                    isReordering={isReordering} isLocked={isLocked}
+                    onToggle={toggleHabit}
+                    onOpenInfo={() => setDrawerHabit(h)}
+                    onOpenEdit={() => setEditHabit(h)}
+                  />
                 ))}
-              </div>
-            )}
+            </div>
 
-            {/* CREATE HABIT BUTTON */}
-            <div className="pt-6">
+            {/* CREATE BTN */}
+            <div className="pt-8">
               <button
                 onClick={() => setEditHabit({ title: '', visuals: { color: 'bg-blue-500', icon: 'Zap' }, default_config: {} })}
                 className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl flex items-center justify-center gap-2 text-white font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
               >
-                <Plus size={16} /> Create New Habit
+                <Plus size={16} /> Initialize New Habit
               </button>
             </div>
 
-            {/* LIBRARY (Only on Day View) */}
-            <div className="mt-16 pt-10 border-t border-white/5">
-              <HabitLibrary />
+            {/* LIBRARY (Day Only) */}
+            <div className="mt-20 border-t border-white/5 pt-10">
+              <HabitLibrary onDeploy={(habit) => setEditHabit(habit)} />
             </div>
           </div>
         )}
 
-        {view === 'week' && (
-            <motion.div
-              key="week"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <WeeklyMatrix habits={activeHabits} isLocked={isLocked} />
-            </motion.div>
-        )}
+        {view === 'week' && <WeeklyMatrix habits={activeHabits} isLocked={isLocked} />}
 
         {/* MONTH VIEW */}
         {view === 'month' && (
@@ -178,32 +167,28 @@ export default function DashboardSingularity() {
 
       {/* OVERLAYS */}
       <AnimatePresence>
-        {drawerHabit && <HabitDetailModal habit={drawerHabit} onClose={() => setDrawerHabit(null)} onSave={() => {}} />}
+        {drawerHabit && <HabitInfoDrawer habit={drawerHabit} onClose={() => setDrawerHabit(null)} />}
         {editHabit && (
-            <EditHabitModal
-                habit={editHabit}
-                onClose={() => setEditHabit(null)}
-                onSave={(updates: any) => {
-                   if (editHabit.id) {
-                       // Update Existing
-                       updateHabitConfig(editHabit.id, {
-                           title: updates.title,
-                           description: updates.description,
-                           visuals: updates.visuals,
-                           default_config: updates.default_config,
-                           lenses: updates.lenses
-                       });
-                   } else {
-                       // Create New (Stub - in reality, we'd call a createHabit function)
-                       // Since useHabits doesn't export createHabit yet, we'll just log or could implement it.
-                       // For now, the user asked to restore the button visuals primarily.
-                       // But let's at least toggle the habit if it's from the library or something.
-                       // Actually, creating a *custom* habit from scratch isn't fully in the hook yet (toggleHabit uses library).
-                       // I'll leave as is per prompt instructions to "Restore visuals".
-                   }
-                   setEditHabit(null);
-                }}
-            />
+          <EditHabitModal
+            habit={editHabit}
+            onClose={() => setEditHabit(null)}
+            onSave={(data: any) => {
+               if (editHabit.id) {
+                   // Update existing
+                   updateHabitConfig(editHabit.id, {
+                       title: data.title,
+                       visuals: data.visuals,
+                       default_config: data.default_config,
+                       lenses: data.lenses
+                   });
+               } else {
+                   // Create/Deploy new
+                   toggleHabit(data.id || editHabit.id);
+                   // Note: Full Create not implemented in hook yet, using toggle deploy logic
+               }
+               setEditHabit(null);
+            }}
+          />
         )}
       </AnimatePresence>
     </div>
