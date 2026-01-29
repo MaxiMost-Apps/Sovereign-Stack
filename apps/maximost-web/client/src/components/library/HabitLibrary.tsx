@@ -10,7 +10,7 @@ interface HabitLibraryProps {
 
 export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
   const [activeTab, setActiveTab] = useState<'atoms' | 'stacks'>('atoms');
-  const { habits: userHabits, toggleHabit } = useHabits(); // Destructure toggleHabit
+  const { habits: userHabits, toggleHabit } = useHabits();
   const [infoHabit, setInfoHabit] = useState<any>(null);
 
   const isAdopted = (id: string) => userHabits.some(h => h.habit_id === id && h.status === 'active');
