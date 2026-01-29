@@ -15,7 +15,7 @@ import { LandingPage } from './core/pages/LandingPage';
 import ManifestoPage from './core/pages/ManifestoPage';
 import { LegalPage } from './core/pages/LegalPage';
 import VaultPage from './core/pages/VaultPage';
-import PreferencesPage from './core/pages/PreferencesPage';
+import Preferences from '@/pages/Preferences';
 import { ProtocolsPage } from './core/pages/ProtocolsPage';
 import ProgressPage from './core/pages/ProgressPage';
 import LexiconPage from './core/pages/LexiconPage';
@@ -79,7 +79,7 @@ function App() {
 
                 {/* Secondary/Utility Routes */}
                 <Route path="/vault" element={<VaultPage />} />
-                <Route path="/preferences" element={<PreferencesPage />} />
+                <Route path="/preferences" element={<Preferences />} />
                 <Route path="/stacks" element={<ProtocolsPage />} />
                 <Route path="/ledger" element={<ProgressPage />} />
                 <Route path="/body" element={<BioTelemetryPage />} /> {/* Legacy mapping */}
