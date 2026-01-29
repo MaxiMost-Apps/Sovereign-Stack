@@ -10,7 +10,7 @@ interface HabitLibraryProps {
 
 export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
   const [activeTab, setActiveTab] = useState<'atoms' | 'stacks'>('atoms');
-  const { habits: userHabits } = useHabits();
+  const { habits: userHabits, toggleHabit } = useHabits(); // Destructure toggleHabit
   const [infoHabit, setInfoHabit] = useState<any>(null);
 
   const isAdopted = (id: string) => userHabits.some(h => h.habit_id === id && h.status === 'active');
@@ -72,7 +72,10 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
                     {stack.habit_ids.slice(0, 4).map(id => <div key={id} className="w-1.5 h-1.5 rounded-full bg-slate-600" />)}
                  </div>
                </div>
-               <button className="w-full py-3 bg-blue-600/10 border border-blue-500/50 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-600 hover:text-white transition-all opacity-0 group-hover:opacity-100">
+               <button
+                 onClick={() => stack.habit_ids.forEach(id => toggleHabit(id))}
+                 className="w-full py-3 bg-blue-600/10 border border-blue-500/50 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-600 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+               >
                  Deploy Stack
                </button>
             </div>
