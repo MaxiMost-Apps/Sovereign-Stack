@@ -10,7 +10,7 @@ import {
 
 export const ICON_MAP: any = {
   Sun, ThermometerSnowflake, Activity, Flame, Moon,
-  SmartphoneOff: PhoneOff, // MAPPED HERE
+  SmartphoneOff: PhoneOff, // MAPPED TO PHONE OFF
   Glasses, Wind, BedDouble, BarChart3,
   Dumbbell, Briefcase, Orbit, ScanFace, Tent, Footprints, Zap, Brain,
   Utensils, Droplets, Ban, Fish, Apple, Clock,
@@ -22,17 +22,20 @@ export const ICON_MAP: any = {
 export const PROTOCOL_STACKS = [
   { id: 'stack_morning', title: 'Morning Protocol', description: 'Win the morning, win the day.', habit_ids: ['BIO_01', 'BIO_03', 'PHYS_09', 'STOIC_07'] },
   { id: 'stack_deep_work', title: 'Deep Work Block', description: 'High-output cognitive sprint.', habit_ids: ['COG_01', 'COG_03', 'COG_09', 'LOG_01'] },
-  { id: 'stack_evening', title: 'Power Down', description: 'System reset for recovery.', habit_ids: ['BIO_06', 'BIO_07', 'BIO_05', 'STOIC_03'] }
+  { id: 'stack_evening', title: 'Power Down', description: 'System reset for recovery.', habit_ids: ['BIO_06', 'BIO_07', 'BIO_05', 'STOIC_03'] },
+  { id: 'stack_resilience', title: 'Anti-Fragile', description: 'Stress inoculation training.', habit_ids: ['BIO_02', 'PHYS_03', 'STOIC_10', 'PHYS_02'] },
+  { id: 'stack_metabolic', title: 'Metabolic Fire', description: 'Optimization of fuel systems.', habit_ids: ['FUEL_01', 'FUEL_03', 'FUEL_09', 'PHYS_10'] },
+  { id: 'stack_clarity', title: 'Mental Clarity', description: 'Fog removal and focus.', habit_ids: ['BIO_01', 'COG_02', 'STOIC_03', 'LOG_07'] }
 ];
 
-export const MASTER_LIBRARY = [
+export const SOVEREIGN_LIBRARY = [
   // BIO (Biometric)
   { id: 'BIO_01', title: 'Morning Sunlight', description: '15m outdoor light < 1hr of wake.', category: 'BIO', visuals: { icon: 'Sun', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7, target_value: 15, unit: 'min' } },
   { id: 'BIO_02', title: 'Cold Exposure', description: '2m Cold Shower / Plunge < 60°F.', category: 'BIO', visuals: { icon: 'ThermometerSnowflake', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7, target_value: 2, unit: 'min' } },
   { id: 'BIO_03', title: 'Grounding', description: '10m bare skin on earth.', category: 'BIO', visuals: { icon: 'Activity', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
   { id: 'BIO_04', title: 'Red Light', description: '10m Near-Infrared / Sunset exposure.', category: 'BIO', visuals: { icon: 'Flame', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
   { id: 'BIO_05', title: 'Magnesium', description: '400mg Glycinate/Threonate pre-bed.', category: 'BIO', visuals: { icon: 'Moon', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
-  { id: 'BIO_06', title: 'Digital Dark', description: 'No screens 60m pre-bed.', category: 'BIO', visuals: { icon: 'SmartphoneOff', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'BIO_06', title: 'Digital Dark', description: 'No screens 60m pre-bed.', category: 'BIO', visuals: { icon: 'SmartphoneOff', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7, target_value: 60, unit: 'min' }, lenses: { FORTITUDE: { how: 'Cut the signal.', why: 'Protect mind from interference.' } } },
   { id: 'BIO_07', title: 'Blue Blockers', description: 'Wear glasses post-sunset.', category: 'BIO', visuals: { icon: 'Glasses', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
   { id: 'BIO_08', title: 'Temp Drop', description: 'Room temp < 68°F (20°C).', category: 'BIO', visuals: { icon: 'Wind', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
   { id: 'BIO_09', title: 'Mouth Tape', description: 'Tape on during sleep.', category: 'BIO', visuals: { icon: 'BedDouble', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
@@ -98,5 +101,3 @@ export const MASTER_LIBRARY = [
   { id: 'LOG_09', title: 'Task Batching', description: 'Group similar small tasks.', category: 'LOG', visuals: { icon: 'ListChecks', color: 'bg-slate-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
   { id: 'LOG_10', title: 'Weekly Review', description: 'Plan the week ahead (Sun).', category: 'LOG', visuals: { icon: 'CalendarRange', color: 'bg-slate-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 1 } }
 ];
-
-export const SOVEREIGN_LIBRARY = MASTER_LIBRARY;

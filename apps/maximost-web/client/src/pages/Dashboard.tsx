@@ -19,16 +19,12 @@ export default function Dashboard() {
   const { library } = useLibrary();
   const { habits: userHabits, toggleHabit, updateHabitConfig } = useHabits();
 
-  // MERGE LOGIC: Combines the Static Library with User Database Data
+  // MERGE LOGIC: Combine Library with User Data
   const activeHabits = library.map(master => {
     const userState = userHabits.find(h => h.habit_id === master.id);
-    // If not active in DB, skip it (unless we want to show everything)
     if (!userState || userState.status === 'archived') return null;
-
     return {
-      ...master,
-      ...userState,
-      // Merge configs: User config overrides Default config
+      ...master, ...userState,
       default_config: { ...master.default_config, ...userState.metadata?.config },
       visuals: { ...master.visuals, ...userState.metadata?.visuals },
       status: userState.status || 'active',
@@ -40,8 +36,7 @@ export default function Dashboard() {
   const frequencyHabits = activeHabits.filter(h => h.default_config.frequency_type === 'FREQUENCY');
 
   return (
-    <div className="min-h-screen bg-[#020408] pb-32"> {/* VOID BLACK BACKGROUND */}
-
+    <div className="min-h-screen bg-[#020408] pb-32">
       {/* HEADER */}
       <div className="sticky top-0 z-40 bg-[#020408]/90 backdrop-blur-md border-b border-white/5 px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
@@ -49,9 +44,7 @@ export default function Dashboard() {
             <h1 className="text-xl font-black tracking-[0.2em] uppercase text-white">Mission Control</h1>
             <div className="flex items-center gap-3 mt-1">
                <button className="text-slate-600 hover:text-white"><ChevronLeft size={16}/></button>
-               <p className="text-[10px] text-blue-500 font-bold tracking-widest uppercase">
-                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-               </p>
+               <p className="text-[10px] text-blue-500 font-bold tracking-widest uppercase">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
                <button className="text-slate-600 hover:text-white"><ChevronRight size={16}/></button>
             </div>
           </div>
@@ -101,9 +94,9 @@ export default function Dashboard() {
       {/* OVERLAYS */}
       <AnimatePresence>
         {drawerHabit && <HabitInfoDrawer habit={drawerHabit} onClose={() => setDrawerHabit(null)} />}
-        {editHabit && <EditHabitModal habit={editHabit} onClose={() => setEditHabit(null)} onSave={(updates: any) => {
+        {editHabit && <EditHabitModal habit={editHabit} onClose={() => setEditHabit(null)} onSave={(updates) => {
             if (editHabit.id) updateHabitConfig(editHabit.id, updates);
-            else toggleHabit(updates.habit_id || updates.id); // Creation
+            else toggleHabit(updates.habit_id || updates.id);
             setEditHabit(null);
         }} />}
       </AnimatePresence>
