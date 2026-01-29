@@ -6,7 +6,7 @@ import { ICON_MAP } from '@/data/sovereign_library';
 interface DailyHabitRowProps {
   habit: any;
   index: number;
-  isReordering: boolean;
+  isReordering: boolean; // Toggled by Up/Down arrows
   isLocked: boolean;
   onToggle: (id: string, val?: number) => void;
   onOpenInfo: (habit: any) => void;
@@ -18,10 +18,15 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
   const isCompleted = habit.status === 'completed';
 
   // Logic for measurable habits (e.g. Water 0/3)
-  // Check metadata config or root props (since we might sync it differently)
-  const targetVal = habit.metadata?.config?.target_value || habit.target_value || 1;
+  // We check 'metadata.config' first (user saved settings), then default_config
+  const config = habit.metadata?.config || habit.default_config || {};
+  const targetVal = config.target_value || 1;
   const isMeasurable = targetVal > 1;
   const currentVal = habit.current_value || 0;
+
+  // Dynamic Shadow Color based on Habit Color (e.g. bg-blue-500 -> shadow-blue-500/50)
+  // Simplified for V1: Use current color class string to infer style
+  const pulseClass = isCompleted ? `animate-pulse shadow-[0_0_15px_currentColor]` : '';
 
   return (
     <motion.div
@@ -66,9 +71,9 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
         {isMeasurable ? (
            <div className="flex items-center gap-2 mt-1">
              <div className="h-1 w-24 bg-slate-800 rounded-full overflow-hidden">
-               <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${(currentVal/targetVal)*100}%` }} />
+               <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${Math.min((currentVal/targetVal)*100, 100)}%` }} />
              </div>
-             <span className="text-[9px] font-mono text-slate-400">{currentVal}/{targetVal} {habit.default_config?.unit || habit.metadata?.config?.unit || 'reps'}</span>
+             <span className="text-[9px] font-mono text-slate-400">{currentVal}/{targetVal} {config.unit || 'reps'}</span>
            </div>
         ) : (
            <p className="text-[10px] text-slate-500 truncate mt-0.5 font-medium">{habit.description}</p>
@@ -78,7 +83,7 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
       {/* 4. COMPLETION ACTION (Pulsing Circle or Plus) */}
       {isMeasurable && !isCompleted ? (
         <button
-          onClick={() => onToggle(habit.habit_id, 1)}
+          onClick={() => onToggle(habit.habit_id, 1)} // Increment by 1
           className="shrink-0 w-10 h-10 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all active:scale-95"
         >
           <Plus size={18} />
@@ -86,13 +91,20 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
       ) : (
         <button
           onClick={() => onToggle(habit.habit_id)}
-          className={`shrink-0 w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
+          className={`shrink-0 w-6 h-6 rounded-full border flex items-center justify-center transition-all relative ${
             isCompleted
-              ? 'bg-green-500 border-green-500 shadow-[0_0_10px_#22c55e] animate-pulse' // PULSING CIRCLE
+              ? `${habit.visuals.color.replace('bg-', 'border-').replace('500', '400')} ${habit.visuals.color}` // Dynamic Border/Fill
               : 'border-slate-700 bg-transparent hover:border-slate-500'
           }`}
         >
-          {isCompleted && <div className="w-full h-full rounded-full bg-green-500" />}
+          {isCompleted && (
+             <>
+               {/* Pulsing Ring */}
+               <div className={`absolute inset-0 rounded-full ${habit.visuals.color} animate-ping opacity-75`} />
+               {/* Solid Fill */}
+               <div className={`w-full h-full rounded-full ${habit.visuals.color}`} />
+             </>
+          )}
         </button>
       )}
 

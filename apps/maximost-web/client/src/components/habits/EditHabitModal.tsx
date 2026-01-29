@@ -5,10 +5,17 @@ import { ICON_MAP } from '@/data/sovereign_library';
 export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
   const [title, setTitle] = useState(habit.title);
   const [mode, setMode] = useState<'ABSOLUTE' | 'FREQUENCY'>(habit.default_config?.frequency_type || 'ABSOLUTE');
-  const [goal, setGoal] = useState(habit.default_config?.target_value || 1);
-  const [unit, setUnit] = useState(habit.default_config?.unit || 'reps');
+
+  // METRICS
+  const [goal, setGoal] = useState(habit.metadata?.config?.target_value || 1);
+  const [unit, setUnit] = useState(habit.metadata?.config?.unit || 'reps');
+  const [freqDays, setFreqDays] = useState(habit.metadata?.config?.target_days || 7);
+
+  // VISUALS
   const [color, setColor] = useState(habit.visuals?.color || 'bg-blue-500');
   const [iconKey, setIconKey] = useState(habit.visuals?.icon || 'Zap');
+
+  // LENS
   const [how, setHow] = useState(habit.lenses?.FORTITUDE?.how || '');
   const [why, setWhy] = useState(habit.lenses?.FORTITUDE?.why || '');
 
@@ -33,16 +40,27 @@ export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
             <input value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-slate-900/50 p-4 rounded-lg border border-white/5 text-white font-bold focus:border-blue-500 outline-none" />
           </div>
 
-          {/* TOGGLE */}
+          {/* MODE TOGGLE */}
           <div className="bg-black/40 p-1 rounded-lg flex border border-white/5">
              <button onClick={() => setMode('ABSOLUTE')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded transition-all ${mode === 'ABSOLUTE' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-600'}`}>Absolute</button>
              <button onClick={() => setMode('FREQUENCY')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded transition-all ${mode === 'FREQUENCY' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-600'}`}>Frequency</button>
           </div>
 
+          {/* FREQUENCY SLIDER (Only show if Frequency Mode) */}
+          {mode === 'FREQUENCY' && (
+            <div className="bg-slate-900/30 p-4 rounded-lg border border-white/5">
+               <div className="flex justify-between mb-2">
+                 <span className="text-[10px] font-bold text-slate-500 uppercase">Weekly Target</span>
+                 <span className="text-xs font-bold text-white">{freqDays} Days / Week</span>
+               </div>
+               <input type="range" min="1" max="7" value={freqDays} onChange={e => setFreqDays(parseInt(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+            </div>
+          )}
+
           {/* GOAL / UNIT */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Goal</label>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Goal (Daily)</label>
               <input type="number" value={goal} onChange={e => setGoal(parseInt(e.target.value))} className="w-full bg-slate-900/50 p-4 rounded-lg border border-white/5 text-white font-mono focus:border-blue-500 outline-none" />
             </div>
             <div>
@@ -55,7 +73,7 @@ export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
           <div>
             <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Visuals</label>
             <div className="grid grid-cols-2 gap-6">
-              {/* COLORS */}
+              {/* COLORS (Left) */}
               <div className="grid grid-cols-5 gap-2 content-start">
                 {colors.map(c => (
                   <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full ${c} flex items-center justify-center transition-transform hover:scale-110 ${color === c ? 'ring-2 ring-white scale-110' : 'opacity-70'}`}>
@@ -63,7 +81,7 @@ export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
                   </button>
                 ))}
               </div>
-              {/* ICONS */}
+              {/* ICONS (Right) */}
               <div className="grid grid-cols-5 gap-2 h-32 overflow-y-auto pr-2 custom-scrollbar">
                 {icons.map(k => {
                   const Icon = ICON_MAP[k];
@@ -92,7 +110,7 @@ export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
         {/* FOOTER */}
         <div className="p-5 border-t border-white/5 bg-slate-950/50 flex justify-end gap-3 rounded-b-xl">
           <button onClick={onClose} className="px-6 py-3 text-xs font-bold text-slate-500 hover:text-white uppercase tracking-widest">Cancel</button>
-          <button onClick={() => onSave({ ...habit, title, visuals: { color, icon: iconKey }, default_config: { frequency_type: mode, target_value: goal, unit }, lenses: { FORTITUDE: { how, why } } })} className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-widest shadow-lg uppercase">
+          <button onClick={() => onSave({ ...habit, title, visuals: { color, icon: iconKey }, default_config: { frequency_type: mode, target_value: goal, unit, target_days: freqDays }, lenses: { FORTITUDE: { how, why } } })} className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-widest shadow-lg uppercase">
             Save Habit
           </button>
         </div>
