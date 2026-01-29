@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyMatrix } from '@/components/dashboard/WeeklyMatrix';
 import { HabitLibrary } from '@/components/library/HabitLibrary';
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const { library } = useLibrary();
   const { habits: userHabits, toggleHabit, updateHabitConfig } = useHabits();
 
+  // MERGE LOGIC
   const activeHabits = library.map(master => {
     const userState = userHabits.find(h => h.habit_id === master.id);
     if (!userState || userState.status === 'archived') return null;
@@ -65,18 +66,24 @@ export default function Dashboard() {
         {/* DAY VIEW */}
         {view === 'day' && (
           <div className="space-y-4 animate-in fade-in">
+            {/* ABSOLUTE */}
             <div className="space-y-3">
                 <div className="flex items-center gap-2 pl-2"><span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Absolute Habits</span></div>
                 {absoluteHabits.map((h, i) => <DailyHabitRow key={h.id} habit={h} index={i} isReordering={isReordering} isLocked={isLocked} onToggle={toggleHabit} onOpenInfo={() => setDrawerHabit(h)} onOpenEdit={() => setEditHabit(h)} />)}
             </div>
+            {/* FREQUENCY */}
             <div className="space-y-3 pt-8">
-                 <div className="flex items-center gap-2 pl-2"><span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Frequency Habits</span></div>
+                 <div className="flex items-center gap-2 pl-2 border-t border-white/5 pt-6"><span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Frequency Habits</span></div>
                 {frequencyHabits.map((h, i) => <DailyHabitRow key={h.id} habit={h} index={i} isReordering={isReordering} isLocked={isLocked} onToggle={toggleHabit} onOpenInfo={() => setDrawerHabit(h)} onOpenEdit={() => setEditHabit(h)} />)}
             </div>
+            {/* CREATE BTN */}
             <div className="pt-8">
               <button onClick={() => setEditHabit({ title: '', visuals: { color: 'bg-blue-500', icon: 'Zap' }, default_config: {} })} className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl flex items-center justify-center gap-2 text-white font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"><Plus size={16} /> Initialize New Habit</button>
             </div>
-            <div className="mt-20 border-t border-white/5 pt-10"><HabitLibrary onDeploy={(h) => setEditHabit(h)} /></div>
+            <div className="mt-20 border-t border-white/5 pt-10"><HabitLibrary onDeploy={(h) => {
+               // When deploying from library, open edit modal to confirm settings
+               setEditHabit({ ...h, habit_id: h.id });
+            }} /></div>
           </div>
         )}
         {view === 'week' && <WeeklyMatrix habits={activeHabits} isLocked={isLocked} />}
@@ -85,8 +92,8 @@ export default function Dashboard() {
       <AnimatePresence>
         {drawerHabit && <HabitInfoDrawer habit={drawerHabit} onClose={() => setDrawerHabit(null)} />}
         {editHabit && <EditHabitModal habit={editHabit} onClose={() => setEditHabit(null)} onSave={(updates: any) => {
-            if (editHabit.id) updateHabitConfig(editHabit.id, updates);
-            else toggleHabit(updates.habit_id || updates.id);
+            if (updates.habit_id && !updates.id) toggleHabit(updates.habit_id); // New
+            else if (updates.id) updateHabitConfig(updates.id, updates); // Edit
             setEditHabit(null);
         }} />}
       </AnimatePresence>
