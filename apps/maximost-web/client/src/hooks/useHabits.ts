@@ -15,7 +15,7 @@ export const useHabits = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from('habits').select('*').eq('user_id', user.id).eq('status', 'active');
+      const { data } = await supabase.from('habits').select('*').eq('user_id', user.id).eq('status', 'active').order('created_at');
       setHabits(data || []);
     } catch (error) {
       console.error('Fetch error:', error);
@@ -40,7 +40,7 @@ export const useHabits = () => {
           if (typeof value === 'number') {
              const currentVal = h.current_value || 0;
              // Use metadata config if available, otherwise default
-             const target = h.metadata?.config?.target_value || h.target_value || 1;
+             const target = h.metadata?.config?.target_value || h.default_config?.target_value || 1;
              const newVal = currentVal + value;
              // Complete if target reached
              const isComplete = newVal >= target;
@@ -83,7 +83,7 @@ export const useHabits = () => {
            const newStatus = existing.status === 'completed' ? 'active' : 'completed';
            await supabase.from('habits').update({
              status: newStatus,
-             last_completed: newStatus === 'completed' ? new Date().toISOString() : null,
+             // last_completed logic could be refined but this is V1
              streak: newStatus === 'completed' ? existing.streak + 1 : Math.max(0, existing.streak - 1)
            }).eq('id', existing.id);
         }
@@ -104,7 +104,7 @@ export const useHabits = () => {
     }
   };
 
-  // Keep updateHabitConfig for compatibility
+  // Add updateHabitConfig to support the Dashboard editing
   const updateHabitConfig = async (habitId: string, updates: any) => {
       try {
         setHabits(prev => prev.map(h => h.habit_id === habitId ? { ...h, ...updates } : h));

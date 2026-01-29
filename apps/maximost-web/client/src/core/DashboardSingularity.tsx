@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyMatrix } from '@/components/dashboard/WeeklyMatrix';
 import { HabitLibrary } from '@/components/library/HabitLibrary';
-import { HabitDetailModal } from '@/components/habits/HabitDetailModal'; // Alias for HabitInfoDrawer
+import { HabitDetailModal } from '@/components/habits/HabitDetailModal'; // Use Read-Only modal for Info
 import { EditHabitModal } from '@/components/habits/EditHabitModal';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useHabits } from '@/hooks/useHabits';
@@ -14,8 +14,8 @@ export default function DashboardSingularity() {
   const [view, setView] = useState<'day' | 'week' | 'month'>('day');
   const [isLocked, setIsLocked] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
-  const [drawerHabit, setDrawerHabit] = useState<any>(null);
-  const [editHabit, setEditHabit] = useState<any>(null);
+  const [drawerHabit, setDrawerHabit] = useState<any>(null); // Read Only
+  const [editHabit, setEditHabit] = useState<any>(null); // Edit
 
   const { library } = useLibrary();
   const { habits: userHabits, toggleHabit, updateHabitConfig } = useHabits();
@@ -23,7 +23,19 @@ export default function DashboardSingularity() {
   const activeHabits = library.map(master => {
     const userState = userHabits.find(h => h.habit_id === master.id);
     if (!userState || userState.status === 'archived') return null;
-    return { ...master, ...userState, status: userState.status || 'active', is_completed: userState.status === 'completed' };
+
+    // Merge Saved Config with Default Config
+    const mergedConfig = { ...master.default_config, ...userState.metadata?.config };
+    const mergedVisuals = { ...master.visuals, ...userState.metadata?.visuals };
+
+    return {
+      ...master,
+      ...userState,
+      default_config: mergedConfig,
+      visuals: mergedVisuals,
+      status: userState.status || 'active',
+      is_completed: userState.status === 'completed'
+    };
   }).filter(Boolean);
 
   const absoluteHabits = activeHabits.filter(h => h.default_config.frequency_type === 'ABSOLUTE');
@@ -55,6 +67,7 @@ export default function DashboardSingularity() {
              <button onClick={() => setIsLocked(!isLocked)} className={`p-2 rounded-lg transition-colors ${isLocked ? 'text-red-500 bg-red-500/10' : 'text-slate-600 hover:text-white'}`}>
                {isLocked ? <Lock size={20} /> : <Unlock size={20} />}
              </button>
+             {/* MENU */}
              <Link to="/preferences" className="p-2 text-slate-500 hover:text-white transition-colors">
                 <Menu size={24} />
              </Link>
@@ -106,7 +119,7 @@ export default function DashboardSingularity() {
               </div>
             )}
 
-            {/* FREQUENCY */}
+            {/* FREQUENCY (Spacing Fixed) */}
             {frequencyHabits.length > 0 && (
               <div className="space-y-2 pt-2">
                  <div className="flex items-center gap-2 mb-2 pl-2 border-t border-white/5 pt-4">
@@ -124,7 +137,7 @@ export default function DashboardSingularity() {
                 onClick={() => setEditHabit({ title: '', visuals: { color: 'bg-blue-500', icon: 'Zap' }, default_config: {} })}
                 className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-2xl flex items-center justify-center gap-2 text-white font-bold uppercase tracking-widest transition-all shadow-lg shadow-blue-900/20"
               >
-                <Plus size={16} /> Initialize New Habit
+                <Plus size={16} /> Create New Habit
               </button>
             </div>
 
@@ -177,7 +190,8 @@ export default function DashboardSingularity() {
                            title: updates.title,
                            description: updates.description,
                            visuals: updates.visuals,
-                           default_config: updates.default_config
+                           default_config: updates.default_config,
+                           lenses: updates.lenses
                        });
                    } else {
                        // Create New (Stub - in reality, we'd call a createHabit function)
