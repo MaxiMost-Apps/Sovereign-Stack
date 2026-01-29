@@ -3,15 +3,14 @@ import { X, Check, Trash2, Calendar, FileText } from 'lucide-react';
 import { ICON_MAP } from '@/data/sovereign_library';
 
 interface HabitSlideOverProps {
-  habit: any; // The habit data (either from Library or Active)
-  mode: 'EDIT' | 'CREATE'; // Are we editing active or deploying new?
+  habit: any;
+  mode: 'EDIT' | 'CREATE';
   onClose: () => void;
   onConfirm: (data: any) => void;
   onDelete?: () => void;
 }
 
 export const HabitSlideOver: React.FC<HabitSlideOverProps> = ({ habit, mode, onClose, onConfirm, onDelete }) => {
-  // Initialize state with habit data
   const [title, setTitle] = useState(habit.title);
   const [freqType, setFreqType] = useState<'ABSOLUTE' | 'FREQUENCY'>(habit.default_config?.frequency_type || 'ABSOLUTE');
   const [targetDays, setTargetDays] = useState(habit.default_config?.target_days || 7);
@@ -28,10 +27,7 @@ export const HabitSlideOver: React.FC<HabitSlideOverProps> = ({ habit, mode, onC
   return (
     <div className="fixed inset-0 z-[70] flex justify-end">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-
       <div className="relative w-full max-w-md h-full bg-[#050A14] border-l border-white/10 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
-
-        {/* HEADER */}
         <div className="p-6 border-b border-white/5 flex items-center justify-between bg-[#0B1221]">
            <div>
              <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1 block">
@@ -41,19 +37,13 @@ export const HabitSlideOver: React.FC<HabitSlideOverProps> = ({ habit, mode, onC
            </div>
            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-slate-400 hover:text-white"><X size={20}/></button>
         </div>
-
-        {/* SCROLLABLE BODY */}
         <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-
-           {/* 1. FREQUENCY MATRIX */}
            <div className="space-y-4">
              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cadence</label>
              <div className="bg-white/5 p-1 rounded-lg flex">
                 <button onClick={() => setFreqType('ABSOLUTE')} className={`flex-1 py-3 text-[10px] font-black uppercase rounded transition-all ${freqType === 'ABSOLUTE' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Absolute</button>
                 <button onClick={() => setFreqType('FREQUENCY')} className={`flex-1 py-3 text-[10px] font-black uppercase rounded transition-all ${freqType === 'FREQUENCY' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}>Frequency</button>
              </div>
-
-             {/* Slider for Frequency */}
              {freqType === 'FREQUENCY' && (
                <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                  <div className="flex justify-between mb-2">
@@ -64,8 +54,6 @@ export const HabitSlideOver: React.FC<HabitSlideOverProps> = ({ habit, mode, onC
                </div>
              )}
            </div>
-
-           {/* 2. OUTPUT METRICS */}
            <div className="grid grid-cols-2 gap-4">
              <div>
                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Daily Goal</label>
@@ -76,8 +64,6 @@ export const HabitSlideOver: React.FC<HabitSlideOverProps> = ({ habit, mode, onC
                <input value={unit} onChange={e => setUnit(e.target.value)} className="w-full bg-white/5 p-3 rounded-xl border border-white/5 text-white font-mono text-center focus:border-blue-500 outline-none" />
              </div>
            </div>
-
-           {/* 3. VISUAL IDENTIFIER */}
            <div>
              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Signal Config</label>
              <div className="grid grid-cols-2 gap-4">
@@ -100,8 +86,6 @@ export const HabitSlideOver: React.FC<HabitSlideOverProps> = ({ habit, mode, onC
                 </div>
              </div>
            </div>
-
-           {/* 4. TACTICAL BRIEF */}
            <div className="space-y-4">
              <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tactical (How)</label>
@@ -112,10 +96,7 @@ export const HabitSlideOver: React.FC<HabitSlideOverProps> = ({ habit, mode, onC
                 <textarea value={why} onChange={e => setWhy(e.target.value)} className="w-full h-20 bg-white/5 p-3 rounded-xl border border-white/5 text-slate-300 text-xs focus:border-blue-500 outline-none resize-none" />
              </div>
            </div>
-
         </div>
-
-        {/* FOOTER */}
         <div className="p-6 border-t border-white/5 bg-[#0B1221] flex justify-between items-center gap-4">
            {mode === 'EDIT' && onDelete && (
              <button onClick={onDelete} className="p-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-colors">
@@ -129,7 +110,6 @@ export const HabitSlideOver: React.FC<HabitSlideOverProps> = ({ habit, mode, onC
              {mode === 'CREATE' ? 'Confirm Deployment' : 'Save Updates'}
            </button>
         </div>
-
       </div>
     </div>
   );
