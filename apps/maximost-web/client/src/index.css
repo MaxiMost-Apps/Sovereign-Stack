@@ -126,6 +126,9 @@ body, .bg-slate-950 {
   .bg-void {
     @apply bg-[#020408];
   }
+  .bg-card-dark {
+    @apply bg-[#0A0F1C] border border-white/5;
+  }
   .glass-card {
     @apply bg-[#0B1221]/80 backdrop-blur-md border border-white/5 shadow-xl;
   }

@@ -9,7 +9,8 @@ import {
   Signal, Battery, Leaf, Fish, Milk, Egg,
   Gamepad2, XCircle, Ban, Hourglass, Scale,
   Glasses, Mic, RefreshCw, Box, Layers, Speaker,
-  Clipboard, CalendarCheck, Home, ShoppingCart, User
+  Clipboard, CalendarCheck, Home, ShoppingCart, User,
+  ThermometerSnowflake, SmartphoneOff, Orbit, Timer, Mail, Ghost, UserCheck, FileText, HeartHandshake, Trash2, Tent, ListChecks, CalendarRange, Apple
 } from 'lucide-react';
 
 export const ICON_MAP: Record<string, any> = {
@@ -23,661 +24,80 @@ export const ICON_MAP: Record<string, any> = {
   Signal, Battery, Leaf, Fish, Milk, Egg,
   Gamepad2, XCircle, Ban, Hourglass, Scale,
   Glasses, Mic, RefreshCw, Box, Layers, Speaker,
-  Clipboard, CalendarCheck, Home, ShoppingCart, User
+  Clipboard, CalendarCheck, Home, ShoppingCart, User,
+  ThermometerSnowflake, SmartphoneOff, Orbit, Timer, Mail, Ghost, UserCheck, FileText, HeartHandshake, Trash2, Tent, ListChecks, CalendarRange, Apple
 };
 
-// --- 2. TYPES ---
-export interface LensData {
-  why: string;
-  how: string;
-}
+export const SOVEREIGN_LIBRARY = [
+  // BIO (Biometric)
+  { id: 'BIO_01', title: 'Morning Sunlight', description: '15m outdoor light < 1hr of wake.', category: 'BIO', visuals: { icon: 'Sun', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7, target_value: 15, unit: 'min' } },
+  { id: 'BIO_02', title: 'Cold Exposure', description: '2m Cold Shower / Plunge < 60°F.', category: 'BIO', visuals: { icon: 'ThermometerSnowflake', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7, target_value: 2, unit: 'min' } },
+  { id: 'BIO_03', title: 'Grounding', description: '10m bare skin on earth.', category: 'BIO', visuals: { icon: 'Activity', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'BIO_04', title: 'Red Light', description: '10m Near-Infrared / Sunset exposure.', category: 'BIO', visuals: { icon: 'Flame', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'BIO_05', title: 'Magnesium', description: '400mg Glycinate/Threonate pre-bed.', category: 'BIO', visuals: { icon: 'Moon', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'BIO_06', title: 'Digital Dark', description: 'No screens 60m pre-bed.', category: 'BIO', visuals: { icon: 'SmartphoneOff', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'BIO_07', title: 'Blue Blockers', description: 'Wear glasses post-sunset.', category: 'BIO', visuals: { icon: 'Glasses', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'BIO_08', title: 'Temp Drop', description: 'Room temp < 68°F (20°C).', category: 'BIO', visuals: { icon: 'Wind', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'BIO_09', title: 'Mouth Tape', description: 'Tape on during sleep.', category: 'BIO', visuals: { icon: 'BedDouble', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'BIO_10', title: 'Sleep Tracking', description: 'Review Oura/Whoop/Sleep data.', category: 'BIO', visuals: { icon: 'BarChart3', color: 'bg-amber-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
 
-export interface HabitDefinition {
-  id: string;
-  title: string;
-  description: string;
-  category: 'mind' | 'body' | 'spirit' | 'business' | 'asset';
-  system_tags: string[];
-  default_config: {
-    frequency_type: 'ABSOLUTE' | 'FREQUENCY';
-    target_days: number;
-    time_of_day: 'morning' | 'afternoon' | 'evening' | 'any';
-  };
-  visuals: {
-    icon: string;
-    color: string;
-  };
-  lenses: {
-    FORTITUDE: LensData;
-    REASON: LensData;
-  };
-}
+  // PHYS (Kinetic)
+  { id: 'PHYS_01', title: 'Strength Session', description: '45m Lifting / Resistance.', category: 'PHYS', visuals: { icon: 'Dumbbell', color: 'bg-red-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 4, target_value: 45, unit: 'min' } },
+  { id: 'PHYS_02', title: 'Ruck / Carry', description: '30m Load Bearing.', category: 'PHYS', visuals: { icon: 'Briefcase', color: 'bg-red-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 2 } },
+  { id: 'PHYS_03', title: 'Sauna / Heat', description: '20m @ >170°F.', category: 'PHYS', visuals: { icon: 'Flame', color: 'bg-red-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 4 } },
+  { id: 'PHYS_04', title: 'Mobility / Stretch', description: '10m Flow / Yoga.', category: 'PHYS', visuals: { icon: 'Orbit', color: 'bg-red-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'PHYS_05', title: 'Sport / Play', description: '30m Competitive or Skill.', category: 'PHYS', visuals: { icon: 'Activity', color: 'bg-red-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 2 } },
+  { id: 'PHYS_06', title: 'Walk / Jog', description: '30m steady state.', category: 'PHYS', visuals: { icon: 'Footprints', color: 'bg-red-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'PHYS_07', title: 'HIIT', description: '15m Max Effort Intervals.', category: 'PHYS', visuals: { icon: 'Zap', color: 'bg-red-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 2 } },
+  { id: 'PHYS_08', title: 'Yoga', description: '20m Structured Flow.', category: 'PHYS', visuals: { icon: 'Orbit', color: 'bg-red-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 2 } },
+  { id: 'PHYS_09', title: 'Cold Plunge (Active)', description: 'Recovery/Training specific.', category: 'PHYS', visuals: { icon: 'ThermometerSnowflake', color: 'bg-red-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 3 } },
+  { id: 'PHYS_10', title: 'Zone 2 Cardio', description: '45m @ 60-70% Max HR.', category: 'PHYS', visuals: { icon: 'Activity', color: 'bg-red-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 3 } },
 
-// --- 3. THE ATOM LEDGER (60 ITEMS) ---
-export const SOVEREIGN_LIBRARY: HabitDefinition[] = [
+  // FUEL (Nutrition)
+  { id: 'FUEL_01', title: 'The Fast', description: '16hr Fasting Window.', category: 'FUEL', visuals: { icon: 'Ban', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7, target_value: 16, unit: 'hrs' } },
+  { id: 'FUEL_02', title: 'Protein Target', description: '1g Protein / lb bodyweight.', category: 'FUEL', visuals: { icon: 'Utensils', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'FUEL_03', title: 'Zero Sugar', description: 'No added sugar.', category: 'FUEL', visuals: { icon: 'Ban', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'FUEL_04', title: 'Creatine', description: '5g Monohydrate.', category: 'FUEL', visuals: { icon: 'Zap', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'FUEL_05', title: 'Electrolytes', description: 'Sodium/Potassium/Magnesium.', category: 'FUEL', visuals: { icon: 'Droplets', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'FUEL_06', title: 'Fermented Food', description: 'Kimchi / Sauerkraut / Kefir.', category: 'FUEL', visuals: { icon: 'Apple', color: 'bg-orange-500' }, default_config: { frequency_type: 'FREQUENCY', target_days: 4 } },
+  { id: 'FUEL_07', title: 'Omega-3', description: '2g EPA/DHA.', category: 'FUEL', visuals: { icon: 'Fish', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'FUEL_08', title: 'Raw Veggies', description: '1 cup Greens/Cruciferous.', category: 'FUEL', visuals: { icon: 'Apple', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'FUEL_09', title: 'No Alcohol', description: '0 drinks.', category: 'FUEL', visuals: { icon: 'Ban', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'FUEL_10', title: 'Last Meal 3hr Pre-Bed', description: 'Finish eating by 7-8pm.', category: 'FUEL', visuals: { icon: 'Clock', color: 'bg-orange-500' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
 
-  // === MORNING & BIOLOGY (1-10) ===
-  {
-    id: 'h_wake_0430',
-    title: '04:30 Wake Up',
-    description: 'Beat the enemy to the battlefield.',
-    category: 'body',
-    system_tags: ['discipline', 'jocko'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Clock', color: 'bg-slate-600' },
-    lenses: { FORTITUDE: { why: "The enemy sleeps.", how: "No snooze." }, REASON: { why: "Focus hours.", how: "Go to bed early." } }
-  },
-  {
-    id: 'h_morning_sun',
-    title: 'Morning Sunlight',
-    description: 'Anchor circadian clock.',
-    category: 'body',
-    system_tags: ['circadian', 'huberman'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Sun', color: 'bg-amber-500' },
-    lenses: { FORTITUDE: { why: "Discipline.", how: "Outside immediately." }, REASON: { why: "Cortisol peak.", how: "10-20 mins." } }
-  },
-  {
-    id: 'h_salt_water',
-    title: 'Morning Salt',
-    description: '30oz Water + Electrolytes.',
-    category: 'body',
-    system_tags: ['hydration'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Droplets', color: 'bg-blue-400' },
-    lenses: { FORTITUDE: { why: "Prime machine.", how: "Drink first." }, REASON: { why: "Rehydration.", how: "LMNT/Salt." } }
-  },
-  {
-    id: 'h_cold_plunge',
-    title: 'Cold Plunge',
-    description: 'Systemic inflammation reduction.',
-    category: 'body',
-    system_tags: ['recovery'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Thermometer', color: 'bg-cyan-500' },
-    lenses: { FORTITUDE: { why: "Kill comfort.", how: "Submerge." }, REASON: { why: "Dopamine.", how: "3 mins @ 50F." } }
-  },
-  {
-    id: 'h_delay_caffeine',
-    title: 'Delay Caffeine',
-    description: 'Wait 90 mins before coffee.',
-    category: 'body',
-    system_tags: ['adenosine'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Coffee', color: 'bg-amber-700' },
-    lenses: { FORTITUDE: { why: "No crutches.", how: "Hydrate first." }, REASON: { why: "Adenosine clearance.", how: "Wait 90m." } }
-  },
-  {
-    id: 'h_make_bed',
-    title: 'Make The Bed',
-    description: 'First task completed.',
-    category: 'mind',
-    system_tags: ['order'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'CheckCircle', color: 'bg-emerald-600' },
-    lenses: { FORTITUDE: { why: "Order.", how: "Military corners." }, REASON: { why: "Momentum.", how: "60 seconds." } }
-  },
-  {
-    id: 'h_meditation',
-    title: 'Meditation',
-    description: 'Mindfulness practice.',
-    category: 'spirit',
-    system_tags: ['mindfulness'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Wind', color: 'bg-sky-400' },
-    lenses: { FORTITUDE: { why: "Control mind.", how: "Silence." }, REASON: { why: "Grey matter.", how: "10 mins." } }
-  },
-  {
-    id: 'h_breathwork',
-    title: 'Wim Hof Breath',
-    description: 'Hypoxic training.',
-    category: 'body',
-    system_tags: ['breath'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 3, time_of_day: 'morning' },
-    visuals: { icon: 'Wind', color: 'bg-blue-300' },
-    lenses: { FORTITUDE: { why: "Physiology control.", how: "30 rounds." }, REASON: { why: "Alkalinity.", how: "Hold breath." } }
-  },
-  {
-    id: 'h_gratitude',
-    title: 'Gratitude Log',
-    description: 'Positive reinforcement.',
-    category: 'spirit',
-    system_tags: ['mindset'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Heart', color: 'bg-pink-500' },
-    lenses: { FORTITUDE: { why: "Perspective.", how: "Write 3." }, REASON: { why: "Rewiring.", how: "Be specific." } }
-  },
-  {
-    id: 'h_scripture',
-    title: 'Read Scripture',
-    description: 'Ancient wisdom.',
-    category: 'spirit',
-    system_tags: ['wisdom'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'BookOpen', color: 'bg-yellow-600' },
-    lenses: { FORTITUDE: { why: "Giants' shoulders.", how: "1 Chapter." }, REASON: { why: "Moral grounding.", how: "Reflect." } }
-  },
+  // COG (Cognitive)
+  { id: 'COG_01', title: 'Deep Work', description: '90m Distraction-Free.', category: 'COG', visuals: { icon: 'Brain', color: 'bg-blue-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 5, target_value: 90, unit: 'min' } },
+  { id: 'COG_02', title: 'Read (Analog)', description: '20 pages physical book.', category: 'COG', visuals: { icon: 'BookOpen', color: 'bg-blue-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'COG_03', title: 'No-Phone Block', description: '1hr away from device.', category: 'COG', visuals: { icon: 'SmartphoneOff', color: 'bg-blue-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'COG_04', title: 'Power Nap / NSDR', description: '20m Non-Sleep Deep Rest.', category: 'COG', visuals: { icon: 'Moon', color: 'bg-blue-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'COG_05', title: 'Language Study', description: '15m Practice.', category: 'COG', visuals: { icon: 'Mic', color: 'bg-blue-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 4 } },
+  { id: 'COG_06', title: 'Skill Practice', description: '20m Deliberate Practice.', category: 'COG', visuals: { icon: 'PenTool', color: 'bg-blue-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 4 } },
+  { id: 'COG_07', title: 'Writing / Output', description: '500 words / Journaling.', category: 'COG', visuals: { icon: 'PenTool', color: 'bg-blue-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'COG_08', title: 'Podcast / Learning', description: '30m Educational Audio.', category: 'COG', visuals: { icon: 'Radio', color: 'bg-blue-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'COG_09', title: 'Pomodoro Sprints', description: '4 x 25m Intervals.', category: 'COG', visuals: { icon: 'Timer', color: 'bg-blue-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 5 } },
+  { id: 'COG_10', title: 'Inbox Zero', description: 'Clear email/messages.', category: 'COG', visuals: { icon: 'Mail', color: 'bg-blue-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
 
-  // --- 2. PHYSICAL TRAINING (10) ---
-  {
-    id: 'h_zone_2',
-    title: 'Zone 2 Cardio',
-    description: 'Base aerobic capacity.',
-    category: 'body',
-    system_tags: ['endurance'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 4, time_of_day: 'any' },
-    visuals: { icon: 'Activity', color: 'bg-emerald-500' },
-    lenses: { FORTITUDE: { why: "Engine building.", how: "Nasal breath." }, REASON: { why: "Mitochondria.", how: "45 mins." } }
-  },
-  {
-    id: 'h_heavy_lift',
-    title: 'Heavy Lift',
-    description: 'Compound resistance.',
-    category: 'body',
-    system_tags: ['strength'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 4, time_of_day: 'afternoon' },
-    visuals: { icon: 'Dumbbell', color: 'bg-stone-500' },
-    lenses: { FORTITUDE: { why: "Iron sharpens.", how: "Log reps." }, REASON: { why: "Bone density.", how: "Squat/Dead." } }
-  },
-  {
-    id: 'h_rucking',
-    title: 'Rucking',
-    description: 'Weighted walking.',
-    category: 'body',
-    system_tags: ['endurance'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 2, time_of_day: 'any' },
-    visuals: { icon: 'Mountain', color: 'bg-green-800' },
-    lenses: { FORTITUDE: { why: "Embrace suck.", how: "30lb pack." }, REASON: { why: "Work capacity.", how: "3 miles." } }
-  },
-  {
-    id: 'h_sprint',
-    title: 'VO2 Max Sprint',
-    description: 'HIIT intervals.',
-    category: 'body',
-    system_tags: ['vo2max'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'Wind', color: 'bg-red-500' },
-    lenses: { FORTITUDE: { why: "Taste blood.", how: "Max effort." }, REASON: { why: "Longevity.", how: "4x4 mins." } }
-  },
-  {
-    id: 'h_mobility',
-    title: 'Mobility',
-    description: 'Joint maintenance.',
-    category: 'body',
-    system_tags: ['recovery'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 3, time_of_day: 'evening' },
-    visuals: { icon: 'Smile', color: 'bg-teal-500' },
-    lenses: { FORTITUDE: { why: "Maintenance.", how: "15 mins." }, REASON: { why: "ROM.", how: "Hips/Spine." } }
-  },
-  {
-    id: 'h_grip',
-    title: 'Grip Training',
-    description: 'Hang/Carry.',
-    category: 'body',
-    system_tags: ['strength'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 3, time_of_day: 'any' },
-    visuals: { icon: 'Target', color: 'bg-stone-700' },
-    lenses: { FORTITUDE: { why: "Never let go.", how: "Dead hang." }, REASON: { why: "Mortality link.", how: "Farmers walk." } }
-  },
-  {
-    id: 'h_neck',
-    title: 'Neck Training',
-    description: 'Protective chassis.',
-    category: 'body',
-    system_tags: ['durability'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 2, time_of_day: 'any' },
-    visuals: { icon: 'Shield', color: 'bg-stone-400' },
-    lenses: { FORTITUDE: { why: "Protection.", how: "Resistance." }, REASON: { why: "Concussion prev.", how: "Iron Neck." } }
-  },
-  {
-    id: 'h_sport',
-    title: 'Sport / Play',
-    description: 'Dynamic movement.',
-    category: 'body',
-    system_tags: ['agility'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'Trophy', color: 'bg-yellow-500' },
-    lenses: { FORTITUDE: { why: "Test machine.", how: "Compete." }, REASON: { why: "Neuroplasticity.", how: "Pickleball/BJJ." } }
-  },
-  {
-    id: 'h_10k_steps',
-    title: '10k Steps',
-    description: 'Base movement.',
-    category: 'body',
-    system_tags: ['recovery'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'any' },
-    visuals: { icon: 'Footprints', color: 'bg-green-400' },
-    lenses: { FORTITUDE: { why: "Keep moving.", how: "Walk." }, REASON: { why: "Metabolism.", how: "Track steps." } }
-  },
-  {
-    id: 'h_sauna',
-    title: 'Sauna',
-    description: 'Heat shock.',
-    category: 'body',
-    system_tags: ['recovery'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 4, time_of_day: 'evening' },
-    visuals: { icon: 'Flame', color: 'bg-orange-600' },
-    lenses: { FORTITUDE: { why: "In the fire.", how: "20 mins." }, REASON: { why: "Cardio benefit.", how: "190F." } }
-  },
+  // STOIC (Mindset)
+  { id: 'STOIC_01', title: 'The Shadow Audit', description: 'Review daily failures/emotions.', category: 'STOIC', visuals: { icon: 'Ghost', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_02', title: 'Accountability Mirror', description: '1m Self-Confrontation.', category: 'STOIC', visuals: { icon: 'UserCheck', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_03', title: 'Journal (Dump)', description: 'Free writing.', category: 'STOIC', visuals: { icon: 'FileText', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_04', title: 'Meditation', description: '10m Stillness.', category: 'STOIC', visuals: { icon: 'Anchor', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_05', title: 'Box Breathing', description: '5m (4-4-4-4).', category: 'STOIC', visuals: { icon: 'Wind', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_06', title: 'Visualization', description: '5m Mental Rehearsal.', category: 'STOIC', visuals: { icon: 'Eye', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_07', title: 'Gratitude Practice', description: '3 items written.', category: 'STOIC', visuals: { icon: 'HeartHandshake', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_08', title: 'Digital Minimalism', description: 'Delete/Hide distractions.', category: 'STOIC', visuals: { icon: 'Trash2', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_09', title: 'Silence Block', description: '10m No Input/Output.', category: 'STOIC', visuals: { icon: 'Moon', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'STOIC_10', title: 'Memento Mori', description: 'Contemplate mortality.', category: 'STOIC', visuals: { icon: 'Ghost', color: 'bg-purple-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
 
-  // --- 3. NUTRITION (10) ---
-  {
-    id: 'h_fasting',
-    title: 'Intermittent Fast',
-    description: 'Feeding window.',
-    category: 'body',
-    system_tags: ['diet'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Utensils', color: 'bg-yellow-500' },
-    lenses: { FORTITUDE: { why: "Hunger is focus.", how: "Skip breakfast." }, REASON: { why: "Autophagy.", how: "16:8 window." } }
-  },
-  {
-    id: 'h_protein',
-    title: 'Protein Target',
-    description: '1g per lb bodyweight.',
-    category: 'body',
-    system_tags: ['diet'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'any' },
-    visuals: { icon: 'Egg', color: 'bg-red-700' },
-    lenses: { FORTITUDE: { why: "Feed beast.", how: "Meat/Eggs." }, REASON: { why: "Synthesis.", how: "Track macros." } }
-  },
-  {
-    id: 'h_no_sugar',
-    title: 'No Sugar',
-    description: 'Glycemic control.',
-    category: 'body',
-    system_tags: ['diet'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'any' },
-    visuals: { icon: 'Ban', color: 'bg-red-600' },
-    lenses: { FORTITUDE: { why: "Reject poison.", how: "Read labels." }, REASON: { why: "Metabolic.", how: "Zero added." } }
-  },
-  {
-    id: 'h_no_alcohol',
-    title: 'Zero Alcohol',
-    description: 'Neurotoxin avoidance.',
-    category: 'body',
-    system_tags: ['health'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'any' },
-    visuals: { icon: 'Ban', color: 'bg-red-800' },
-    lenses: { FORTITUDE: { why: "Reality enough.", how: "Water." }, REASON: { why: "Sleep kill.", how: "Abstain." } }
-  },
-  {
-    id: 'h_creatine',
-    title: 'Creatine',
-    description: '5g Monohydrate.',
-    category: 'body',
-    system_tags: ['supplements'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Zap', color: 'bg-white' },
-    lenses: { FORTITUDE: { why: "Power.", how: "5g daily." }, REASON: { why: "ATP.", how: "In water." } }
-  },
-  {
-    id: 'h_magnesium',
-    title: 'Magnesium',
-    description: 'Nervous system.',
-    category: 'body',
-    system_tags: ['supplements'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Zap', color: 'bg-purple-500' },
-    lenses: { FORTITUDE: { why: "Calm.", how: "Glycinate." }, REASON: { why: "Relaxation.", how: "400mg." } }
-  },
-  {
-    id: 'h_omega3',
-    title: 'Omega-3',
-    description: 'Brain health.',
-    category: 'body',
-    system_tags: ['supplements'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Fish', color: 'bg-orange-400' },
-    lenses: { FORTITUDE: { why: "Oil machine.", how: "Fish oil." }, REASON: { why: "Inflammation.", how: "2g EPA/DHA." } }
-  },
-  {
-    id: 'h_acv',
-    title: 'Apple Cider Vinegar',
-    description: 'Glycemic control.',
-    category: 'body',
-    system_tags: ['diet'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'FlaskConical', color: 'bg-amber-300' },
-    lenses: { FORTITUDE: { why: "Gut health.", how: "Shot." }, REASON: { why: "Insulin.", how: "Before meal." } }
-  },
-  {
-    id: 'h_fiber',
-    title: 'Fiber',
-    description: 'Gut biome.',
-    category: 'body',
-    system_tags: ['diet'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'any' },
-    visuals: { icon: 'Leaf', color: 'bg-green-400' },
-    lenses: { FORTITUDE: { why: "Feed biome.", how: "Veggies." }, REASON: { why: "Digestion.", how: "Psyllium." } }
-  },
-  {
-    id: 'h_cheat_meal',
-    title: 'Cheat Meal',
-    description: 'Metabolic reset.',
-    category: 'body',
-    system_tags: ['diet'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'RefreshCw', color: 'bg-pink-500' },
-    lenses: { FORTITUDE: { why: "Strategic.", how: "One meal." }, REASON: { why: "Leptin.", how: "Enjoy." } }
-  },
-
-  // --- 4. COGNITIVE & WORK (10) ---
-  {
-    id: 'h_deep_work',
-    title: 'Deep Work',
-    description: '90m Focus Block.',
-    category: 'business',
-    system_tags: ['productivity'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 5, time_of_day: 'morning' },
-    visuals: { icon: 'Brain', color: 'bg-violet-600' },
-    lenses: { FORTITUDE: { why: "No distraction.", how: "Phone away." }, REASON: { why: "Flow.", how: "90 mins." } }
-  },
-  {
-    id: 'h_read',
-    title: 'Read (Analog)',
-    description: 'Paper book.',
-    category: 'mind',
-    system_tags: ['learning'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'BookOpen', color: 'bg-emerald-600' },
-    lenses: { FORTITUDE: { why: "Sharpen.", how: "10 pages." }, REASON: { why: "Focus.", how: "No screens." } }
-  },
-  {
-    id: 'h_writing',
-    title: 'Writing',
-    description: 'Structured thought.',
-    category: 'mind',
-    system_tags: ['clarity'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 3, time_of_day: 'morning' },
-    visuals: { icon: 'PenTool', color: 'bg-blue-500' },
-    lenses: { FORTITUDE: { why: "Clarity.", how: "Journal." }, REASON: { why: "Articulation.", how: "500 words." } }
-  },
-  {
-    id: 'h_inbox_zero',
-    title: 'Inbox Zero',
-    description: 'Clear queues.',
-    category: 'business',
-    system_tags: ['organization'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 5, time_of_day: 'afternoon' },
-    visuals: { icon: 'Briefcase', color: 'bg-blue-700' },
-    lenses: { FORTITUDE: { why: "No loose ends.", how: "Triage." }, REASON: { why: "Mental load.", how: "Archive." } }
-  },
-  {
-    id: 'h_plan_tomorrow',
-    title: 'Plan Tomorrow',
-    description: 'Pre-deployment.',
-    category: 'business',
-    system_tags: ['prep'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Target', color: 'bg-slate-500' },
-    lenses: { FORTITUDE: { why: "Win morning.", how: "Top 3." }, REASON: { why: "Decision fatigue.", how: "List it." } }
-  },
-  {
-    id: 'h_learn_skill',
-    title: 'Learn Skill',
-    description: 'Neuroplasticity.',
-    category: 'mind',
-    system_tags: ['learning'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 3, time_of_day: 'any' },
-    visuals: { icon: 'Lightbulb', color: 'bg-yellow-600' },
-    lenses: { FORTITUDE: { why: "White belt.", how: "Practice." }, REASON: { why: "Growth.", how: "30 mins." } }
-  },
-  {
-    id: 'h_chess',
-    title: 'Chess',
-    description: 'Strategy game.',
-    category: 'mind',
-    system_tags: ['strategy'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 2, time_of_day: 'any' },
-    visuals: { icon: 'Swords', color: 'bg-stone-600' },
-    lenses: { FORTITUDE: { why: "Think ahead.", how: "Play." }, REASON: { why: "Patterns.", how: "1 game." } }
-  },
-  {
-    id: 'h_outreach',
-    title: 'Outreach',
-    description: 'Pipeline generation.',
-    category: 'business',
-    system_tags: ['growth'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 5, time_of_day: 'morning' },
-    visuals: { icon: 'Network', color: 'bg-indigo-600' },
-    lenses: { FORTITUDE: { why: "Hunt.", how: "5 calls." }, REASON: { why: "Pipeline.", how: "DM/Email." } }
-  },
-  {
-    id: 'h_audit_spend',
-    title: 'Audit Spend',
-    description: 'Financial check.',
-    category: 'asset',
-    system_tags: ['wealth'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'Calculator', color: 'bg-red-400' },
-    lenses: { FORTITUDE: { why: "Plug leaks.", how: "Check bank." }, REASON: { why: "Wealth.", how: "Review." } }
-  },
-  {
-    id: 'h_buy_bitcoin',
-    title: 'Buy Bitcoin',
-    description: 'DCA Hard Money.',
-    category: 'asset',
-    system_tags: ['wealth'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'Gem', color: 'bg-orange-500' },
-    lenses: { FORTITUDE: { why: "Opt out.", how: "Auto-buy." }, REASON: { why: "Asymmetry.", how: "Custody." } }
-  },
-
-  // --- 5. RECOVERY & MINDSET (10) ---
-  {
-    id: 'h_dark_room',
-    title: 'Dark Room',
-    description: 'Blackout sleep.',
-    category: 'body',
-    system_tags: ['sleep'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Moon', color: 'bg-black' },
-    lenses: { FORTITUDE: { why: "Cave mode.", how: "Tape LEDs." }, REASON: { why: "Deep sleep.", how: "Eye mask." } }
-  },
-  {
-    id: 'h_negative_viz',
-    title: 'Negative Viz',
-    description: 'Stoic prep.',
-    category: 'mind',
-    system_tags: ['stoicism'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 3, time_of_day: 'morning' },
-    visuals: { icon: 'Skull', color: 'bg-stone-800' },
-    lenses: { FORTITUDE: { why: "Prepare.", how: "Imagine loss." }, REASON: { why: "Resilience.", how: "2 mins." } }
-  },
-  {
-    id: 'h_memento_mori',
-    title: 'Memento Mori',
-    description: 'Remember death.',
-    category: 'spirit',
-    system_tags: ['stoicism'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'Hourglass', color: 'bg-stone-500' },
-    lenses: { FORTITUDE: { why: "Time is finite.", how: "Look at countdown." }, REASON: { why: "Urgency.", how: "Don't waste." } }
-  },
-  {
-    id: 'h_weekly_review',
-    title: 'Weekly Review',
-    description: 'Sunday strategy.',
-    category: 'mind',
-    system_tags: ['strategy'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'BookOpen', color: 'bg-blue-800' },
-    lenses: { FORTITUDE: { why: "Correct.", how: "Review goals." }, REASON: { why: "Plan.", how: "Set week." } }
-  },
-  {
-    id: 'h_social_detox',
-    title: 'Social Detox',
-    description: 'No media.',
-    category: 'mind',
-    system_tags: ['focus'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'Ban', color: 'bg-red-500' },
-    lenses: { FORTITUDE: { why: "Stop scroll.", how: "Delete app." }, REASON: { why: "Dopamine.", how: "Blocker." } }
-  },
-  {
-    id: 'h_call_parents',
-    title: 'Call Parents',
-    description: 'Lineage.',
-    category: 'spirit',
-    system_tags: ['family'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'any' },
-    visuals: { icon: 'Users', color: 'bg-teal-600' },
-    lenses: { FORTITUDE: { why: "Honor.", how: "Call." }, REASON: { why: "Regret min.", how: "Check in." } }
-  },
-  {
-    id: 'h_date_night',
-    title: 'Date Night',
-    description: 'Partner focus.',
-    category: 'spirit',
-    system_tags: ['relationship'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 1, time_of_day: 'evening' },
-    visuals: { icon: 'Heart', color: 'bg-pink-600' },
-    lenses: { FORTITUDE: { why: "Lead.", how: "Plan it." }, REASON: { why: "Invest.", how: "No phones." } }
-  },
-  {
-    id: 'h_play_kids',
-    title: 'Play w/ Kids',
-    description: 'Undistracted.',
-    category: 'spirit',
-    system_tags: ['family'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Smile', color: 'bg-yellow-400' },
-    lenses: { FORTITUDE: { why: "Present.", how: "Floor time." }, REASON: { why: "Legacy.", how: "Phone away." } }
-  },
-  {
-    id: 'h_gear_prep',
-    title: 'Gear Prep',
-    description: 'Kit staging.',
-    category: 'body',
-    system_tags: ['prep'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Briefcase', color: 'bg-slate-700' },
-    lenses: { FORTITUDE: { why: "No friction.", how: "Pack bag." }, REASON: { why: "Efficiency.", how: "Doorway." } }
-  },
-  {
-    id: 'h_clean_water',
-    title: 'Clean Water',
-    description: 'Filtered only.',
-    category: 'body',
-    system_tags: ['health'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'any' },
-    visuals: { icon: 'Droplets', color: 'bg-cyan-600' },
-    lenses: { FORTITUDE: { why: "No poison.", how: "RO filter." }, REASON: { why: "Endocrine.", how: "Glass only." } }
-  },
-
-  // --- 6. LOGISTICS & ENV (10) ---
-  {
-    id: 'h_grounding',
-    title: 'Grounding',
-    description: 'Earth contact.',
-    category: 'body',
-    system_tags: ['recovery'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 3, time_of_day: 'morning' },
-    visuals: { icon: 'Sprout', color: 'bg-green-600' },
-    lenses: { FORTITUDE: { why: "Connect.", how: "Barefoot." }, REASON: { why: "Inflammation.", how: "10 mins." } }
-  },
-  {
-    id: 'h_nature_walk',
-    title: 'Nature Walk',
-    description: 'Green space.',
-    category: 'mind',
-    system_tags: ['calm'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 2, time_of_day: 'any' },
-    visuals: { icon: 'Leaf', color: 'bg-green-500' },
-    lenses: { FORTITUDE: { why: "Decompress.", how: "Trees." }, REASON: { why: "Optic flow.", how: "Horizon." } }
-  },
-  {
-    id: 'h_cook_meal',
-    title: 'Cook Meal',
-    description: 'Scratch cooking.',
-    category: 'body',
-    system_tags: ['nutrition'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Flame', color: 'bg-orange-500' },
-    lenses: { FORTITUDE: { why: "Control.", how: "No seed oils." }, REASON: { why: "Quality.", how: "Grill." } }
-  },
-  {
-    id: 'h_box_breath',
-    title: 'Box Breathing',
-    description: 'Stress reset.',
-    category: 'mind',
-    system_tags: ['calm'],
-    default_config: { frequency_type: 'FREQUENCY', target_days: 3, time_of_day: 'any' },
-    visuals: { icon: 'Wind', color: 'bg-blue-200' },
-    lenses: { FORTITUDE: { why: "Reset.", how: "4-4-4-4." }, REASON: { why: "Navy SEAL.", how: "5 mins." } }
-  },
-  {
-    id: 'h_no_phone',
-    title: 'No Phone',
-    description: 'Physical separation.',
-    category: 'mind',
-    system_tags: ['focus'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'any' },
-    visuals: { icon: 'Ban', color: 'bg-red-400' },
-    lenses: { FORTITUDE: { why: "Break chain.", how: "Drawer." }, REASON: { why: "Dopamine.", how: "2 hours." } }
-  },
-  {
-    id: 'h_sleep_track',
-    title: 'Sleep Track',
-    description: 'Quantify recovery.',
-    category: 'body',
-    system_tags: ['data'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'morning' },
-    visuals: { icon: 'Moon', color: 'bg-indigo-500' },
-    lenses: { FORTITUDE: { why: "Truth.", how: "Check stats." }, REASON: { why: "Feedback.", how: "Oura." } }
-  },
-  {
-    id: 'h_blue_block',
-    title: 'Blue Block',
-    description: 'Melatonin protection.',
-    category: 'body',
-    system_tags: ['sleep'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Glasses', color: 'bg-orange-500' },
-    lenses: { FORTITUDE: { why: "Sunset.", how: "Glasses." }, REASON: { why: "Circadian.", how: "Post-sun." } }
-  },
-  {
-    id: 'h_temp_drop',
-    title: 'Temp Drop',
-    description: 'Cool sleep.',
-    category: 'body',
-    system_tags: ['sleep'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Thermometer', color: 'bg-cyan-800' },
-    lenses: { FORTITUDE: { why: "Hibernate.", how: "AC 65." }, REASON: { why: "Deep sleep.", how: "Chiller." } }
-  },
-  {
-    id: 'h_mouth_tape',
-    title: 'Mouth Tape',
-    description: 'Nasal breath.',
-    category: 'body',
-    system_tags: ['sleep'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Smile', color: 'bg-teal-700' },
-    lenses: { FORTITUDE: { why: "Shut mouth.", how: "Tape." }, REASON: { why: "Oxygen.", how: "Strips." } }
-  },
-  {
-    id: 'h_digital_dark',
-    title: 'Digital Dark',
-    description: 'Zero screens.',
-    category: 'mind',
-    system_tags: ['sleep'],
-    default_config: { frequency_type: 'ABSOLUTE', target_days: 7, time_of_day: 'evening' },
-    visuals: { icon: 'Moon', color: 'bg-indigo-900' },
-    lenses: { FORTITUDE: { why: "Unplug.", how: "Off." }, REASON: { why: "Melatonin.", how: "1h pre-bed." } }
-  }
-];
-
-// --- 9. PROTOCOLS (STACKS) ---
-export const PROTOCOL_STACKS = [
-  { id: 'stack_atlas', title: 'ATLAS GOLDEN SET', description: 'Foundation.', habit_ids: ['h_wake_0430', 'h_morning_sun', 'h_salt_water', 'h_protein', 'h_sleep_track'] },
-  { id: 'stack_huberman', title: 'HUBERMAN NEURAL', description: 'Brain opt.', habit_ids: ['h_morning_sun', 'h_cold_plunge', 'h_delay_caffeine', 'h_breathwork', 'h_zone_2'] },
-  { id: 'stack_goggins', title: 'GOGGINS IRON MIND', description: 'Friction.', habit_ids: ['h_rucking', 'h_cold_plunge', 'h_sprint', 'h_negative_viz'] },
-  { id: 'stack_attia', title: 'ATTIA CENTENARIAN', description: 'Longevity.', habit_ids: ['h_zone_2', 'h_heavy_lift', 'h_protein', 'h_sprint', 'h_mobility'] },
-  { id: 'stack_jocko', title: 'JOCKO DISCIPLINE', description: 'Execution.', habit_ids: ['h_wake_0430', 'h_heavy_lift', 'h_fasting', 'h_gear_prep'] },
-  { id: 'stack_stoic', title: 'THE STOIC', description: 'Resilience.', habit_ids: ['h_meditation', 'h_scripture', 'h_writing', 'h_memento_mori'] },
-  { id: 'stack_war', title: 'THE WAR PHASE', description: 'Crisis.', habit_ids: ['h_deep_work', 'h_inbox_zero', 'h_no_phone', 'h_fasting'] },
-  { id: 'stack_deep', title: 'DEEP STACK', description: 'Focus.', habit_ids: ['h_deep_work', 'h_no_phone', 'h_meditation', 'h_digital_dark'] },
-  { id: 'stack_athlete', title: 'ATHLETE STANDARD', description: 'Performance.', habit_ids: ['h_sprint', 'h_heavy_lift', 'h_protein', 'h_sauna', 'h_sleep_track'] }
+  // LOG (Logistics)
+  { id: 'LOG_01', title: 'Environment Clear', description: 'Tidy workspace/room.', category: 'LOG', visuals: { icon: 'Tent', color: 'bg-slate-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'LOG_02', title: 'Meal Prep', description: 'Prepare food for tomorrow.', category: 'LOG', visuals: { icon: 'Utensils', color: 'bg-slate-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'LOG_03', title: 'Tomorrow’s Kit', description: 'Lay out clothes/gear.', category: 'LOG', visuals: { icon: 'Briefcase', color: 'bg-slate-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'LOG_04', title: 'Financial Audit', description: 'Check balances/spend.', category: 'LOG', visuals: { icon: 'BarChart3', color: 'bg-slate-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'LOG_05', title: 'Social Sync', description: 'Coord with partner/team.', category: 'LOG', visuals: { icon: 'UserCheck', color: 'bg-slate-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'LOG_06', title: 'Home Maintenance', description: '15m Chores/Fix.', category: 'LOG', visuals: { icon: 'Tent', color: 'bg-slate-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 3 } },
+  { id: 'LOG_07', title: 'Inbox Triage', description: 'Sort actionable vs archive.', category: 'LOG', visuals: { icon: 'Mail', color: 'bg-slate-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'LOG_08', title: 'Grocery Run', description: 'Stock provisions.', category: 'LOG', visuals: { icon: 'ShoppingCart', color: 'bg-slate-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 2 } },
+  { id: 'LOG_09', title: 'Task Batching', description: 'Group similar small tasks.', category: 'LOG', visuals: { icon: 'ListChecks', color: 'bg-slate-600' }, default_config: { frequency_type: 'ABSOLUTE', target_days: 7 } },
+  { id: 'LOG_10', title: 'Weekly Review', description: 'Plan the week ahead (Sun).', category: 'LOG', visuals: { icon: 'CalendarRange', color: 'bg-slate-600' }, default_config: { frequency_type: 'FREQUENCY', target_days: 1 } }
 ];

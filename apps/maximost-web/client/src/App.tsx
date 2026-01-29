@@ -1,26 +1,16 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AuthProvider, useAuth } from './core/AuthSystem';
-import { ToastProvider } from './core/components/Toast';
-import { AIProvider } from './core/context/AIContext';
-import { LensProvider } from './core/context/LensContext';
-import DashboardCore from './core/DashboardSingularity';
-import LoginCore from './core/LoginCore'; // Mapped from LoginPage
-import AdminDiagnostics from './core/pages/AdminDiagnostics';
-import LibraryPage from './core/pages/LibraryPage';
-import AIWarRoomPage from './core/pages/AIWarRoomPage';
-import AccountabilityMirror from './pages/mirror'; // The new Mirror
-import TheMirror from './core/pages/TheMirror';
-import BioTelemetryPage from './core/pages/BioTelemetryPage';
-import { LandingPage } from './core/pages/LandingPage';
-import ManifestoPage from './core/pages/ManifestoPage';
-import { LegalPage } from './core/pages/LegalPage';
-import VaultPage from './core/pages/VaultPage';
+import { AuthProvider, useAuth } from '@/components/auth/AuthSystem';
+import { ToastProvider } from '@/components/ui/Toast';
+import { AIProvider } from '@/context/AIContext';
+import { LensProvider } from '@/context/LensContext';
+import Dashboard from '@/pages/Dashboard';
+import Login from '@/pages/Login';
+import LibraryPage from '@/pages/LibraryPage';
+import AccountabilityMirror from '@/pages/mirror';
+import { LandingPage } from '@/pages/Landing';
 import Preferences from '@/pages/Preferences';
-import { ProtocolsPage } from './core/pages/ProtocolsPage';
-import ProgressPage from './core/pages/ProgressPage';
-import LexiconPage from './core/pages/LexiconPage';
-import AccessDenied from './core/components/ui/AccessDenied';
-import CoreLayout from './core/CoreLayout'; // Import CoreLayout
+import AccessDenied from '@/components/ui/AccessDenied';
+import CoreLayout from '@/components/layout/CoreLayout';
 
 // Protected Route Wrapper - NOW WRAPS EVERYTHING IN CORELAYOUT
 const ProtectedRoute = () => {
@@ -53,42 +43,17 @@ function App() {
             <Routes>
               {/* PUBLIC */}
               <Route path="/" element={<LandingPage />} />
-              <Route path="/manifesto" element={<ManifestoPage />} />
-              <Route path="/lexicon" element={<LexiconPage />} /> {/* SEO Root Route */}
-              <Route path="/login" element={<PublicRoute><LoginCore /></PublicRoute>} />
+              <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
               <Route path="/signup" element={<Navigate to="/login" replace />} />
-              <Route path="/privacy" element={<LegalPage title="Privacy Protocol" content={`1. Data Sovereignty: You own your data. We do not sell it.\n2. Encryption: All biometric data is encrypted at rest.\n3. Deletion: You may nuke your account at any time.`} />} />
-              <Route path="/terms" element={<LegalPage title="Terms of Service" content={`1. The Code: Maximost is a tool for self-mastery. Use it responsibly.\n2. Liability: We are not doctors. Do not use this for medical diagnosis.`} />} />
-              <Route path="/support" element={<LegalPage title="Support Frequency" content={`Contact the command center at: support@maximost.com\n\nExpected response time: 24-48 hours.`} />} />
 
               {/* PUBLIC CAMPAIGN ROUTES */}
               <Route path="/mirror" element={<AccountabilityMirror />} />
 
               {/* PROTECTED */}
               <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<DashboardCore />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/archive" element={<LibraryPage />} />
-                <Route path="/body-hud" element={<BioTelemetryPage />} />
-                <Route path="/coach" element={<AIWarRoomPage />} />
-                {/* <Route path="/mirror" element={<TheMirror />} /> Replaced by Campaign Mirror */}
-                <Route path="/admin" element={<AdminDiagnostics />} />
-                <Route path="/admin/diagnostics" element={<AdminDiagnostics />} />
-
-                {/* Tools Sub-routes */}
-                <Route path="/tools/lexicon" element={<LexiconPage />} />
-
-                {/* Secondary/Utility Routes */}
-                <Route path="/vault" element={<VaultPage />} />
                 <Route path="/preferences" element={<Preferences />} />
-                <Route path="/stacks" element={<ProtocolsPage />} />
-                <Route path="/ledger" element={<ProgressPage />} />
-                <Route path="/body" element={<BioTelemetryPage />} /> {/* Legacy mapping */}
-                <Route path="/journal" element={<Navigate to="/coach" replace />} /> {/* Redirect Journal to Coach/WarRoom? Or keep if exists. Mapping to WarRoom based on Sidebar */}
-                <Route path="/progress" element={<ProgressPage />} />
-
-                {/* Fallback for access denied or unknown protected routes if needed,
-                    but * acts as global fallback.
-                    If we want specific AccessDenied route: */}
                 <Route path="/access-denied" element={<AccessDenied />} />
               </Route>
 

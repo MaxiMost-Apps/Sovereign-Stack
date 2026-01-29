@@ -29,7 +29,7 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="group flex items-center gap-4 p-4 bg-[#0B1221] border border-white/5 rounded-2xl hover:border-white/10 transition-all select-none"
+      className="group flex items-center gap-4 p-4 bg-card-dark rounded-2xl hover:border-white/10 transition-all select-none"
     >
 
       {/* GRIPPER */}
@@ -39,11 +39,9 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
         </div>
       )}
 
-      {/* ICON */}
-      <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-        isCompleted ? 'bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.4)]' : `${habit.visuals.color} text-white shadow-lg opacity-90`
-      }`}>
-        {isCompleted ? <Check size={20} strokeWidth={3} /> : <Icon size={20} strokeWidth={2.5} />}
+      {/* LEFT SIDE: STATIC ICON */}
+      <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${habit.visuals.color} text-white shadow-lg opacity-90`}>
+        <Icon size={20} strokeWidth={2.5} />
       </div>
 
       {/* TEXT & CONTROLS */}
@@ -53,7 +51,7 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
             {habit.title}
           </h3>
 
-          {/* ACTIONS */}
+          {/* ACTIONS: [i] [...] */}
           {!isLocked && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                <button onClick={(e) => { e.stopPropagation(); onOpenInfo(habit); }} className="p-1.5 text-slate-500 hover:text-blue-400 transition-colors"><Info size={16} /></button>
@@ -75,8 +73,9 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
         )}
       </div>
 
-      {/* COMPLETION BUTTON */}
+      {/* RIGHT SIDE: ACTION BUTTON */}
       {isMeasurable && !isCompleted ? (
+        // PLUS BUTTON (Numeric)
         <button
           onClick={() => onToggle(habit.habit_id, 1)}
           className="shrink-0 w-12 h-12 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all active:scale-95"
@@ -84,6 +83,7 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
           <Plus size={20} strokeWidth={3} />
         </button>
       ) : (
+        // PULSING CIRCLE (Boolean)
         <button
           onClick={() => onToggle(habit.habit_id)}
           className={`shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ml-2 ${
@@ -92,7 +92,7 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isRe
               : 'border-slate-700 hover:border-slate-500 bg-transparent'
           }`}
         >
-          {isCompleted && <div className="w-full h-full rounded-full bg-green-500" />}
+          {isCompleted && <Check size={16} className="text-black" strokeWidth={4} />}
         </button>
       )}
 

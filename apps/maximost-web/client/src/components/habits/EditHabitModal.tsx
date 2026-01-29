@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Calendar, PauseCircle, PlayCircle } from 'lucide-react';
 import { ICON_MAP } from '@/data/sovereign_library';
 
 export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
   const [title, setTitle] = useState(habit.title);
   const [mode, setMode] = useState<'ABSOLUTE' | 'FREQUENCY'>(habit.default_config?.frequency_type || 'ABSOLUTE');
+  const [isPaused, setIsPaused] = useState(habit.is_paused || false);
+  const [startDate, setStartDate] = useState(habit.start_date || new Date().toISOString().split('T')[0]);
 
   // METRICS
   const [goal, setGoal] = useState(habit.metadata?.config?.target_value || 1);
@@ -14,10 +16,6 @@ export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
   // VISUALS
   const [color, setColor] = useState(habit.visuals?.color || 'bg-blue-500');
   const [iconKey, setIconKey] = useState(habit.visuals?.icon || 'Zap');
-
-  // LENS
-  const [how, setHow] = useState(habit.lenses?.FORTITUDE?.how || '');
-  const [why, setWhy] = useState(habit.lenses?.FORTITUDE?.why || '');
 
   const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-violet-600', 'bg-red-600', 'bg-cyan-600', 'bg-pink-500', 'bg-slate-500', 'bg-orange-500', 'bg-lime-500'];
   const icons = Object.keys(ICON_MAP);
@@ -34,10 +32,37 @@ export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
-          {/* NAME */}
+          {/* NAME & STATUS */}
+          <div className="grid grid-cols-3 gap-4">
+             <div className="col-span-2">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Habit Name</label>
+                <input value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-slate-900/50 p-4 rounded-lg border border-white/5 text-white font-bold focus:border-blue-500 outline-none" />
+             </div>
+             <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Status</label>
+                <button
+                  onClick={() => setIsPaused(!isPaused)}
+                  className={`w-full p-4 rounded-lg border flex items-center justify-center gap-2 font-bold uppercase text-xs transition-all ${
+                    isPaused ? 'bg-amber-900/20 border-amber-500/50 text-amber-500' : 'bg-green-900/20 border-green-500/50 text-green-500'
+                  }`}
+                >
+                  {isPaused ? <><PauseCircle size={16} /> PAUSED</> : <><PlayCircle size={16} /> ACTIVE</>}
+                </button>
+             </div>
+          </div>
+
+          {/* START DATE */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Habit Name</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-slate-900/50 p-4 rounded-lg border border-white/5 text-white font-bold focus:border-blue-500 outline-none" />
+            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Effective Date</label>
+            <div className="relative">
+              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
+              <input
+                type="date"
+                value={startDate}
+                onChange={e => setStartDate(e.target.value)}
+                className="w-full bg-slate-900/50 p-4 pl-12 rounded-lg border border-white/5 text-white font-mono focus:border-blue-500 outline-none"
+              />
+            </div>
           </div>
 
           {/* MODE TOGGLE */}
@@ -95,22 +120,22 @@ export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
             </div>
           </div>
 
-          {/* TEXT AREAS */}
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tactical (How)</label>
-            <textarea value={how} onChange={e => setHow(e.target.value)} className="w-full h-20 bg-slate-900/50 p-4 rounded-lg border border-white/5 text-slate-300 text-sm focus:border-blue-500 outline-none resize-none" />
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Identity (Why)</label>
-            <textarea value={why} onChange={e => setWhy(e.target.value)} className="w-full h-20 bg-slate-900/50 p-4 rounded-lg border border-white/5 text-slate-300 text-sm focus:border-blue-500 outline-none resize-none" />
-          </div>
-
         </div>
 
         {/* FOOTER */}
         <div className="p-5 border-t border-white/5 bg-slate-950/50 flex justify-end gap-3 rounded-b-xl">
           <button onClick={onClose} className="px-6 py-3 text-xs font-bold text-slate-500 hover:text-white uppercase tracking-widest">Cancel</button>
-          <button onClick={() => onSave({ ...habit, title, visuals: { color, icon: iconKey }, default_config: { frequency_type: mode, target_value: goal, unit, target_days: freqDays }, lenses: { FORTITUDE: { how, why } } })} className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-widest shadow-lg uppercase">
+          <button
+            onClick={() => onSave({
+               ...habit,
+               title,
+               is_paused: isPaused,
+               start_date: startDate,
+               visuals: { color, icon: iconKey },
+               default_config: { frequency_type: mode, target_value: goal, unit, target_days: freqDays }
+            })}
+            className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-widest shadow-lg uppercase"
+          >
             Save Habit
           </button>
         </div>
