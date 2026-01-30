@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-text antialiased font-serif;
+  }
+}
+
+@layer utilities {
+  .gold-text {
+    @apply text-primary drop-shadow-[0_1px_1px_rgba(212,175,55,0.3)];
+  }
+}
