@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { DriveService } from './services/DriveService';
 import { AiCortex } from './services/AiCortex';
+import { GlucoseSniffer, type GlucoseReading } from './services/GlucoseSniffer';
+import { SupabaseService } from './services/SupabaseService';
 
 function App() {
   const [logs, setLogs] = useState<string[]>(['System Initialized...', 'Waiting for Auth...']);
   const [isSyncing, setIsSyncing] = useState(false);
   const [aiResponse, setAiResponse] = useState('');
+  const [lastReading, setLastReading] = useState<GlucoseReading | null>(null);
 
   const addLog = (msg: string) => setLogs(prev => [msg, ...prev]);
 
@@ -32,6 +35,25 @@ function App() {
     }
   };
 
+  const runSniffCycle = async () => {
+    addLog('Loophole: Sniffing port 17580...');
+    try {
+      const reading = await GlucoseSniffer.sniffLocalPort();
+
+      if (reading) {
+        setLastReading(reading);
+        addLog(`DATA FOUND: ${reading.sgv} mg/dL. Uploading...`);
+
+        await SupabaseService.pushGlucose(reading);
+        addLog('SUCCESS: Data live on Sovereign Stack.');
+      } else {
+        addLog('Loophole: No broadcast detected.');
+      }
+    } catch (err: any) {
+      addLog(`ERROR: ${err.message}`);
+    }
+  };
+
   return (
     <div style={{ padding: '20px', fontFamily: 'monospace', backgroundColor: '#121212', color: '#00ff00', minHeight: '100vh' }}>
       <h1 className="text-xl font-bold mb-4">BIO-UPLINK v1.0</h1>
@@ -41,6 +63,7 @@ function App() {
         <p>STATUS: {isSyncing ? '🟢 ACTIVE' : '🔴 PAUSED'}</p>
         <p>SOURCE: Health Connect</p>
         <p>DEST: Google Drive / Supabase</p>
+        <p>CGM: {lastReading ? `${lastReading.sgv} (${lastReading.direction})` : 'WAITING'}</p>
       </div>
 
       {/* CONTROLS */}
@@ -48,6 +71,12 @@ function App() {
         onClick={handleSyncToggle}
         style={{ padding: '15px', width: '100%', marginBottom: '10px', backgroundColor: isSyncing ? '#333' : '#00ff00', color: isSyncing ? '#fff' : '#000', border: 'none', fontWeight: 'bold' }}>
         {isSyncing ? 'STOP SYNC' : 'ACTIVATE SYNC'}
+      </button>
+
+      <button
+        onClick={runSniffCycle}
+        style={{ padding: '10px', width: '100%', marginBottom: '10px', backgroundColor: '#333', color: '#fff', border: '1px solid #555' }}>
+        SNIFF LOCAL PORT (17580)
       </button>
 
       <button
