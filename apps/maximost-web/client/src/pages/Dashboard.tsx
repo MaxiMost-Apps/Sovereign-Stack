@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Lock, Unlock, ArrowUpDown, LayoutGrid, Calendar as CalendarIcon, BarChart3, Plus } from 'lucide-react';
+import { Lock, Unlock, ArrowUpDown, LayoutGrid, Calendar as CalendarIcon, BarChart3, Plus, Layers } from 'lucide-react';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { HabitMasterDrawer } from '@/components/habits/HabitMasterDrawer';
 import { useHabits } from '@/hooks/useHabits';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
   const { habits, loading, toggleHabit, updateHabitConfig, deleteHabit } = useHabits();
   const [isLocked, setIsLocked] = useState(true);
+  const [isReordering, setIsReordering] = useState(false);
   const [view, setView] = useState<'day' | 'week' | 'month'>('day');
 
   // Drawer State
@@ -53,7 +54,10 @@ export const Dashboard: React.FC = () => {
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setView(tab.id as any)}
+                    onClick={() => {
+                        setView(tab.id as any);
+                        if (tab.id !== 'day') setIsReordering(false); // Only Day view supports reorder
+                    }}
                     className={`flex items-center gap-2 px-4 py-2 text-[10px] font-bold tracking-widest rounded-md transition-all ${
                       view === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'
                     }`}
@@ -65,12 +69,19 @@ export const Dashboard: React.FC = () => {
 
             {/* Right Controls */}
             <div className="flex items-center gap-2">
-                 <button className="p-2 text-gray-600 hover:text-white transition-colors">
-                     <ArrowUpDown size={18} />
-                 </button>
+                 {view === 'day' && (
+                     <button
+                        onClick={() => setIsReordering(!isReordering)}
+                        className={`p-2 rounded-lg transition-colors ${isReordering ? 'text-blue-500 bg-blue-500/10' : 'text-gray-500 hover:text-white'}`}
+                        title="Reorder Habits"
+                     >
+                         <ArrowUpDown size={18} />
+                     </button>
+                 )}
                  <button
                     onClick={() => setIsLocked(!isLocked)}
                     className={`p-2 rounded-lg transition-colors ${isLocked ? 'text-blue-500 bg-blue-500/10' : 'text-gray-500 hover:text-white'}`}
+                    title={isLocked ? "Unlock Controls" : "Lock Controls"}
                  >
                     {isLocked ? <Lock size={18} /> : <Unlock size={18} />}
                  </button>
@@ -98,6 +109,7 @@ export const Dashboard: React.FC = () => {
                                 key={habit.id}
                                 habit={habit}
                                 isLocked={isLocked}
+                                isReordering={isReordering}
                                 onOpenInfo={(h) => handleOpenDrawer(h, 'HQ')}
                                 onOpenConfig={(h) => handleOpenDrawer(h, 'CONFIG')}
                                 onToggle={(id) => toggleHabit(id)}
@@ -125,6 +137,7 @@ export const Dashboard: React.FC = () => {
                                 key={habit.id}
                                 habit={habit}
                                 isLocked={isLocked}
+                                isReordering={isReordering}
                                 onOpenInfo={(h) => handleOpenDrawer(h, 'HQ')}
                                 onOpenConfig={(h) => handleOpenDrawer(h, 'CONFIG')}
                                 onToggle={(id, val) => toggleHabit(id, val)}
@@ -135,34 +148,27 @@ export const Dashboard: React.FC = () => {
             </section>
         )}
 
-        {/* SECTION 3: ATOM LEDGER (Reserves) */}
-        {view === 'day' && (
+        {/* SECTION 3: RESERVES (Renamed from Atom Ledger) */}
+        {view === 'day' && inactiveHabits.length > 0 && (
              <section className="pt-8 animate-in fade-in slide-in-from-bottom-10 duration-1000">
                  <div className="flex items-center gap-3 mb-6 opacity-50">
                      <div className="h-px bg-white/5 flex-1" />
-                     <span className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">Atom Ledger (Reserves)</span>
+                     <span className="text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">RESERVES</span>
                      <div className="h-px bg-white/5 flex-1" />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 opacity-60 hover:opacity-100 transition-opacity">
                      {inactiveHabits.map(habit => (
                         <DailyHabitRow
                             key={habit.id}
                             habit={habit}
-                            isLocked={true} // Always locked in ledger
+                            isLocked={true} // Always locked in reserves
                             isLedgerMode={true}
                             onOpenInfo={() => {}}
                             onOpenConfig={() => {}}
                             onToggle={(id) => toggleHabit(id)} // Equip
                         />
                      ))}
-                </div>
-
-                {/* FOOTER ACTION */}
-                <div className="mt-8">
-                    <button className="w-full py-4 rounded-xl border border-blue-500/30 text-blue-500 hover:bg-blue-500/10 transition-all flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest">
-                        <Plus size={16} /> Initialize New Habit
-                    </button>
                 </div>
              </section>
         )}
@@ -172,6 +178,20 @@ export const Dashboard: React.FC = () => {
              <div className="py-20 text-center text-gray-500 font-mono text-sm">
                  Macro Analysis Module Loading...
              </div>
+        )}
+
+        {/* FOOTER ACTION */}
+        {view === 'day' && (
+            <div className="pt-12 pb-20 border-t border-white/5 mt-8 flex justify-center">
+                 <Link
+                    to="/archive"
+                    className="flex items-center gap-3 px-8 py-4 rounded-full bg-[#0A0F1C] border border-white/10 hover:border-blue-500/50 hover:text-blue-400 transition-all group"
+                 >
+                     <Layers size={16} className="text-gray-500 group-hover:text-blue-500 transition-colors" />
+                     <span className="text-xs font-bold uppercase tracking-widest text-gray-400 group-hover:text-white">Open Protocol Archive</span>
+                     <Plus size={16} className="text-gray-500 group-hover:text-blue-500 transition-colors" />
+                 </Link>
+            </div>
         )}
 
       </div>

@@ -5,6 +5,7 @@ import { ICON_MAP } from '@/data/sovereign_library';
 interface DailyHabitRowProps {
   habit: any;
   isLocked: boolean;
+  isReordering?: boolean;
   onOpenInfo: (habit: any) => void;
   onOpenConfig: (habit: any) => void;
   onToggle: (id: string, value?: number) => void;
@@ -14,6 +15,7 @@ interface DailyHabitRowProps {
 export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({
   habit,
   isLocked,
+  isReordering = false,
   onOpenInfo,
   onOpenConfig,
   onToggle,
@@ -63,10 +65,10 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({
          />
       )}
 
-      {/* 1. Drag Handle (Hidden if Locked) */}
-      {!isLocked && (
-        <div className="cursor-grab active:cursor-grabbing text-gray-700 hover:text-gray-400 transition-colors">
-          <GripVertical size={16} />
+      {/* 1. Drag Handle (Visible ONLY if Reordering is true) */}
+      {isReordering && (
+        <div className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-white transition-colors animate-in slide-in-from-left-2 duration-200">
+          <GripVertical size={20} />
         </div>
       )}
 
@@ -83,20 +85,22 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({
                 {habit.title}
             </h4>
 
-            {/* Info and Edit Icons (Shown only if Unlocked) */}
+            {/* Info and Edit Icons (Hidden if Locked) */}
             {!isLocked && (
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => onOpenInfo(habit)}
                   className="p-1 hover:bg-blue-400/10 text-gray-600 hover:text-blue-400 rounded-md transition-all"
+                  title="HQ / Info"
                 >
-                  <Info size={12} />
+                  <Info size={14} />
                 </button>
                 <button
                   onClick={() => onOpenConfig(habit)}
                   className="p-1 hover:bg-white/10 text-gray-600 hover:text-gray-200 rounded-md transition-all"
+                  title="Config"
                 >
-                  <MoreHorizontal size={12} />
+                  <MoreHorizontal size={14} />
                 </button>
               </div>
             )}

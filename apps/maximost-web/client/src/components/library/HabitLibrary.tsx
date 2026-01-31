@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Check, Search, Layers, Activity } from 'lucide-react';
+import { Plus, Check, Search, Layers, Activity, X } from 'lucide-react';
 import { SOVEREIGN_LIBRARY, ICON_MAP, PROTOCOL_STACKS } from '@/data/sovereign_library';
 import { useHabits } from '@/hooks/useHabits';
 
@@ -9,8 +9,12 @@ interface HabitLibraryProps {
 
 export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
   const { habits, toggleHabit } = useHabits();
-  const [activeTab, setActiveTab] = useState<'ATOMS' | 'STACKS'>('ATOMS');
+  const [activeTab, setActiveTab] = useState<'HABITS' | 'STACKS'>('HABITS');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Stack Selection State
+  const [selectedStack, setSelectedStack] = useState<any>(null);
+  const [selectedStackHabits, setSelectedStackHabits] = useState<string[]>([]);
 
   // Helper to check if habit is active
   const isHabitActive = (libraryId: string) => {
@@ -29,20 +33,29 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
   );
 
   const handleAdd = (habitId: string) => {
-      // Find the def
-      const def = SOVEREIGN_LIBRARY.find(h => h.id === habitId);
-      if (!def) return;
-
       toggleHabit(habitId);
   };
 
-  const handleDeployStack = (stack: any) => {
-      // Deploy all habits in stack
-      stack.habit_ids.forEach((hid: string) => {
+  const openStackModal = (stack: any) => {
+      setSelectedStack(stack);
+      setSelectedStackHabits(stack.habit_ids); // Default all selected
+  };
+
+  const toggleStackHabitSelection = (hid: string) => {
+      if (selectedStackHabits.includes(hid)) {
+          setSelectedStackHabits(prev => prev.filter(id => id !== hid));
+      } else {
+          setSelectedStackHabits(prev => [...prev, hid]);
+      }
+  };
+
+  const deployStack = () => {
+      selectedStackHabits.forEach(hid => {
           if (!isHabitActive(hid)) {
               toggleHabit(hid);
           }
       });
+      setSelectedStack(null);
   };
 
   return (
@@ -50,22 +63,22 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-white/5 pb-8">
         <div>
           <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">The Archive</h1>
-          <p className="text-gray-500 font-mono text-xs uppercase tracking-widest mt-2">Protocol Database // V1.6</p>
+          <p className="text-gray-500 font-mono text-xs uppercase tracking-widest mt-2">Protocol Database // V1.7</p>
         </div>
 
         {/* TABS */}
         <div className="flex bg-[#0A0F1C] p-1 rounded-lg border border-white/5">
             <button
-                onClick={() => setActiveTab('ATOMS')}
-                className={`px-6 py-2 text-xs font-bold tracking-widest uppercase rounded-md transition-all flex items-center gap-2 ${activeTab === 'ATOMS' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-white'}`}
+                onClick={() => setActiveTab('HABITS')}
+                className={`px-6 py-2 text-xs font-bold tracking-widest uppercase rounded-md transition-all flex items-center gap-2 ${activeTab === 'HABITS' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-white'}`}
             >
-                <Activity size={14} /> Atoms
+                <Activity size={14} /> Habits
             </button>
             <button
                 onClick={() => setActiveTab('STACKS')}
                 className={`px-6 py-2 text-xs font-bold tracking-widest uppercase rounded-md transition-all flex items-center gap-2 ${activeTab === 'STACKS' ? 'bg-blue-600 text-white' : 'text-gray-500 hover:text-white'}`}
             >
-                <Layers size={14} /> Stacks
+                <Layers size={14} /> Protocol Stacks
             </button>
         </div>
 
@@ -81,7 +94,7 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
       </header>
 
       {/* CONTENT GRID */}
-      {activeTab === 'ATOMS' ? (
+      {activeTab === 'HABITS' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {filteredLibrary.map((habit) => {
               const active = isHabitActive(habit.id);
@@ -139,17 +152,17 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
               {filteredStacks.map((stack) => (
                    <div
                     key={stack.id}
-                    className="group relative bg-[#0B1221] border border-white/5 rounded-2xl p-8 hover:border-blue-500/50 hover:bg-[#0F1729] transition-all"
+                    className="group relative bg-[#0B1221] border border-white/5 rounded-2xl p-8 hover:border-blue-500/50 hover:bg-[#0F1729] transition-all cursor-pointer"
+                    onClick={() => openStackModal(stack)}
                    >
                        <div className="flex items-center justify-between mb-6">
                            <div className="p-3 bg-blue-500/10 text-blue-400 rounded-lg">
                                <Layers size={24} />
                            </div>
                            <button
-                             onClick={() => handleDeployStack(stack)}
-                             className="px-4 py-2 bg-white/5 hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-widest rounded transition-all"
+                             className="px-4 py-2 bg-white/5 group-hover:bg-blue-600 text-white text-xs font-bold uppercase tracking-widest rounded transition-all"
                            >
-                               Deploy Stack
+                               Select Stack
                            </button>
                        </div>
 
@@ -157,9 +170,9 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
                        <p className="text-gray-500 text-sm mt-2">{stack.description}</p>
 
                        <div className="mt-8 border-t border-white/5 pt-6">
-                           <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-3">Contains Protocols:</div>
+                           <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-3">Contains Habits:</div>
                            <div className="flex flex-wrap gap-2">
-                               {stack.habit_ids.map(hid => {
+                               {stack.habit_ids.slice(0, 4).map((hid: string) => {
                                    const h = SOVEREIGN_LIBRARY.find(lib => lib.id === hid);
                                    return h ? (
                                        <span key={hid} className="px-2 py-1 bg-black/40 border border-white/10 rounded text-[10px] text-gray-400">
@@ -167,11 +180,91 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
                                        </span>
                                    ) : null;
                                })}
+                               {stack.habit_ids.length > 4 && (
+                                   <span className="px-2 py-1 bg-black/40 border border-white/10 rounded text-[10px] text-gray-400">
+                                       +{stack.habit_ids.length - 4} more
+                                   </span>
+                               )}
                            </div>
                        </div>
                    </div>
               ))}
           </div>
+      )}
+
+      {/* STACK SELECTION MODAL */}
+      {selectedStack && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedStack(null)} />
+            <div className="relative w-full max-w-2xl bg-[#0B1221] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-300">
+                <div className="p-8 border-b border-white/5 flex items-center justify-between bg-[#050A14]">
+                    <div>
+                        <span className="text-blue-500 text-[10px] font-bold uppercase tracking-widest">Protocol Stack Deployment</span>
+                        <h2 className="text-2xl font-black italic text-white mt-1 uppercase">{selectedStack.title}</h2>
+                    </div>
+                    <button onClick={() => setSelectedStack(null)} className="p-2 hover:bg-white/5 rounded-full text-gray-400 transition-colors">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div className="p-8 max-h-[60vh] overflow-y-auto">
+                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Contains Habits:</div>
+                    <div className="space-y-3">
+                        {selectedStack.habit_ids.map((hid: string) => {
+                            const habit = SOVEREIGN_LIBRARY.find(h => h.id === hid);
+                            if (!habit) return null;
+                            const isSelected = selectedStackHabits.includes(hid);
+                            const isActiveAlready = isHabitActive(hid);
+
+                            return (
+                                <div
+                                    key={hid}
+                                    onClick={() => !isActiveAlready && toggleStackHabitSelection(hid)}
+                                    className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
+                                        isActiveAlready
+                                        ? 'bg-blue-500/5 border-blue-500/20 opacity-50 cursor-default'
+                                        : isSelected
+                                            ? 'bg-blue-600/10 border-blue-500/50'
+                                            : 'bg-white/5 border-white/5 hover:border-white/10'
+                                    }`}
+                                >
+                                    <div className={`w-6 h-6 rounded flex items-center justify-center border transition-all ${
+                                        isActiveAlready || isSelected
+                                        ? 'bg-blue-500 border-blue-500 text-white'
+                                        : 'border-gray-600 bg-transparent'
+                                    }`}>
+                                        {(isActiveAlready || isSelected) && <Check size={14} />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="font-bold text-white text-sm">{habit.title}</h4>
+                                            {isActiveAlready && <span className="text-[10px] text-blue-400 font-mono uppercase">Already Active</span>}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">{habit.description}</p>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="p-6 border-t border-white/5 bg-[#050A14] flex justify-end gap-4">
+                    <button
+                        onClick={() => setSelectedStack(null)}
+                        className="px-6 py-3 text-xs font-bold uppercase tracking-widest text-gray-500 hover:text-white transition-colors"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={deployStack}
+                        disabled={selectedStackHabits.length === 0}
+                        className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-widest rounded-lg shadow-lg shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                        ADD TO DASH ({selectedStackHabits.length})
+                    </button>
+                </div>
+            </div>
+        </div>
       )}
     </div>
   );
