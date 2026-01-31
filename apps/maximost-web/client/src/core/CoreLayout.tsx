@@ -1,120 +1,69 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { Sidebar } from './components/Sidebar';
-import { Menu, X } from 'lucide-react';
-import { TelemetryHeader } from './components/TelemetryHeader';
-import ConsoleOverlay from './components/ConsoleOverlay';
-import { VaultCore } from './components/VaultCore';
-import CommandMenu from './admin/CommandMenu';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useAuth } from './AuthSystem';
-import AccessDenied from './components/ui/AccessDenied';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Library, Activity, BookOpen, Bot, Monitor, FileText, Settings, Shield } from 'lucide-react';
+import { Toaster } from 'sonner';
 
-export default function CoreLayout({ children }: { children?: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isVaultOpen, setIsVaultOpen] = useState(false);
-  const [isCommandOpen, setIsCommandOpen] = useState(false);
-  const navigate = useNavigate();
+interface CoreLayoutProps {
+  children: React.ReactNode;
+}
+
+const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
   const location = useLocation();
-  const { role } = useAuth();
 
-  // Global Command Palette Listener (Cmd+K)
-  useEffect(() => {
-      const handleKeyDown = (e: KeyboardEvent) => {
-          if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-              e.preventDefault();
-              setIsCommandOpen(prev => !prev);
-          }
-          if (e.key === 'Escape') {
-              setIsCommandOpen(false);
-          }
-      };
-      window.addEventListener('keydown', handleKeyDown);
-      return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  const isActive = (path: string) => {
+    return location.pathname === path ? 'text-blue-400 border-l-2 border-blue-400 bg-blue-500/5' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5';
+  };
 
-  // Access Control Logic (Updated: Vault is open to all operators)
-  const isRestricted = location.pathname.startsWith('/admin');
-  const isAuthorized = role === 'ROOT_ADMIN';
-
-  const content = (isRestricted && !isAuthorized) ? <AccessDenied /> : (children || <Outlet />);
+  const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
+    <Link
+      to={to}
+      className={`flex items-center gap-3 px-6 py-3 transition-all duration-200 text-sm font-bold tracking-widest uppercase ${isActive(to)}`}
+    >
+      <Icon size={18} />
+      <span>{label}</span>
+    </Link>
+  );
 
   return (
-    <div className="flex h-screen bg-[#0B1121] text-white overflow-hidden font-mono">
-
-      {/* MOBILE OVERLAY */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/80 z-40 md:hidden backdrop-blur-sm"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* SIDEBAR (Responsive & Persistent) */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-zinc-950 border-r border-zinc-800 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="h-full overflow-y-auto scrollbar-hide">
-           <div className="flex justify-end p-4 md:hidden">
-              <button onClick={() => setSidebarOpen(false)} className="text-gray-400 hover:text-white"><X /></button>
-           </div>
-           <Sidebar
-              onCloseMobile={() => setSidebarOpen(false)}
-              onOpenVault={() => setIsVaultOpen(true)}
-           />
-        </div>
-      </div>
-
-      {/* MAIN CONTENT area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* MOBILE HEADER */}
-        <div className="md:hidden flex items-center p-4 border-b border-gray-800 bg-[#0F172A]">
-           <button onClick={() => setSidebarOpen(true)} className="p-2 -ml-2 text-gray-400 hover:text-white">
-              <Menu />
-           </button>
-           <span className="font-bold ml-2 text-lg">MaxiMost</span>
+    <div className="flex min-h-screen bg-[#020408] font-sans">
+      {/* FIXED LEFT SIDEBAR */}
+      <aside className="w-64 bg-[#020408] border-r border-white/5 flex-shrink-0 fixed h-full z-50">
+        <div className="p-8">
+            <h1 className="text-2xl font-black italic tracking-tighter text-white">TITAN<span className="text-blue-500">.OS</span></h1>
+            <p className="text-[10px] text-gray-600 font-mono mt-1 tracking-[0.3em]">V1.6 STABLE</p>
         </div>
 
-        {/* 1% HEADER (Telemetry) */}
-        <div className="hidden md:block">
-           <TelemetryHeader />
-           {/* 1% Loading Bar */}
-           <motion.div
-              key={location.pathname + "bar"}
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 0.5, ease: "circOut" }}
-              className="h-[2px] bg-blue-500 shadow-[0_0_10px_#3b82f6]"
-           />
-        </div>
+        <nav className="space-y-8 mt-4">
+            <div>
+                <div className="px-6 mb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">Command</div>
+                <NavItem to="/dashboard" icon={LayoutDashboard} label="The Dash" />
+                <NavItem to="/archive" icon={Library} label="The Archive" />
+                <NavItem to="/body-hud" icon={Activity} label="Body HUD" />
+                <NavItem to="/ledger" icon={BookOpen} label="The Ledger" />
+            </div>
 
-        {/* PAGE CONTENT (Animated) */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-hide relative">
-           <AnimatePresence mode="wait">
-             <motion.div
-               key={location.pathname}
-               initial={{ x: 20, opacity: 0 }}
-               animate={{ x: 0, opacity: 1 }}
-               exit={{ x: -20, opacity: 0 }}
-               transition={{ duration: 0.3, ease: "easeOut" }}
-               className="h-full"
-             >
-                {content}
-             </motion.div>
-           </AnimatePresence>
-        </main>
-      </div>
+            <div>
+                <div className="px-6 mb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">Tools</div>
+                <NavItem to="/coach" icon={Bot} label="AI Coach" />
+                <NavItem to="/mirror" icon={Monitor} label="The Mirror" />
+                <NavItem to="/stacks" icon={FileText} label="Blueprints" />
+            </div>
 
-      {/* VAULT OVERLAY */}
-      <ConsoleOverlay
-        isOpen={isVaultOpen}
-        onClose={() => setIsVaultOpen(false)}
-        title="Sovereign Vault"
-      >
-         <VaultCore isOverlay={true} />
-      </ConsoleOverlay>
+            <div>
+                <div className="px-6 mb-2 text-[10px] font-bold text-gray-600 uppercase tracking-widest">System</div>
+                <NavItem to="/vault" icon={Shield} label="The Vault" />
+                <NavItem to="/preferences" icon={Settings} label="Preferences" />
+            </div>
+        </nav>
+      </aside>
 
-      {/* TACTICAL OVERLAY (Command Menu) */}
-      <CommandMenu isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
-
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 ml-64 relative">
+         {children}
+         <Toaster position="bottom-right" theme="dark" />
+      </main>
     </div>
   );
-}
+};
+
+export default CoreLayout;
