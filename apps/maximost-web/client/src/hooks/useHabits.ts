@@ -15,7 +15,27 @@ export const useHabits = () => {
   const fetchHabits = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+
+      if (!user) {
+        // MOCK DATA FALLBACK FOR PREVIEW/DEV
+        console.warn('⚠️ No user found - falling back to SOVEREIGN LIBRARY mock data');
+        const mockData = SOVEREIGN_LIBRARY.map(h => ({
+           id: h.id,
+           habit_id: h.id,
+           title: h.title,
+           status: 'active',
+           current_value: 0,
+           target_value: h.default_config.target_value,
+           frequency_type: h.default_config.frequency_type,
+           streak: 0,
+           metadata: {
+             visuals: h.visuals,
+             config: h.default_config
+           }
+        }));
+        setHabits(mockData);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('habits')

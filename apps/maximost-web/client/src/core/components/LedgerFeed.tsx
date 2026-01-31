@@ -1,17 +1,17 @@
 import React from 'react';
 import { Activity, Zap, FileText, CheckCircle2, Lock } from 'lucide-react';
-import { useLens } from '../context/LensContext';
+import { useLens } from '@/context/LensContext';
 
 // Feed Card Component
 const FeedCard = ({ item }: any) => {
     const { type, timestamp, content } = item;
-    const { currentLens } = useLens();
+    const { activeLens } = useLens();
     const time = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     // Resolve Narrative based on Lens
     const narrative = content.narrative ||
-                      content.perspectives?.[currentLens] ||
-                      content.perspectives?.fortitude ||
+                      content.perspectives?.[activeLens] ||
+                      content.perspectives?.operator ||
                       content.preview ||
                       (typeof content.data === 'string' ? content.data : JSON.stringify(content.data));
 

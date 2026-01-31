@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-
 import { AuthProvider, useAuth } from './core/AuthSystem';
 import { ToastProvider } from './core/components/Toast';
 import { AIProvider } from './core/context/AIContext';
-import { LensProvider } from './core/context/LensContext';
+import { LensProvider } from '@/context/LensContext'; // V1.8 Lens System
 // import DashboardCore from './core/DashboardSingularity'; // REPLACED
 import { Dashboard } from './pages/Dashboard'; // NEW DASHBOARD
 import LoginCore from './core/LoginCore'; // Mapped from LoginPage
@@ -64,6 +64,7 @@ function App() {
 
               {/* PUBLIC CAMPAIGN ROUTES */}
               <Route path="/mirror" element={<AccountabilityMirror />} />
+              <Route path="/preview-dashboard" element={<CoreLayout><Dashboard /></CoreLayout>} />
 
               {/* PROTECTED */}
               <Route element={<ProtectedRoute />}>

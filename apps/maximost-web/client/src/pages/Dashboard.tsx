@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Lock, Unlock, ArrowUpDown, LayoutGrid, Calendar as CalendarIcon, BarChart3, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Lock, Unlock, ArrowUpDown, Plus, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { HabitMasterDrawer } from '@/components/habits/HabitMasterDrawer';
 import { useHabits } from '@/hooks/useHabits';
+import { useLens } from '@/context/LensContext';
+import { SOVEREIGN_LIBRARY_DATA } from '@/data/sovereign_library';
 import { Link } from 'react-router-dom';
 
 export const Dashboard: React.FC = () => {
   const { habits, loading, toggleHabit, updateHabitConfig, deleteHabit } = useHabits();
+  const { activeLens } = useLens();
   const [isLocked, setIsLocked] = useState(true);
   const [isReordering, setIsReordering] = useState(false);
   const [view, setView] = useState<'day' | 'week' | 'month'>('day');
@@ -38,7 +41,15 @@ export const Dashboard: React.FC = () => {
   });
 
   const handleOpenDrawer = (habit: any, tab: 'HQ' | 'CONFIG') => {
-    setDrawerState({ isOpen: true, habit, tab });
+    // Lookup lens text
+    const lensText = SOVEREIGN_LIBRARY_DATA[habit.habit_id]?.[activeLens] || habit.description;
+
+    // Pass enriched habit object to drawer
+    setDrawerState({
+        isOpen: true,
+        habit: { ...habit, description: lensText }, // Override description with lens text for display
+        tab
+    });
   };
 
   // Date Logic (Mock for now)

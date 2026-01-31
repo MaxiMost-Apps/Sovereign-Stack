@@ -10,7 +10,7 @@ interface LensContextType {
 const LensContext = createContext<LensContextType | undefined>(undefined);
 
 export const LensProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [activeLens, setLens] = useState<LensType>('operator'); // Default to Operator (Fortitude)
+  const [activeLens, setLens] = useState<LensType>('operator');
 
   return (
     <LensContext.Provider value={{ activeLens, setLens }}>
