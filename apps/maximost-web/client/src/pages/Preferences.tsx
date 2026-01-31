@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Flame, Brain, Zap, Bell, Activity, Moon, Ruler, Clock, Settings, Save } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { supabase } from '@/services/supabase';
 import { toast } from 'sonner';
 
@@ -8,28 +7,28 @@ const LENS_OPTIONS = [
   {
     id: 'stoic',
     name: 'STOIC',
-    description: 'Internal regulation. Logical detachment. Focus on what is controllable. Endure and prevail.',
+    description: 'Logic and internal regulation.',
     icon: Shield,
     color: 'text-slate-400'
   },
   {
     id: 'operator',
     name: 'OPERATOR',
-    description: 'Military precision. Radical ownership. Short, punchy execution. No excuses.',
+    description: 'Military precision and execution.',
     icon: Flame,
     color: 'text-red-500'
   },
   {
     id: 'scientist',
     name: 'SCIENTIST',
-    description: 'Biological mechanisms and neurochemistry. Optimization through data and physiological leverage.',
+    description: 'Biological mechanisms and data.',
     icon: Brain,
     color: 'text-blue-400'
   },
   {
     id: 'visionary',
     name: 'VISIONARY',
-    description: 'System-wide scaling. High-level ROI. Building the legacy and the long-term future.',
+    description: 'High-level ROI and legacy building.',
     icon: Zap,
     color: 'text-purple-400'
   }
@@ -50,7 +49,9 @@ export default function Preferences() {
   // System Toggles
   const [bioUplink, setBioUplink] = useState(true);
   const [notifications, setNotifications] = useState(true);
-  const [animations, setAnimations] = useState(true); // Performance
+
+  // Animations Enabled (true) -> Reduced Motion (false)
+  const [animations, setAnimations] = useState(true);
 
   // Dropdowns
   const [timezone, setTimezone] = useState('local');
@@ -67,7 +68,7 @@ export default function Preferences() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('user_preferences')
         .select('*')
         .eq('user_id', user.id)
@@ -199,7 +200,7 @@ export default function Preferences() {
                     </button>
                 </div>
 
-                {/* Performance */}
+                {/* Reduced Motion (Logic Inverted for UI) */}
                 <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                         <Settings size={18} className="text-slate-400" />
@@ -210,9 +211,10 @@ export default function Preferences() {
                     </div>
                     <button
                          onClick={() => setAnimations(!animations)}
-                        className={`w-10 h-5 rounded-full transition-colors relative ${animations ? 'bg-blue-600' : 'bg-slate-700'}`}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${!animations ? 'bg-blue-600' : 'bg-slate-700'}`}
                     >
-                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${animations ? 'left-6' : 'left-1'}`} />
+                        {/* If !animations (Motion Reduced), switch is ON (Blue) */}
+                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${!animations ? 'left-6' : 'left-1'}`} />
                     </button>
                 </div>
 
