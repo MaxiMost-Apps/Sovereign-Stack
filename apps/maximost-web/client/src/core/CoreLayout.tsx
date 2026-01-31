@@ -19,8 +19,19 @@ const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
   };
 
   const handleSignOut = async () => {
-      await signOut();
-      navigate('/login');
+      try {
+        // Clear Local Storage State
+        localStorage.removeItem('dashboard_locked');
+        localStorage.removeItem('supabase.auth.token'); // Explicit clear if needed, though signOut handles it
+        // Any other local state keys...
+
+        await signOut();
+        navigate('/login');
+      } catch (error) {
+        console.error('Logout error:', error);
+        // Force redirect anyway
+        navigate('/login');
+      }
   };
 
   const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (

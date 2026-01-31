@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/core/supabase';
+import { supabase } from '@/services/supabase'; // Updated path
 import { toast } from 'sonner';
 import { SOVEREIGN_LIBRARY } from '@/data/sovereign_library';
 
@@ -20,8 +20,8 @@ export const useHabits = () => {
         // MOCK DATA FALLBACK FOR PREVIEW/DEV
         console.warn('⚠️ No user found - falling back to SOVEREIGN LIBRARY mock data');
         const mockData = SOVEREIGN_LIBRARY.map(h => ({
-           id: h.id,
-           habit_id: h.id,
+           id: h.id, // This is habit_id in library
+           habit_id: h.id, // Standardize
            title: h.title,
            status: 'active',
            current_value: 0,
@@ -40,10 +40,17 @@ export const useHabits = () => {
       const { data, error } = await supabase
         .from('habits')
         .select('*')
-        .eq('user_id', user.id); // Fetch ALL habits (including archived/paused) for client-side filtering
+        .eq('user_id', user.id);
 
       if (error) throw error;
-      setHabits(data || []);
+
+      // Standardize data shape
+      const transformed = (data || []).map(h => ({
+        ...h,
+        id: h.habit_id || h.id // Ensure we have a consistent ID field for frontend keys
+      }));
+
+      setHabits(transformed);
     } catch (error) {
       console.error('❌ FETCH ERROR:', error);
     } finally {
@@ -64,11 +71,9 @@ export const useHabits = () => {
           if (h.habit_id === habitId) {
              if (typeof value === 'number') {
                 const newVal = (h.current_value || 0) + value;
-                const target = h.metadata?.config?.target_value || 1;
+                const target = h.target_value || 1;
                 return { ...h, current_value: newVal, status: newVal >= target ? 'completed' : 'active' };
              }
-             // Toggle Logic: Active <-> Completed
-             // If currently active, make completed. Otherwise (completed or archived), make active.
              const newStatus = h.status === 'active' ? 'completed' : 'active';
              return { ...h, status: newStatus };
           }
@@ -81,7 +86,6 @@ export const useHabits = () => {
           title: def.title,
           description: def.description,
           visuals: def.visuals,
-          default_config: def.default_config,
           status: 'active',
           streak: 0,
           current_value: 0,
@@ -102,13 +106,13 @@ export const useHabits = () => {
         let updates: any = {};
         if (typeof value === 'number') {
            const newVal = (existing.current_value || 0) + value;
-           const target = existing.metadata?.config?.target_value || 1;
+           const target = existing.target_value || 1;
            updates = { current_value: newVal, status: newVal >= target ? 'completed' : 'active' };
         } else {
-           // Improved Toggle Logic
            const newStatus = existing.status === 'active' ? 'completed' : 'active';
            updates = { status: newStatus };
         }
+        // Use 'id' (UUID) for update if we have the record
         const { error } = await supabase.from('habits').update(updates).eq('id', existing.id);
         if (error) throw error;
 
@@ -116,7 +120,7 @@ export const useHabits = () => {
         // INSERT
         const { error } = await supabase.from('habits').insert({
           user_id: user.id,
-          habit_id: habitId,
+          habit_id: habitId, // Ensure habit_id is set
           title: def.title,
           status: 'active',
           streak: 0,
@@ -127,7 +131,7 @@ export const useHabits = () => {
     } catch (err) {
       console.error('❌ SAVE FAILED:', err);
       toast.error('Sync failed - check console');
-      fetchHabits(); // Revert to server state on error
+      fetchHabits();
     }
   }, []);
 
@@ -137,16 +141,12 @@ export const useHabits = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Map frontend updates to DB schema if needed
         const dbUpdates: any = {
              title: updates.title,
+             // Map other fields as needed
         };
 
-        // Handle metadata merging if needed
-        if (updates.visuals || updates.default_config || updates.description) {
-             dbUpdates.description = updates.description;
-             // dbUpdates.metadata = { visuals: updates.visuals, config: updates.default_config };
-        }
+        if (updates.description) dbUpdates.description = updates.description;
 
         await supabase.from('habits').update(dbUpdates).eq('user_id', user.id).eq('habit_id', habitId);
         toast.success('Protocol Updated');
@@ -158,7 +158,6 @@ export const useHabits = () => {
   };
 
   const deleteHabit = async (habitId: string) => {
-      // Optimistic
       setHabits(prev => prev.filter(h => h.habit_id !== habitId));
 
       try {
@@ -180,9 +179,7 @@ export const useHabits = () => {
   };
 
   const reorderHabits = async (newOrder: any[]) => {
-      // Stub: Just update local state for now
       setHabits(newOrder);
-      // TODO: Implement backend persistence for order
   };
 
   return {

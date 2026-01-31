@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Shield, Flame, Brain, Zap, Bell, Activity, Moon, Ruler } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Shield, Flame, Brain, Zap, Bell, Activity, Moon, Ruler, Clock, Settings, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '@/services/supabase';
+import { toast } from 'sonner';
 
 const LENS_OPTIONS = [
   {
@@ -34,12 +36,90 @@ const LENS_OPTIONS = [
 ];
 
 export default function Preferences() {
+  const [loading, setLoading] = useState(false);
   const [activeLens, setActiveLens] = useState('stoic');
+
+  // System Toggles
   const [bioUplink, setBioUplink] = useState(true);
   const [notifications, setNotifications] = useState(true);
+  const [animations, setAnimations] = useState(true); // Performance
+
+  // Dropdowns
+  const [timezone, setTimezone] = useState('local');
+  const [resetTime, setResetTime] = useState('04:00'); // 4 AM default
+  const [units, setUnits] = useState('metric');
+
+  // Load Preferences
+  useEffect(() => {
+    loadPreferences();
+  }, []);
+
+  const loadPreferences = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (data) {
+        if (data.active_lens) setActiveLens(data.active_lens);
+        if (data.settings) {
+            setBioUplink(data.settings.bio_uplink ?? true);
+            setNotifications(data.settings.notifications ?? true);
+            setAnimations(data.settings.animations ?? true);
+            setTimezone(data.settings.timezone || 'local');
+            setResetTime(data.settings.reset_time || '04:00');
+            setUnits(data.settings.units || 'metric');
+        }
+      }
+    } catch (err) {
+      console.error('Load failed:', err);
+    }
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Not authenticated');
+        return;
+      }
+
+      const settings = {
+        bio_uplink: bioUplink,
+        notifications: notifications,
+        animations: animations,
+        timezone: timezone,
+        reset_time: resetTime,
+        units: units
+      };
+
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user.id,
+          active_lens: activeLens,
+          settings: settings,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+      toast.success('System Configuration Saved');
+    } catch (err) {
+      console.error('Save failed:', err);
+      toast.error('Save Failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#020408] text-white p-6 pb-24 font-sans max-w-xl mx-auto">
+    <div className="min-h-screen bg-[#020408] text-white p-6 pb-32 font-sans max-w-xl mx-auto relative">
       <header className="mb-8">
         <h1 className="text-sm font-black tracking-[0.3em] uppercase text-slate-500 mb-2">System Config</h1>
         <h2 className="text-2xl font-bold">Preferences</h2>
@@ -71,7 +151,7 @@ export default function Preferences() {
           </div>
         </section>
 
-        {/* SYSTEM TOGGLES */}
+        {/* SYSTEM CORE */}
         <section className="space-y-4 pt-6 border-t border-white/5">
             <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">System Core</h2>
 
@@ -83,7 +163,7 @@ export default function Preferences() {
                         <Activity size={18} className="text-emerald-500" />
                         <div>
                             <h3 className="text-xs font-bold text-white">Bio-Uplink</h3>
-                            <p className="text-[10px] text-slate-500">Sync Health Data (Apple/Google)</p>
+                            <p className="text-[10px] text-slate-500">Sync Health Data</p>
                         </div>
                     </div>
                     <button
@@ -111,15 +191,64 @@ export default function Preferences() {
                     </button>
                 </div>
 
-                 {/* Dark Mode (Static) */}
-                 <div className="flex items-center justify-between p-4 opacity-50 cursor-not-allowed">
+                {/* Performance */}
+                <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
-                        <Moon size={18} className="text-slate-400" />
+                        <Settings size={18} className="text-slate-400" />
                         <div>
-                            <h3 className="text-xs font-bold text-white">Theme</h3>
-                            <p className="text-[10px] text-slate-500">Locked to Titan Mode (Dark)</p>
+                            <h3 className="text-xs font-bold text-white">Performance</h3>
+                            <p className="text-[10px] text-slate-500">UI Animations</p>
                         </div>
                     </div>
+                    <button
+                         onClick={() => setAnimations(!animations)}
+                        className={`w-10 h-5 rounded-full transition-colors relative ${animations ? 'bg-blue-600' : 'bg-slate-700'}`}
+                    >
+                        <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${animations ? 'left-6' : 'left-1'}`} />
+                    </button>
+                </div>
+
+                 {/* Reset Time */}
+                 <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                        <Clock size={18} className="text-blue-400" />
+                        <div>
+                            <h3 className="text-xs font-bold text-white">Daily Reset</h3>
+                            <p className="text-[10px] text-slate-500">Dashboard clear time</p>
+                        </div>
+                    </div>
+                    <select
+                        value={resetTime}
+                        onChange={(e) => setResetTime(e.target.value)}
+                        className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-blue-500"
+                    >
+                        <option value="00:00">12:00 AM</option>
+                        <option value="01:00">01:00 AM</option>
+                        <option value="02:00">02:00 AM</option>
+                        <option value="03:00">03:00 AM</option>
+                        <option value="04:00">04:00 AM</option>
+                    </select>
+                </div>
+
+                 {/* Timezone */}
+                 <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                        <Moon size={18} className="text-purple-400" />
+                        <div>
+                            <h3 className="text-xs font-bold text-white">Timezone</h3>
+                            <p className="text-[10px] text-slate-500">Local Adjustment</p>
+                        </div>
+                    </div>
+                    <select
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-blue-500 max-w-[120px]"
+                    >
+                        <option value="local">Local System</option>
+                        <option value="utc">UTC</option>
+                        <option value="est">EST (New York)</option>
+                        <option value="pst">PST (Los Angeles)</option>
+                    </select>
                 </div>
 
             </div>
@@ -130,23 +259,40 @@ export default function Preferences() {
              <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Measurement</h2>
              <div className="bg-[#0A0F1C] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <Ruler size={18} className="text-blue-400" />
+                    <Ruler size={18} className="text-slate-300" />
                     <div>
                         <h3 className="text-xs font-bold text-white">Units</h3>
                         <p className="text-[10px] text-slate-500">Metric vs Imperial</p>
                     </div>
                 </div>
                 <div className="flex bg-black/40 rounded-lg p-1">
-                    <button className="px-3 py-1 text-[10px] font-bold bg-white/10 text-white rounded">METRIC</button>
-                    <button className="px-3 py-1 text-[10px] font-bold text-slate-500">IMPERIAL</button>
+                    <button
+                        onClick={() => setUnits('metric')}
+                        className={`px-3 py-1 text-[10px] font-bold rounded transition-all ${units === 'metric' ? 'bg-white/10 text-white' : 'text-slate-500'}`}
+                    >
+                        METRIC
+                    </button>
+                    <button
+                        onClick={() => setUnits('imperial')}
+                        className={`px-3 py-1 text-[10px] font-bold rounded transition-all ${units === 'imperial' ? 'bg-white/10 text-white' : 'text-slate-500'}`}
+                    >
+                        IMPERIAL
+                    </button>
                 </div>
              </div>
          </section>
 
-         <div className="pt-8 text-center">
-            <p className="text-[9px] text-slate-600 font-mono">MAXIMOST TITAN OS V19.3</p>
-         </div>
+      </div>
 
+      {/* SAVE BUTTON */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#020408] to-transparent pointer-events-none flex justify-center z-50">
+         <button
+            onClick={handleSave}
+            disabled={loading}
+            className="w-full max-w-md pointer-events-auto py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-xs tracking-[0.2em] uppercase shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-3"
+         >
+            <Save size={18} /> {loading ? 'SAVING...' : 'SAVE CHANGES'}
+         </button>
       </div>
     </div>
   );
