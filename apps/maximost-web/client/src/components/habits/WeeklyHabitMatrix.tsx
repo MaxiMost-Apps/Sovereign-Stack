@@ -2,7 +2,7 @@ import React from 'react';
 import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { motion } from 'framer-motion';
 
-export const WeeklyHabitMatrix = ({ habits, selectedDate }: any) => {
+export const WeeklyHabitMatrix = ({ habits, selectedDate, animationsEnabled = true }: any) => {
   const startOfCurrentWeek = startOfWeek(selectedDate, { weekStartsOn: 1 }); // Monday start
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfCurrentWeek, i));
 
@@ -47,8 +47,9 @@ export const WeeklyHabitMatrix = ({ habits, selectedDate }: any) => {
                   return (
                     <div key={i} className="flex-1 flex justify-center">
                       <div
-                        className={`w-3 h-3 rounded-full transition-all duration-300 border border-white/5
-                          ${isCompleted ? `${theme.bg} scale-110` : 'bg-[#151a25]'}`}
+                        className={`w-3 h-3 rounded-full border border-white/5
+                          ${animationsEnabled ? 'transition-all duration-300' : ''}
+                          ${isCompleted ? `${theme.bg} ${animationsEnabled ? 'scale-110' : ''}` : 'bg-[#151a25]'}`}
                         style={{ boxShadow: isCompleted ? `0 0 8px ${theme.glow}` : 'none' }}
                       />
                     </div>

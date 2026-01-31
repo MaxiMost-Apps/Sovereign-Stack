@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Settings, Database, Save, Trash2 } from 'lucide-react';
 import { supabase } from '@/services/supabase';
 
-export const EditHabitPanel = ({ habit, isOpen, onClose, onSave }: any) => {
+export const EditHabitPanel = ({ habit, isOpen, onClose, onSave, animationsEnabled = true }: any) => {
   const [activeTab, setActiveTab] = useState<'basics' | 'architecture'>('basics');
   const [formData, setFormData] = useState<any>({});
 
@@ -26,11 +26,7 @@ export const EditHabitPanel = ({ habit, isOpen, onClose, onSave }: any) => {
         lens_operator: formData.lens_operator,
         lens_scientist: formData.lens_scientist,
         lens_visionary: formData.lens_visionary,
-        // Using stack_labels for Bio-Uplink temporarily if column doesn't exist,
-        // OR assumign metadata field for complex data dump if columns not strictly there.
-        // Based on migration, we have stack_labels.
         stack_labels: formData.stack_labels,
-        // goal_target: formData.goal_target // if needed
       };
 
       const { error } = await supabase
@@ -52,15 +48,20 @@ export const EditHabitPanel = ({ habit, isOpen, onClose, onSave }: any) => {
         <>
           {/* BACKDROP */}
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: animationsEnabled ? 0.3 : 0 }}
             onClick={onClose}
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
           />
 
           {/* PANEL */}
           <motion.div
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={animationsEnabled ? { type: 'spring', damping: 25, stiffness: 200 } : { duration: 0 }}
             className="fixed right-0 top-0 h-full w-full max-w-md bg-[#0A0F1C] border-l border-white/10 z-[70] shadow-2xl flex flex-col font-sans"
           >
             {/* HEADER */}
@@ -90,7 +91,7 @@ export const EditHabitPanel = ({ habit, isOpen, onClose, onSave }: any) => {
                 </div>
 
                 {activeTab === 'basics' ? (
-                <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className={`space-y-6 ${animationsEnabled ? 'animate-in fade-in slide-in-from-right-4 duration-300' : ''}`}>
                     {/* Title */}
                     <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Protocol Title</label>
@@ -119,7 +120,7 @@ export const EditHabitPanel = ({ habit, isOpen, onClose, onSave }: any) => {
                                 <button
                                     key={c}
                                     onClick={() => setFormData({...formData, visual_color: c})}
-                                    className={`w-8 h-8 rounded-full border-2 transition-all ${formData.visual_color === c ? `border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]` : 'border-transparent opacity-50 hover:opacity-100'}`}
+                                    className={`w-8 h-8 rounded-full border-2 transition-all ${formData.visual_color === c ? `border-white ${animationsEnabled ? 'scale-110' : ''} shadow-[0_0_10px_rgba(255,255,255,0.3)]` : 'border-transparent opacity-50 hover:opacity-100'}`}
                                     style={{ backgroundColor: c === 'amber' ? '#f59e0b' : c === 'emerald' ? '#10b981' : c === 'purple' ? '#a855f7' : c === 'red' ? '#ef4444' : '#3b82f6' }}
                                 />
                             ))}
@@ -141,7 +142,7 @@ export const EditHabitPanel = ({ habit, isOpen, onClose, onSave }: any) => {
                     </div>
                 </div>
                 ) : (
-                <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className={`space-y-8 ${animationsEnabled ? 'animate-in fade-in slide-in-from-right-4 duration-300' : ''}`}>
                     {/* IDENTITY LENSES */}
                     <div className="space-y-4">
                        <div className="flex items-center justify-between">

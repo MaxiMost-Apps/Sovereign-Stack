@@ -35,6 +35,14 @@ const LENS_OPTIONS = [
   }
 ];
 
+const DAY_END_OPTIONS = [
+  { label: 'Midnight (00:00)', value: 0 },
+  { label: '1:00 AM', value: 1 },
+  { label: '2:00 AM', value: 2 },
+  { label: '3:00 AM', value: 3 },
+  { label: '4:00 AM', value: 4 },
+];
+
 export default function Preferences() {
   const [loading, setLoading] = useState(false);
   const [activeLens, setActiveLens] = useState('stoic');
@@ -46,7 +54,7 @@ export default function Preferences() {
 
   // Dropdowns
   const [timezone, setTimezone] = useState('local');
-  const [resetTime, setResetTime] = useState('04:00'); // 4 AM default
+  const [resetTime, setResetTime] = useState('4'); // Default to 4 AM logic
   const [units, setUnits] = useState('metric');
 
   // Load Preferences
@@ -72,7 +80,7 @@ export default function Preferences() {
             setNotifications(data.settings.notifications ?? true);
             setAnimations(data.settings.animations ?? true);
             setTimezone(data.settings.timezone || 'local');
-            setResetTime(data.settings.reset_time || '04:00');
+            setResetTime(data.settings.reset_time?.toString() || '4');
             setUnits(data.settings.units || 'metric');
         }
       }
@@ -95,7 +103,7 @@ export default function Preferences() {
         notifications: notifications,
         animations: animations,
         timezone: timezone,
-        reset_time: resetTime,
+        reset_time: parseInt(resetTime),
         units: units
       };
 
@@ -196,8 +204,8 @@ export default function Preferences() {
                     <div className="flex items-center gap-3">
                         <Settings size={18} className="text-slate-400" />
                         <div>
-                            <h3 className="text-xs font-bold text-white">Performance</h3>
-                            <p className="text-[10px] text-slate-500">UI Animations</p>
+                            <h3 className="text-xs font-bold text-white">Reduced Motion</h3>
+                            <p className="text-[10px] text-slate-500">Disable heavy animations</p>
                         </div>
                     </div>
                     <button
@@ -209,25 +217,26 @@ export default function Preferences() {
                 </div>
 
                  {/* Reset Time */}
-                 <div className="flex items-center justify-between p-4">
-                    <div className="flex items-center gap-3">
-                        <Clock size={18} className="text-blue-400" />
-                        <div>
-                            <h3 className="text-xs font-bold text-white">Daily Reset</h3>
-                            <p className="text-[10px] text-slate-500">Dashboard clear time</p>
-                        </div>
+                 <div className="flex flex-col p-4 gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                          <Clock size={18} className="text-blue-400" />
+                          <div>
+                              <h3 className="text-xs font-bold text-white">Daily Reset Offset</h3>
+                              <p className="text-[10px] text-slate-500">When the new day begins</p>
+                          </div>
+                      </div>
+                      <select
+                          value={resetTime}
+                          onChange={(e) => setResetTime(e.target.value)}
+                          className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-blue-500"
+                      >
+                          {DAY_END_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                      </select>
                     </div>
-                    <select
-                        value={resetTime}
-                        onChange={(e) => setResetTime(e.target.value)}
-                        className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-blue-500"
-                    >
-                        <option value="00:00">12:00 AM</option>
-                        <option value="01:00">01:00 AM</option>
-                        <option value="02:00">02:00 AM</option>
-                        <option value="03:00">03:00 AM</option>
-                        <option value="04:00">04:00 AM</option>
-                    </select>
+                    <p className="text-[9px] text-slate-600 font-mono italic pl-8">Adjust this to match your actual sleep cycle.</p>
                 </div>
 
                  {/* Timezone */}

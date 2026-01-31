@@ -37,9 +37,10 @@ export const useHabits = () => {
         return;
       }
 
+      // STRICT QUERY UPDATE: select '*, habit_id' explicitly to override cache/ambiguity
       const { data, error } = await supabase
         .from('habits')
-        .select('*')
+        .select('*, habit_id')
         .eq('user_id', user.id);
 
       if (error) throw error;

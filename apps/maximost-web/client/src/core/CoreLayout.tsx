@@ -22,8 +22,8 @@ const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
       try {
         // Clear Local Storage State
         localStorage.removeItem('dashboard_locked');
-        localStorage.removeItem('supabase.auth.token'); // Explicit clear if needed, though signOut handles it
-        // Any other local state keys...
+        localStorage.removeItem('maximost-theme-lock'); // Specific request
+        localStorage.removeItem('supabase.auth.token');
 
         await signOut();
         navigate('/login');

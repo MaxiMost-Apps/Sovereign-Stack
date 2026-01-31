@@ -9,9 +9,10 @@ interface DailyHabitRowProps {
   date: Date;
   onToggle: (id: string, date?: number) => void;
   onOpenConfig?: (habit: any) => void;
+  animationsEnabled?: boolean;
 }
 
-export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig }: DailyHabitRowProps) => {
+export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig, animationsEnabled = true }: DailyHabitRowProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isCompleted = habit.completed;
 
@@ -63,7 +64,7 @@ export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig }:
         <div className="flex-shrink-0">
              {frequencyType === 'ABSOLUTE' ? (
                  <motion.button
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={animationsEnabled ? { scale: 0.9 } : {}}
                     onClick={() => onToggle(habit.id, date.getTime())}
                     className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all
                         ${isCompleted ? `border-transparent ${theme.bg}` : 'border-slate-800 bg-transparent'}`}
@@ -93,9 +94,10 @@ export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig }:
       <AnimatePresence>
         {isDrawerOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={animationsEnabled ? { height: 0, opacity: 0 } : false}
+            animate={animationsEnabled ? { height: 'auto', opacity: 1 } : { height: 'auto', opacity: 1 }}
+            exit={animationsEnabled ? { height: 0, opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={{ duration: animationsEnabled ? 0.3 : 0 }}
             className="bg-black/20 border-t border-white/5 overflow-hidden"
           >
             <div className="p-5 grid grid-cols-1 gap-4">

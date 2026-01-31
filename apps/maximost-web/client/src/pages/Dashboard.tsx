@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addDays, startOfWeek, endOfWeek, isSameDay } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, isSameDay, subDays } from 'date-fns';
 import { supabase } from '@/services/supabase';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyHabitMatrix } from '@/components/habits/WeeklyHabitMatrix';
@@ -13,7 +13,13 @@ export default function Dashboard() {
     const saved = localStorage.getItem('dashboard_locked');
     return saved ? JSON.parse(saved) : true;
   });
-  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // State for Preferences & Date
+  const [resetOffset, setResetOffset] = useState(4); // Default 4 AM
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date()); // Initial placeholder
+  const [isDateInitialized, setIsDateInitialized] = useState(false);
+
   const [habits, setHabits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingHabit, setEditingHabit] = useState<any>(null);
@@ -23,19 +29,62 @@ export default function Dashboard() {
     localStorage.setItem('dashboard_locked', JSON.stringify(isLocked));
   }, [isLocked]);
 
-  // Data Fetching
+  // Load Preferences & Initialize "Operational Date"
   useEffect(() => {
-    fetchHabits();
+    const init = async () => {
+        let offset = 4; // Default
+        let anim = true;
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase
+                    .from('user_preferences')
+                    .select('settings')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+
+                if (data?.settings) {
+                    if (typeof data.settings.reset_time === 'number') offset = data.settings.reset_time;
+                    if (typeof data.settings.animations === 'boolean') anim = data.settings.animations;
+                }
+            }
+        } catch (e) {
+            console.warn('Prefs load error', e);
+        }
+
+        setResetOffset(offset);
+        setAnimationsEnabled(anim);
+
+        // Calculate Sovereign Clock
+        const now = new Date();
+        const hour = now.getHours();
+        if (hour < offset) {
+            setSelectedDate(subDays(now, 1));
+        } else {
+            setSelectedDate(now);
+        }
+        setIsDateInitialized(true);
+    };
+
+    init();
   }, []);
+
+  // Data Fetching (Only after date is ready)
+  useEffect(() => {
+    if (isDateInitialized) fetchHabits();
+  }, [isDateInitialized, selectedDate]); // Refetch when date changes
 
   async function fetchHabits() {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       const userId = user?.id || '00000000-0000-0000-0000-000000000000';
 
+      // QUERY FIX: Explicitly select habit_id
       const { data, error } = await supabase
         .from('habits')
-        .select(`*, habit_logs(date, status, value)`)
+        .select(`*, habit_id, habit_logs(date, status, value)`)
         .eq('user_id', userId)
         .order('created_at', { ascending: true });
 
@@ -69,7 +118,8 @@ export default function Dashboard() {
 
   const getContextLabel = () => {
     if (view === 'DAILY') {
-      return isSameDay(selectedDate, new Date()) ? 'Today' : format(selectedDate, 'MMM d');
+      // Format: < Saturday, Jan 31 >
+      return format(selectedDate, 'EEEE, MMM d');
     }
     if (view === 'WEEKLY') {
       const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
@@ -83,7 +133,6 @@ export default function Dashboard() {
   };
 
   const toggleHabit = async (habitId: string, date?: number) => {
-    // Determine date to toggle: passed date or selectedDate
     const targetDate = date ? new Date(date) : selectedDate;
     const dateStr = format(targetDate, 'yyyy-MM-dd');
 
@@ -113,8 +162,7 @@ export default function Dashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const habit = habits.find(h => h.id === habitId);
-      const existingLog = habit?.habit_logs?.find((l: any) => l.date === dateStr);
+      const existingLog = habits.find(h => h.id === habitId)?.habit_logs?.find((l: any) => l.date === dateStr);
       const newStatus = existingLog?.status === 'completed' ? 'pending' : 'completed';
 
       const { error } = await supabase
@@ -141,19 +189,19 @@ export default function Dashboard() {
     completed: h.habit_logs?.some((l: any) => l.date === format(selectedDate, 'yyyy-MM-dd') && l.status === 'completed')
   }));
 
+  if (!isDateInitialized) return <div className="min-h-screen bg-[#020408]" />; // Flash preventer
+
   return (
-    <div className="min-h-screen bg-[#020408] pb-20 font-sans text-white relative">
+    <div className="min-h-screen bg-[#020408] pb-20 font-sans text-white relative overscroll-contain">
       {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#0A0F1C]/95 backdrop-blur-xl border-b border-white/5 shadow-2xl shadow-black/50">
 
         {/* Row 1: Lock & Tabs */}
         <div className="flex items-center justify-between p-3">
-           {/* Lock (Left) */}
            <button onClick={() => setIsLocked(!isLocked)} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
             {isLocked ? <Lock size={18} className="text-slate-500" /> : <Unlock size={18} className="text-amber-500" />}
            </button>
 
-           {/* Tabs (Right/Center) */}
            <div className="flex bg-[#020408] rounded-lg p-0.5 border border-white/10">
               {['DAILY', 'WEEKLY', 'MONTHLY'].map(t => (
                 <button
@@ -166,10 +214,10 @@ export default function Dashboard() {
               ))}
            </div>
 
-           <div className="w-8" /> {/* Spacer balance */}
+           <div className="w-8" />
         </div>
 
-        {/* Row 2: Date Navigator (Full Width) */}
+        {/* Row 2: Date Navigator (One-Line) */}
         <div className="px-3 pb-3">
            <div className="flex items-center justify-between bg-[#020408] border border-white/5 rounded-xl p-2">
               <button onClick={() => changeDate(-1)} className="p-2 text-slate-500 hover:text-white hover:bg-white/5 rounded-lg"><ChevronLeft size={16}/></button>
@@ -192,7 +240,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 10 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: animationsEnabled ? 0.2 : 0 }} // Performance Mode check
               className="space-y-8"
             >
               <section className="space-y-3">
@@ -205,6 +253,7 @@ export default function Dashboard() {
                     date={selectedDate}
                     onToggle={toggleHabit}
                     onOpenConfig={() => setEditingHabit(habit)}
+                    animationsEnabled={animationsEnabled}
                   />
                 ))}
                  {absoluteHabits.length === 0 && !loading && (
@@ -225,6 +274,7 @@ export default function Dashboard() {
                      date={selectedDate}
                      onToggle={toggleHabit}
                      onOpenConfig={() => setEditingHabit(habit)}
+                     animationsEnabled={animationsEnabled}
                    />
                   ))}
                 </section>
@@ -239,9 +289,9 @@ export default function Dashboard() {
              initial={{ opacity: 0, x: 10 }}
              animate={{ opacity: 1, x: 0 }}
              exit={{ opacity: 0, x: -10 }}
-             transition={{ duration: 0.2 }}
+             transition={{ duration: animationsEnabled ? 0.2 : 0 }}
            >
-             <WeeklyHabitMatrix habits={habits} selectedDate={selectedDate} />
+             <WeeklyHabitMatrix habits={habits} selectedDate={selectedDate} animationsEnabled={animationsEnabled} />
            </motion.div>
           )}
 
@@ -252,10 +302,10 @@ export default function Dashboard() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: animationsEnabled ? 0.2 : 0 }}
             className="flex flex-col items-center justify-center space-y-4"
           >
              <div className="w-full bg-[#0A0F1C] border border-white/5 rounded-2xl p-6 min-h-[300px] flex items-center justify-center">
-                 {/* Placeholder for Calendar Grid */}
                  <div className="text-center space-y-2">
                     <div className="grid grid-cols-7 gap-2 opacity-30">
                         {Array.from({length: 28}).map((_, i) => (
@@ -280,6 +330,7 @@ export default function Dashboard() {
           fetchHabits();
           setEditingHabit(null);
         }}
+        animationsEnabled={animationsEnabled}
       />
 
     </div>
