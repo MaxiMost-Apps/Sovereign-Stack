@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addDays, startOfWeek, endOfWeek, subDays, isSameDay } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek, subDays, isSameDay, isValid } from 'date-fns';
 import { supabase } from '@/services/supabase';
-import { useHabits } from '@/hooks/useHabits'; // The Golden Hook
+import { useHabits } from '@/hooks/useHabits';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyHabitMatrix } from '@/components/habits/WeeklyHabitMatrix';
 import { EditHabitPanel } from '@/components/habits/EditHabitPanel';
@@ -11,14 +11,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function Dashboard() {
   const [view, setView] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('DAILY');
   const [isLocked, setIsLocked] = useState(() => {
-    const saved = localStorage.getItem('dashboard_locked');
-    return saved ? JSON.parse(saved) : true;
+    try {
+        const saved = localStorage.getItem('dashboard_locked');
+        return saved ? JSON.parse(saved) : true;
+    } catch { return true; }
   });
 
   // State for Preferences & Date
   const [resetOffset, setResetOffset] = useState(4); // Default 4 AM
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
-  const [activeLens, setActiveLens] = useState('stoic'); // Default lens
+  const [activeLens, setActiveLens] = useState('stoic');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isDateInitialized, setIsDateInitialized] = useState(false);
 
@@ -79,6 +81,10 @@ export default function Dashboard() {
   }, []);
 
   const changeDate = (amount: number) => {
+    if (!isValid(selectedDate)) {
+        setSelectedDate(new Date()); // Fallback
+        return;
+    }
     if (view === 'DAILY') {
       setSelectedDate(addDays(selectedDate, amount));
     } else if (view === 'WEEKLY') {
@@ -91,17 +97,19 @@ export default function Dashboard() {
   };
 
   const getContextLabel = () => {
+    if (!isValid(selectedDate)) return '...';
+
     if (view === 'DAILY') {
-      // Format: < Saturday, Jan 31 >
-      return format(selectedDate, 'EEEE, MMM d');
+      // Format: < SATURDAY, JAN 31 >
+      return format(selectedDate, 'EEEE, MMM d').toUpperCase();
     }
     if (view === 'WEEKLY') {
       const start = startOfWeek(selectedDate, { weekStartsOn: 1 });
       const end = endOfWeek(selectedDate, { weekStartsOn: 1 });
-      return `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`;
+      return `${format(start, 'MMM d')} - ${format(end, 'MMM d')}`.toUpperCase();
     }
     if (view === 'MONTHLY') {
-      return format(selectedDate, 'MMMM yyyy');
+      return format(selectedDate, 'MMMM yyyy').toUpperCase();
     }
     return '';
   };
@@ -110,7 +118,7 @@ export default function Dashboard() {
   const frequencyHabits = habits.filter(h => h.habit_type === 'FREQUENCY');
 
   const prepareForRender = (list: any[]) => list.map(h => {
-     // Check logs for selected date
+     if (!isValid(selectedDate)) return { ...h, completed: false };
      const dateStr = format(selectedDate, 'yyyy-MM-dd');
      const isCompleted = h.habit_logs?.some((l: any) => l.date === dateStr && l.status === 'completed');
      return { ...h, completed: isCompleted };
@@ -134,7 +142,7 @@ export default function Dashboard() {
                 <button
                   key={t}
                   onClick={() => setView(t as any)}
-                  className={`px-4 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider ${view === t ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                  className={`px-4 py-1.5 text-[10px] font-bold rounded-md transition-all tracking-wider ${view === t ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
                 >
                   {t}
                 </button>
@@ -181,7 +189,7 @@ export default function Dashboard() {
                     onToggle={toggleHabit}
                     onOpenConfig={() => setEditingHabit(habit)}
                     animationsEnabled={animationsEnabled}
-                    activeLens={activeLens} // Pass the lens
+                    activeLens={activeLens}
                   />
                 ))}
                  {absoluteHabits.length === 0 && !loading && (
