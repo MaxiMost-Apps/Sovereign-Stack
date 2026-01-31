@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 node_modules
 .turbo
 .turbo/
+
+# Supabase Edge Functions Secrets
+supabase/functions/.env
