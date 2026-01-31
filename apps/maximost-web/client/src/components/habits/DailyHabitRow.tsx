@@ -9,7 +9,7 @@ interface DailyHabitRowProps {
   onOpenInfo: (habit: any) => void;
   onOpenConfig: (habit: any) => void;
   onToggle: (id: string, value?: number) => void;
-  isLedgerMode?: boolean; // For "Atom Ledger" view (inactive habits)
+  isLedgerMode?: boolean; // For "Reserves" view (inactive habits)
 }
 
 export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({
@@ -57,13 +57,6 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({
   // --- ACTIVE MODE ---
   return (
     <div className="group flex items-center gap-4 bg-[#0B1221] px-4 py-4 rounded-xl border border-white/5 hover:bg-white/[0.02] hover:border-white/10 transition-all animate-in fade-in duration-500 relative overflow-hidden">
-      {/* Progress Bar Background for Frequency Habits (Optional visual flair) */}
-      {frequencyType === 'FREQUENCY' && currentValue > 0 && (
-         <div
-           className="absolute bottom-0 left-0 h-0.5 bg-blue-500/50 transition-all duration-500"
-           style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
-         />
-      )}
 
       {/* 1. Drag Handle (Visible ONLY if Reordering is true) */}
       {isReordering && (
@@ -105,56 +98,39 @@ export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({
               </div>
             )}
           </div>
-           {/* Subtext / Streak */}
-           <div className="text-[10px] text-gray-600 font-mono flex items-center gap-2">
-               <span className={habit.streak > 0 ? "text-green-500" : ""}>Streak: {habit.streak || 0}</span>
-               {frequencyType === 'FREQUENCY' && <span>• Target: {targetValue}</span>}
-           </div>
+           {/* Subtext removed for cleaner look as per V1.8 spec, unless necessary */}
         </div>
       </div>
 
-      {/* 3. SMART INPUT */}
+      {/* 3. VISUAL VARIANT (Absolute vs Frequency) */}
       <div className="flex-shrink-0">
          {frequencyType === 'ABSOLUTE' ? (
-             /* BINARY CHECKBOX */
+             /* BINARY CHECKBOX (Simple Circle) */
              <button
                 onClick={() => onToggle(habit.habit_id)}
-                className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all duration-300 ${
+                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                   isCompleted
                   ? 'bg-blue-600 border-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                  : 'border-white/10 hover:border-blue-500/50 hover:bg-white/5'
+                  : 'border-white/20 hover:border-blue-500/50 hover:bg-white/5'
                 }`}
               >
-                {isCompleted && <Check size={18} className="text-white animate-in zoom-in duration-200" strokeWidth={3} />}
+                {isCompleted && <Check size={14} className="text-white animate-in zoom-in duration-200" strokeWidth={4} />}
               </button>
          ) : (
-             /* FREQUENCY RING (1/3) */
+             /* FREQUENCY PILL (Progress Bar Style) */
              <button
                 onClick={() => onToggle(habit.habit_id, 1)} // Increment
-                className="relative w-10 h-10 flex items-center justify-center group/ring"
+                className="relative h-8 w-24 bg-black/40 rounded-full border border-white/10 overflow-hidden flex items-center justify-center group/pill hover:border-blue-500/30 transition-all"
              >
-                {/* SVG Ring */}
-                <svg className="w-full h-full rotate-[-90deg]" viewBox="0 0 36 36">
-                    <path
-                        className="text-gray-800"
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                    />
-                    <path
-                        className={`${isCompleted ? 'text-green-500' : 'text-blue-500'} transition-all duration-500`}
-                        strokeDasharray={`${Math.min((currentValue / targetValue) * 100, 100)}, 100`}
-                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                    />
-                </svg>
-                {/* Number Center */}
-                <span className="absolute text-[9px] font-bold font-mono text-gray-300 group-hover/ring:text-white transition-colors">
-                    {currentValue}/{targetValue}
+                {/* Background Bar */}
+                <div
+                    className={`absolute left-0 top-0 bottom-0 transition-all duration-500 ${currentValue >= targetValue ? 'bg-green-500' : 'bg-blue-600'}`}
+                    style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
+                />
+
+                {/* Text Overlay */}
+                <span className="relative z-10 text-[10px] font-bold font-mono text-white drop-shadow-md">
+                    {currentValue} / {targetValue}
                 </span>
              </button>
          )}

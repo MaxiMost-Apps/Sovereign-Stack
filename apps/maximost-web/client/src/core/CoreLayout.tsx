@@ -32,7 +32,7 @@ const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
       <aside className="w-64 bg-[#020408] border-r border-white/5 flex-shrink-0 fixed h-full z-50 flex flex-col">
         <div className="p-8">
             <h1 className="text-2xl font-black italic tracking-tighter text-white">TITAN<span className="text-blue-500">.OS</span></h1>
-            <p className="text-[10px] text-gray-600 font-mono mt-1 tracking-[0.3em]">V1.7 POLISHED</p>
+            <p className="text-[10px] text-gray-600 font-mono mt-1 tracking-[0.3em]">V1.8 FINAL</p>
         </div>
 
         <nav className="space-y-8 mt-4 flex-1 overflow-y-auto scrollbar-none">
@@ -66,7 +66,7 @@ const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
                         <User size={16} />
                     </div>
                     <div className="flex flex-col">
-                        <span className="text-xs font-bold text-white tracking-wide">{user?.email?.split('@')[0] || 'Operator'}</span>
+                        <span className="text-xs font-bold text-white tracking-wide">{user?.email?.split('@')[0] || 'Josh'}</span>
                         <span className="text-[9px] text-green-500 font-mono uppercase tracking-widest">Signed In</span>
                     </div>
                 </div>
