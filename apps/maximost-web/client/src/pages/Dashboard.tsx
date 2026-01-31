@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Unlock, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+import { Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format, addDays, startOfWeek, endOfWeek, isSameDay } from 'date-fns';
 import { supabase } from '@/services/supabase';
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyHabitMatrix } from '@/components/habits/WeeklyHabitMatrix';
-import { HabitEditSheet } from '@/components/habits/HabitEditSheet';
-import { ActivityFeed } from '@/components/dashboard/ActivityFeed';
+import { EditHabitPanel } from '@/components/habits/EditHabitPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard() {
@@ -42,6 +41,7 @@ export default function Dashboard() {
 
       if (error) throw error;
 
+      // Map to standardize ID usage
       const transformed = (data || []).map(h => ({
         ...h,
         id: h.habit_id || h.id,
@@ -61,7 +61,6 @@ export default function Dashboard() {
     } else if (view === 'WEEKLY') {
       setSelectedDate(addDays(selectedDate, amount * 7));
     } else if (view === 'MONTHLY') {
-      // Simple month jump logic could be added here
       const d = new Date(selectedDate);
       d.setMonth(d.getMonth() + amount);
       setSelectedDate(d);
@@ -83,9 +82,12 @@ export default function Dashboard() {
     return '';
   };
 
-  const toggleHabit = async (habitId: string, date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
+  const toggleHabit = async (habitId: string, date?: number) => {
+    // Determine date to toggle: passed date or selectedDate
+    const targetDate = date ? new Date(date) : selectedDate;
+    const dateStr = format(targetDate, 'yyyy-MM-dd');
 
+    // 1. Optimistic Update
     setHabits(prev => prev.map(h => {
       if (h.id === habitId) {
         const existingLog = h.habit_logs?.find((l: any) => l.date === dateStr);
@@ -106,6 +108,7 @@ export default function Dashboard() {
       return h;
     }));
 
+    // 2. Supabase Update
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -140,43 +143,41 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#020408] pb-20 font-sans text-white relative">
-      {/* 1. STICKY HEADER WITH UNIFIED NAV */}
+      {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#0A0F1C]/95 backdrop-blur-xl border-b border-white/5 shadow-2xl shadow-black/50">
 
-        {/* Top Bar */}
-        <div className="flex items-center justify-between p-4 pb-2">
-           <button onClick={() => setIsLocked(!isLocked)} className="text-slate-400 p-2 hover:bg-white/5 rounded-lg transition-colors">
-            {isLocked ? <Lock size={18} /> : <Unlock size={18} className="text-amber-500" />}
-          </button>
-          <span className="text-[10px] font-black tracking-[0.4em] text-blue-500 uppercase">Mission Control</span>
-          <div className="w-9" />
+        {/* Row 1: Lock & Tabs */}
+        <div className="flex items-center justify-between p-3">
+           {/* Lock (Left) */}
+           <button onClick={() => setIsLocked(!isLocked)} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
+            {isLocked ? <Lock size={18} className="text-slate-500" /> : <Unlock size={18} className="text-amber-500" />}
+           </button>
+
+           {/* Tabs (Right/Center) */}
+           <div className="flex bg-[#020408] rounded-lg p-0.5 border border-white/10">
+              {['DAILY', 'WEEKLY', 'MONTHLY'].map(t => (
+                <button
+                  key={t}
+                  onClick={() => setView(t as any)}
+                  className={`px-4 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider ${view === t ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                >
+                  {t}
+                </button>
+              ))}
+           </div>
+
+           <div className="w-8" /> {/* Spacer balance */}
         </div>
 
-        {/* Unified Navigator */}
-        <div className="px-4 pb-4">
-          <div className="flex items-center bg-[#020408] rounded-xl border border-white/10 p-1">
-             {/* Tab Switcher (Segmented) */}
-             <div className="flex bg-[#0A0F1C] rounded-lg p-0.5 border border-white/5 mr-2">
-                {['DAILY', 'WEEKLY', 'MONTHLY'].map(t => (
-                  <button
-                    key={t}
-                    onClick={() => setView(t as any)}
-                    className={`px-3 py-1.5 text-[9px] font-bold rounded-md transition-all ${view === t ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
-                  >
-                    {t[0]}
-                  </button>
-                ))}
-             </div>
-
-             {/* Date Scroller */}
-             <div className="flex-1 flex items-center justify-between px-2">
-                <button onClick={() => changeDate(-1)} className="text-slate-500 hover:text-white"><ChevronLeft size={16}/></button>
-                <span className="text-xs font-mono font-bold text-white tracking-widest uppercase truncate mx-2">
-                  {getContextLabel()}
-                </span>
-                <button onClick={() => changeDate(1)} className="text-slate-500 hover:text-white"><ChevronRight size={16}/></button>
-             </div>
-          </div>
+        {/* Row 2: Date Navigator (Full Width) */}
+        <div className="px-3 pb-3">
+           <div className="flex items-center justify-between bg-[#020408] border border-white/5 rounded-xl p-2">
+              <button onClick={() => changeDate(-1)} className="p-2 text-slate-500 hover:text-white hover:bg-white/5 rounded-lg"><ChevronLeft size={16}/></button>
+              <span className="text-xs font-mono font-bold text-blue-400 tracking-[0.2em] uppercase">
+                {getContextLabel()}
+              </span>
+              <button onClick={() => changeDate(1)} className="p-2 text-slate-500 hover:text-white hover:bg-white/5 rounded-lg"><ChevronRight size={16}/></button>
+           </div>
         </div>
       </header>
 
@@ -228,16 +229,6 @@ export default function Dashboard() {
                   ))}
                 </section>
               )}
-
-              {/* THE LEDGER DEPLOYMENT */}
-              <section className="pt-8 border-t border-white/5">
-                 <div className="flex items-center gap-2 mb-4">
-                    <Activity size={14} className="text-blue-500" />
-                    <h2 className="text-[10px] text-blue-500 font-bold uppercase tracking-[0.2em]">Live Ledger</h2>
-                 </div>
-                 <ActivityFeed limit={5} />
-              </section>
-
             </motion.div>
           )}
 
@@ -251,9 +242,6 @@ export default function Dashboard() {
              transition={{ duration: 0.2 }}
            >
              <WeeklyHabitMatrix habits={habits} selectedDate={selectedDate} />
-             <div className="mt-4 text-center text-[10px] text-slate-600 font-mono">
-               WEEKLY VIEW IS LOCKED • REVIEW ONLY
-             </div>
            </motion.div>
           )}
 
@@ -264,29 +252,35 @@ export default function Dashboard() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="flex flex-col items-center justify-center h-64 border border-dashed border-white/10 rounded-2xl bg-white/5"
+            className="flex flex-col items-center justify-center space-y-4"
           >
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Macro Cycle View</p>
-            <span className="text-[10px] text-blue-500 mt-2 font-mono">COMING SOON</span>
+             <div className="w-full bg-[#0A0F1C] border border-white/5 rounded-2xl p-6 min-h-[300px] flex items-center justify-center">
+                 {/* Placeholder for Calendar Grid */}
+                 <div className="text-center space-y-2">
+                    <div className="grid grid-cols-7 gap-2 opacity-30">
+                        {Array.from({length: 28}).map((_, i) => (
+                            <div key={i} className={`w-3 h-3 rounded-full ${i % 5 === 0 ? 'bg-blue-500' : 'bg-white/10'}`} />
+                        ))}
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-mono mt-4">MACRO CYCLE DENSITY</p>
+                 </div>
+             </div>
           </motion.div>
           )}
 
         </AnimatePresence>
       </main>
 
-      {/* SLIDE-IN EDIT SHEET */}
-      <AnimatePresence>
-        {editingHabit && (
-          <HabitEditSheet
-            habit={editingHabit}
-            onClose={() => setEditingHabit(null)}
-            onSave={() => {
-              fetchHabits();
-              setEditingHabit(null);
-            }}
-          />
-        )}
-      </AnimatePresence>
+      {/* EDIT SLIDE-IN */}
+      <EditHabitPanel
+        habit={editingHabit}
+        isOpen={!!editingHabit}
+        onClose={() => setEditingHabit(null)}
+        onSave={() => {
+          fetchHabits();
+          setEditingHabit(null);
+        }}
+      />
 
     </div>
   );
