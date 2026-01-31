@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Check, Search, Layers, Activity, X, Info } from 'lucide-react';
-import { SOVEREIGN_LIBRARY, ICON_MAP, PROTOCOL_STACKS } from '@/data/sovereign_library';
+import { SOVEREIGN_LIBRARY, ICON_MAP } from '@/data/sovereign_library';
+import { SOVEREIGN_STACKS } from '@/data/sovereign_stacks';
 import { useHabits } from '@/hooks/useHabits';
 
 interface HabitLibraryProps {
@@ -27,7 +28,7 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
     h.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredStacks = PROTOCOL_STACKS.filter(s =>
+  const filteredStacks = SOVEREIGN_STACKS.filter(s =>
      s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
      s.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -38,7 +39,7 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
 
   const openStackModal = (stack: any) => {
       setSelectedStack(stack);
-      setSelectedStackHabits(stack.habit_ids); // Default all selected
+      setSelectedStackHabits(stack.habits); // Default all selected
   };
 
   const toggleStackHabitSelection = (hid: string) => {
@@ -154,16 +155,18 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
           </div>
       ) : (
           /* STACKS GRID */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {filteredStacks.map((stack) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {filteredStacks.map((stack) => {
+                   const Icon = stack.icon || Layers;
+                   return (
                    <div
                     key={stack.id}
-                    className="group relative bg-[#0B1221] border border-white/5 rounded-xl p-8 hover:border-blue-500/50 hover:bg-[#0F1729] transition-all cursor-pointer"
+                    className="group relative bg-[#0B1221] border border-white/5 rounded-xl p-8 hover:border-blue-500/50 hover:bg-[#0F1729] transition-all cursor-pointer h-full flex flex-col"
                     onClick={() => openStackModal(stack)}
                    >
                        <div className="flex items-center justify-between mb-6">
-                           <div className="p-3 bg-blue-500/10 text-blue-400 rounded-lg">
-                               <Layers size={24} />
+                           <div className={`p-3 rounded-lg bg-white/5 text-${stack.theme_override ? 'white' : 'blue-400'}`}>
+                               <Icon size={24} />
                            </div>
                            <button
                              className="px-4 py-2 bg-white/5 group-hover:bg-blue-600 text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all"
@@ -173,12 +176,13 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
                        </div>
 
                        <h3 className="text-2xl font-black italic uppercase text-white tracking-tighter">{stack.title}</h3>
-                       <p className="text-gray-500 text-xs mt-2">{stack.description}</p>
+                       <p className="text-blue-500 text-[10px] font-bold uppercase tracking-widest mt-1 mb-2">{stack.expert_voice}</p>
+                       <p className="text-gray-500 text-xs">{stack.description}</p>
 
-                       <div className="mt-8 border-t border-white/5 pt-6">
-                           <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-3">Contains Habits:</div>
+                       <div className="mt-auto pt-6 border-t border-white/5">
+                           <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-3">Core Protocols:</div>
                            <div className="flex flex-wrap gap-2">
-                               {stack.habit_ids.slice(0, 4).map((hid: string) => {
+                               {stack.habits.slice(0, 4).map((hid: string) => {
                                    const h = SOVEREIGN_LIBRARY.find(lib => lib.id === hid);
                                    return h ? (
                                        <span key={hid} className="px-2 py-1 bg-black/40 border border-white/10 rounded text-[10px] text-gray-400">
@@ -186,15 +190,16 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
                                        </span>
                                    ) : null;
                                })}
-                               {stack.habit_ids.length > 4 && (
+                               {stack.habits.length > 4 && (
                                    <span className="px-2 py-1 bg-black/40 border border-white/10 rounded text-[10px] text-gray-400">
-                                       +{stack.habit_ids.length - 4} more
+                                       +{stack.habits.length - 4} more
                                    </span>
                                )}
                            </div>
                        </div>
                    </div>
-              ))}
+                   );
+              })}
           </div>
       )}
 
@@ -216,7 +221,7 @@ export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
                 <div className="p-6 max-h-[60vh] overflow-y-auto">
                     <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Select Habits to Add:</div>
                     <div className="space-y-2">
-                        {selectedStack.habit_ids.map((hid: string) => {
+                        {selectedStack.habits.map((hid: string) => {
                             const habit = SOVEREIGN_LIBRARY.find(h => h.id === hid);
                             if (!habit) return null;
                             const isSelected = selectedStackHabits.includes(hid);

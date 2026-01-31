@@ -27,18 +27,24 @@ export const Dashboard: React.FC = () => {
   });
 
   // Filter Data
-  const activeHabits = habits.filter(h => h.status !== 'archived');
-  const inactiveHabits = habits.filter(h => h.status === 'archived');
+  // V1.9: Do not filter by status in SQL, handle visibility here.
+  // absoluteHabits = Frequency Type ABSOLUTE & Active
+  // frequencyHabits = Frequency Type FREQUENCY & Active
+  // reserves = Inactive (Paused or Archived)
 
-  const absoluteHabits = activeHabits.filter(h => {
+  const isHabitActive = (h: any) => !h.is_paused && h.status !== 'archived';
+
+  const absoluteHabits = habits.filter(h => {
      const type = h.metadata?.config?.frequency_type || h.default_config?.frequency_type;
-     return type === 'ABSOLUTE';
+     return type === 'ABSOLUTE' && isHabitActive(h);
   });
 
-  const frequencyHabits = activeHabits.filter(h => {
+  const frequencyHabits = habits.filter(h => {
      const type = h.metadata?.config?.frequency_type || h.default_config?.frequency_type;
-     return type === 'FREQUENCY';
+     return type === 'FREQUENCY' && isHabitActive(h);
   });
+
+  const reserveHabits = habits.filter(h => !isHabitActive(h));
 
   const handleOpenDrawer = (habit: any, tab: 'HQ' | 'CONFIG') => {
     // Lookup lens text
@@ -58,40 +64,55 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#020408] text-white pb-32">
-      {/* 1. HEADER */}
-      <header className="sticky top-0 z-40 bg-[#020408]/90 backdrop-blur-md border-b border-white/5 px-6 py-4">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-            {/* Date Nav */}
-            <div className="flex items-center gap-4 w-1/3">
-                <button className="p-1 text-gray-600 hover:text-white transition-colors"><ChevronLeft size={16} /></button>
-                <span className="text-xs font-bold uppercase tracking-widest text-white">{dateString}</span>
-                <button className="p-1 text-gray-600 hover:text-white transition-colors"><ChevronRight size={16} /></button>
+      {/* 1. HEADER (Titan V1.9 Polish) */}
+      <header className="sticky top-0 z-40 bg-[#020408]/95 backdrop-blur-xl border-b border-white/5 px-6 py-6 transition-all duration-300">
+        <div className="max-w-4xl mx-auto flex items-center justify-between relative">
+
+            {/* Left: Empty / Breadcrumb */}
+            <div className="w-1/3 hidden md:block">
+                 {/* Placeholder for Back button if needed */}
             </div>
 
-            {/* View Toggle (Center) */}
-            <div className="flex bg-[#0A0F1C] p-1 rounded-lg border border-white/5">
-                {[
-                  { id: 'day', label: 'DAY' },
-                  { id: 'week', label: 'WEEK' },
-                  { id: 'month', label: 'MONTH' }
-                ].map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                        setView(tab.id as any);
-                        if (tab.id !== 'day') setIsReordering(false);
-                    }}
-                    className={`px-4 py-1.5 text-[10px] font-bold tracking-widest rounded-md transition-all ${
-                      view === tab.id ? 'bg-blue-600 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+            {/* Center: App-Like Controller */}
+            <div className="flex flex-col items-center gap-3 w-full md:w-1/3">
+                 {/* Date Navigation */}
+                 <div className="flex items-center gap-6">
+                    <button className="p-2 text-gray-500 hover:text-white transition-colors hover:bg-white/5 rounded-full">
+                        <ChevronLeft size={18} />
+                    </button>
+                    <span className="text-sm font-black uppercase tracking-widest text-white whitespace-nowrap">{dateString}</span>
+                    <button className="p-2 text-gray-500 hover:text-white transition-colors hover:bg-white/5 rounded-full">
+                        <ChevronRight size={18} />
+                    </button>
+                 </div>
+
+                 {/* Segmented Toggle */}
+                 <div className="flex bg-[#0A0F1C] p-1 rounded-lg border border-white/5 shadow-inner shadow-black/50">
+                    {[
+                      { id: 'day', label: 'DAY' },
+                      { id: 'week', label: 'WEEK' },
+                      { id: 'month', label: 'MONTH' }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                            setView(tab.id as any);
+                            if (tab.id !== 'day') setIsReordering(false);
+                        }}
+                        className={`px-6 py-1.5 text-[10px] font-bold tracking-[0.2em] rounded-md transition-all duration-300 ${
+                          view === tab.id
+                          ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.3)]'
+                          : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Controls (Right) */}
-            <div className="flex items-center justify-end gap-2 w-1/3">
+            {/* Right: Controls */}
+            <div className="flex items-center justify-end gap-3 w-1/3 absolute right-0 top-1/2 -translate-y-1/2 md:static md:transform-none">
                  {view === 'day' && (
                      <button
                         onClick={() => setIsReordering(!isReordering)}
@@ -180,19 +201,19 @@ export const Dashboard: React.FC = () => {
         )}
 
         {/* SECTION 4: RESERVES (Collapsible) */}
-        {view === 'day' && inactiveHabits.length > 0 && (
+        {view === 'day' && reserveHabits.length > 0 && (
              <section className="pt-8 border-t border-white/5">
                  <button
                     onClick={() => setShowReserves(!showReserves)}
                     className="flex items-center justify-between w-full text-gray-500 hover:text-white transition-colors mb-4 group"
                  >
-                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">RESERVES ({inactiveHabits.length})</span>
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">RESERVES ({reserveHabits.length})</span>
                      {showReserves ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                  </button>
 
                  {showReserves && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                         {inactiveHabits.map(habit => (
+                         {reserveHabits.map(habit => (
                             <DailyHabitRow
                                 key={habit.id}
                                 habit={habit}

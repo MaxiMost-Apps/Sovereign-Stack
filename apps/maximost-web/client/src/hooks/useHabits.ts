@@ -40,8 +40,7 @@ export const useHabits = () => {
       const { data, error } = await supabase
         .from('habits')
         .select('*')
-        .eq('user_id', user.id)
-        .neq('status', 'archived'); // Fetch everything except archived
+        .eq('user_id', user.id); // Fetch ALL habits (including archived/paused) for client-side filtering
 
       if (error) throw error;
       setHabits(data || []);

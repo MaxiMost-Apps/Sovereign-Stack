@@ -1,7 +1,8 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Library, Activity, BookOpen, Bot, Monitor, FileText, Settings, Shield, LogOut, User } from 'lucide-react';
 import { Toaster } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from './AuthSystem';
 
 interface CoreLayoutProps {
@@ -10,10 +11,16 @@ interface CoreLayoutProps {
 
 const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path ? 'text-blue-400 border-l-2 border-blue-400 bg-blue-500/5' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5';
+  };
+
+  const handleSignOut = async () => {
+      await signOut();
+      navigate('/login');
   };
 
   const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
@@ -30,9 +37,14 @@ const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
     <div className="flex min-h-screen bg-[#020408] font-sans">
       {/* FIXED LEFT SIDEBAR */}
       <aside className="w-64 bg-[#020408] border-r border-white/5 flex-shrink-0 fixed h-full z-50 flex flex-col">
-        <div className="p-8">
-            <h1 className="text-2xl font-black italic tracking-tighter text-white">TITAN<span className="text-blue-500">.OS</span></h1>
-            <p className="text-[10px] text-gray-600 font-mono mt-1 tracking-[0.3em]">V1.8 FINAL</p>
+        <div className="p-8 flex items-center gap-3">
+             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-900/50">
+                <Shield size={18} fill="currentColor" />
+             </div>
+             <div>
+                <h1 className="text-xl font-black italic tracking-tighter text-white">MAXIMOST</h1>
+                <p className="text-[8px] text-blue-500 font-bold uppercase tracking-[0.3em] pl-0.5">Titan OS V1.9</p>
+             </div>
         </div>
 
         <nav className="space-y-8 mt-4 flex-1 overflow-y-auto scrollbar-none">
@@ -71,7 +83,7 @@ const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
                     </div>
                 </div>
                 <button
-                  onClick={() => signOut()}
+                  onClick={handleSignOut}
                   className="p-2 text-gray-600 hover:text-red-500 transition-colors rounded-md hover:bg-white/5"
                   title="Sign Out"
                 >
@@ -82,8 +94,19 @@ const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <main className="flex-1 ml-64 relative">
-         {children}
+      <main className="flex-1 ml-64 relative overflow-hidden">
+         <AnimatePresence mode="wait">
+            <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                className="min-h-screen"
+            >
+                {children}
+            </motion.div>
+         </AnimatePresence>
          <Toaster position="bottom-right" theme="dark" />
       </main>
     </div>
