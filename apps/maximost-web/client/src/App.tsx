@@ -3,7 +3,8 @@ import { AuthProvider, useAuth } from './core/AuthSystem';
 import { ToastProvider } from './core/components/Toast';
 import { AIProvider } from './core/context/AIContext';
 import { LensProvider } from './core/context/LensContext';
-import DashboardCore from './core/DashboardSingularity';
+// import DashboardCore from './core/DashboardSingularity'; // REPLACED
+import { Dashboard } from './pages/Dashboard'; // NEW DASHBOARD
 import LoginCore from './core/LoginCore'; // Mapped from LoginPage
 import AdminDiagnostics from './core/pages/AdminDiagnostics';
 import LibraryPage from './core/pages/LibraryPage';
@@ -66,7 +67,7 @@ function App() {
 
               {/* PROTECTED */}
               <Route element={<ProtectedRoute />}>
-                <Route path="/dashboard" element={<DashboardCore />} />
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/archive" element={<LibraryPage />} />
                 <Route path="/body-hud" element={<BioTelemetryPage />} />
                 <Route path="/coach" element={<AIWarRoomPage />} />

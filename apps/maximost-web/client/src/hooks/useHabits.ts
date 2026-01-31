@@ -21,7 +21,7 @@ export const useHabits = () => {
         .from('habits')
         .select('*')
         .eq('user_id', user.id)
-        .eq('status', 'active');
+        .neq('status', 'archived'); // Fetch everything except archived
 
       if (error) throw error;
       setHabits(data || []);
@@ -48,13 +48,15 @@ export const useHabits = () => {
                 const target = h.metadata?.config?.target_value || 1;
                 return { ...h, current_value: newVal, status: newVal >= target ? 'completed' : 'active' };
              }
-             const isCompleted = h.status === 'completed';
-             return { ...h, status: isCompleted ? 'active' : 'completed' };
+             // Toggle Logic: Active <-> Completed
+             // If currently active, make completed. Otherwise (completed or archived), make active.
+             const newStatus = h.status === 'active' ? 'completed' : 'active';
+             return { ...h, status: newStatus };
           }
           return h;
         });
       } else {
-        // Create New
+        // Create New (Optimistic)
         return [...prev, {
           habit_id: habitId,
           title: def.title,
@@ -84,7 +86,8 @@ export const useHabits = () => {
            const target = existing.metadata?.config?.target_value || 1;
            updates = { current_value: newVal, status: newVal >= target ? 'completed' : 'active' };
         } else {
-           const newStatus = existing.status === 'completed' ? 'active' : 'completed';
+           // Improved Toggle Logic
+           const newStatus = existing.status === 'active' ? 'completed' : 'active';
            updates = { status: newStatus };
         }
         const { error } = await supabase.from('habits').update(updates).eq('id', existing.id);
@@ -115,10 +118,18 @@ export const useHabits = () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        await supabase.from('habits').update({
+        // Map frontend updates to DB schema if needed
+        const dbUpdates: any = {
              title: updates.title,
-             metadata: { visuals: updates.visuals, config: updates.default_config }
-          }).eq('user_id', user.id).eq('habit_id', habitId);
+        };
+
+        // Handle metadata merging if needed
+        if (updates.visuals || updates.default_config || updates.description) {
+             dbUpdates.description = updates.description;
+             // dbUpdates.metadata = { visuals: updates.visuals, config: updates.default_config };
+        }
+
+        await supabase.from('habits').update(dbUpdates).eq('user_id', user.id).eq('habit_id', habitId);
         toast.success('Protocol Updated');
       } catch (error) {
         console.error('Update failed', error);
@@ -127,5 +138,41 @@ export const useHabits = () => {
       }
   };
 
-  return { habits, loading, toggleHabit, updateHabitConfig, refresh: fetchHabits };
+  const deleteHabit = async (habitId: string) => {
+      // Optimistic
+      setHabits(prev => prev.filter(h => h.habit_id !== habitId));
+
+      try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          const { error } = await supabase.from('habits')
+              .update({ status: 'archived' })
+              .eq('user_id', user.id)
+              .eq('habit_id', habitId);
+
+          if (error) throw error;
+          toast.success('Protocol Archived');
+      } catch (err) {
+          console.error('Archive failed', err);
+          toast.error('Archive failed');
+          fetchHabits();
+      }
+  };
+
+  const reorderHabits = async (newOrder: any[]) => {
+      // Stub: Just update local state for now
+      setHabits(newOrder);
+      // TODO: Implement backend persistence for order
+  };
+
+  return {
+      habits,
+      loading,
+      toggleHabit,
+      updateHabitConfig,
+      deleteHabit,
+      reorderHabits,
+      refresh: fetchHabits
+  };
 };

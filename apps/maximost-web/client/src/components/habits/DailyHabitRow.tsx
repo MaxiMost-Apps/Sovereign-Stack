@@ -1,101 +1,97 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Check, Info, MoreHorizontal, GripVertical, Plus } from 'lucide-react';
+import { GripVertical, Info, MoreHorizontal, Check } from 'lucide-react';
 import { ICON_MAP } from '@/data/sovereign_library';
 
 interface DailyHabitRowProps {
   habit: any;
-  index: number;
-  isReordering: boolean;
   isLocked: boolean;
-  onToggle: (id: string, val?: number) => void;
   onOpenInfo: (habit: any) => void;
-  onOpenEdit: (habit: any) => void;
+  onOpenConfig: (habit: any) => void;
+  onToggle: (id: string) => void;
 }
 
-export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({ habit, index, isReordering, isLocked, onToggle, onOpenInfo, onOpenEdit }) => {
-  const Icon = habit.visuals?.icon ? (ICON_MAP[habit.visuals.icon] || Info) : Info;
+export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({
+  habit,
+  isLocked,
+  onOpenInfo,
+  onOpenConfig,
+  onToggle
+}) => {
+  // Map Data
+  const color = habit.visuals?.color?.replace('bg-', 'text-') || 'text-blue-500'; // Hack: extract color or default
+  // Ideally, 'visuals.color' is a tailwind class like 'bg-blue-500'.
+  // The spec code used inline styles: style={{ backgroundColor: `${habit.color}15`, color: habit.color }}
+  // If habit.visuals.color is 'bg-blue-500', we can't easily convert to hex for inline style opacity.
+  // We'll try to use the class directly for background if possible, or mapping.
+  // Actually, 'sovereign_library.ts' has colors like 'bg-amber-500'.
+  // Let's use the class for the icon container background and text color if possible.
+
+  const IconComponent = ICON_MAP[habit.visuals?.icon] || Check;
   const isCompleted = habit.status === 'completed';
 
-  // Logic for measurable habits
-  const config = habit.metadata?.config || habit.default_config || {};
-  const targetVal = config.target_value || 1;
-  const isMeasurable = targetVal > 1;
-  const currentVal = habit.current_value || 0;
+  // Helper to extract a hex-like color or fallback for the inline style opacity trick
+  // Since we have Tailwind classes, it's better to use Tailwind opacity utilities if possible.
+  // But the spec used style={{ backgroundColor: ... }}.
+  // Let's just use the habit.color if it exists (mock) or map visuals.color class to a style.
+  // To keep it simple and robust:
+  const colorClass = habit.visuals?.color || 'bg-gray-500';
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="group flex items-center gap-4 p-4 bg-[#0B1221] border border-white/5 rounded-2xl hover:border-white/10 transition-all select-none"
-    >
+    <div className="group flex items-center gap-4 bg-white/2 px-4 py-4 rounded-xl border border-white/5 hover:bg-white/[0.04] hover:border-white/10 transition-all animate-in fade-in duration-500">
 
-      {/* GRIPPER */}
-      {isReordering && (
-        <div className="text-slate-600 cursor-grab hover:text-white shrink-0">
+      {/* 1. Drag Handle (Hidden if Locked) */}
+      {!isLocked && (
+        <div className="cursor-grab active:cursor-grabbing text-gray-600 hover:text-gray-400 transition-colors">
           <GripVertical size={20} />
         </div>
       )}
 
-      {/* ICON */}
-      <div className={`shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-        isCompleted ? 'bg-green-500 text-white shadow-[0_0_20px_rgba(34,197,94,0.4)]' : `${habit.visuals.color} text-white shadow-lg opacity-90`
-      }`}>
-        {isCompleted ? <Check size={20} strokeWidth={3} /> : <Icon size={20} strokeWidth={2.5} />}
-      </div>
-
-      {/* TEXT & CONTROLS */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          <h3 className={`text-sm font-bold tracking-wide truncate transition-colors ${isCompleted ? 'text-slate-500 line-through decoration-slate-600' : 'text-white'}`}>
-            {habit.title}
-          </h3>
-
-          {/* ACTIONS */}
-          {!isLocked && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-               <button onClick={(e) => { e.stopPropagation(); onOpenInfo(habit); }} className="p-1.5 text-slate-500 hover:text-blue-400 transition-colors"><Info size={16} /></button>
-               <button onClick={(e) => { e.stopPropagation(); onOpenEdit(habit); }} className="p-1.5 text-slate-500 hover:text-white transition-colors"><MoreHorizontal size={16} /></button>
-            </div>
-          )}
+      {/* 2. Habit Icon & Title */}
+      <div className="flex items-center gap-4 flex-1">
+        <div
+          className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} bg-opacity-10 text-white`}
+          // style={{ backgroundColor: `${habit.color}15`, color: habit.color }} // Replaced with Tailwind classes
+        >
+          <IconComponent size={20} />
         </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <h4 className={`text-base font-semibold tracking-tight ${isCompleted ? 'text-gray-500 line-through' : 'text-white'}`}>
+                {habit.title}
+            </h4>
 
-        {/* SUBTEXT / PROGRESS */}
-        {isMeasurable ? (
-           <div className="flex items-center gap-3 mt-1.5">
-             <div className="h-1.5 w-24 bg-slate-800 rounded-full overflow-hidden">
-               <div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${Math.min((currentVal/targetVal)*100, 100)}%` }} />
-             </div>
-             <span className="text-[10px] font-mono text-slate-400">{currentVal}/{targetVal} {config.unit}</span>
-           </div>
-        ) : (
-           <p className="text-[10px] text-slate-500 truncate mt-1 font-medium tracking-wide">{habit.description}</p>
-        )}
+            {/* Info and Edit Icons (Shown only if Unlocked) */}
+            {!isLocked && (
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => onOpenInfo(habit)}
+                  className="p-1.5 hover:bg-blue-400/10 text-gray-500 hover:text-blue-400 rounded-md transition-all"
+                >
+                  <Info size={14} />
+                </button>
+                <button
+                  onClick={() => onOpenConfig(habit)}
+                  className="p-1.5 hover:bg-white/10 text-gray-500 hover:text-gray-200 rounded-md transition-all"
+                >
+                  <MoreHorizontal size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* COMPLETION BUTTON */}
-      {isMeasurable && !isCompleted ? (
-        <button
-          onClick={() => onToggle(habit.habit_id, 1)}
-          className="shrink-0 w-12 h-12 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white transition-all active:scale-95"
-        >
-          <Plus size={20} strokeWidth={3} />
-        </button>
-      ) : (
-        <button
-          onClick={() => onToggle(habit.habit_id)}
-          className={`shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ml-2 ${
-            isCompleted
-              ? 'bg-green-500 border-green-500 shadow-[0_0_15px_#22c55e] animate-pulse'
-              : 'border-slate-700 hover:border-slate-500 bg-transparent'
-          }`}
-        >
-          {isCompleted && <div className="w-full h-full rounded-full bg-green-500" />}
-        </button>
-      )}
-
-    </motion.div>
+      {/* 3. Checkbox */}
+      <button
+        onClick={() => onToggle(habit.habit_id)}
+        className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all ${
+          isCompleted
+          ? 'bg-blue-600 border-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]'
+          : 'border-white/10 hover:border-blue-500/50'
+        }`}
+      >
+        {isCompleted && <Check size={18} className="text-white" strokeWidth={3} />}
+      </button>
+    </div>
   );
 };

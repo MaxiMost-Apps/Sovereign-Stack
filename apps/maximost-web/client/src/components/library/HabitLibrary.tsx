@@ -1,89 +1,97 @@
 import React, { useState } from 'react';
-import { Info, Plus, Check, Layers, Atom } from 'lucide-react';
+import { Plus, Check, Search } from 'lucide-react';
+import { SOVEREIGN_LIBRARY, ICON_MAP } from '@/data/sovereign_library';
 import { useHabits } from '@/hooks/useHabits';
-import { SOVEREIGN_LIBRARY, PROTOCOL_STACKS, ICON_MAP } from '@/data/sovereign_library';
-import { HabitInfoDrawer } from '@/components/habits/HabitInfoDrawer';
 
 interface HabitLibraryProps {
-  onDeploy: (habit: any) => void;
+  onDeploy?: (habit: any) => void; // Optional if we handle it internally, but sticking to spec
 }
 
 export const HabitLibrary: React.FC<HabitLibraryProps> = ({ onDeploy }) => {
-  const [activeTab, setActiveTab] = useState<'atoms' | 'stacks'>('atoms');
-  const { habits: userHabits, toggleHabit } = useHabits();
-  const [infoHabit, setInfoHabit] = useState<any>(null);
+  const { habits, toggleHabit } = useHabits();
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const isAdopted = (id: string) => userHabits.some(h => h.habit_id === id && h.status === 'active');
+  // Helper to check if habit is active
+  const isHabitActive = (libraryId: string) => {
+    const userHabit = habits.find(h => h.habit_id === libraryId);
+    return userHabit && userHabit.status !== 'archived';
+  };
+
+  const filteredLibrary = SOVEREIGN_LIBRARY.filter(h =>
+    h.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    h.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAdd = (habit: any) => {
+    if (onDeploy) {
+      onDeploy(habit);
+    } else {
+      toggleHabit(habit.id);
+    }
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-
-      {/* HEADER */}
-      <div className="flex items-center justify-between border-b border-white/5 pb-4">
+    <div className="p-8 space-y-8 max-w-6xl mx-auto">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h2 className="text-xl font-black tracking-[0.2em] uppercase text-white">Atom Ledger</h2>
-          <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-wider">The Armory. Equip habits and load stacks.</p>
+          <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">Habit Library</h1>
+          <p className="text-gray-500 font-mono text-xs uppercase tracking-widest mt-2">Inventory of high-fidelity protocols</p>
         </div>
-        <div className="flex bg-[#0B1221] p-1 rounded-lg border border-white/5">
-          <button onClick={() => setActiveTab('atoms')} className={`px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'atoms' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-white'}`}>Atoms</button>
-          <button onClick={() => setActiveTab('stacks')} className={`px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'stacks' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-white'}`}>Stacks</button>
+        <div className="relative group w-full md:w-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-400 transition-colors" size={16} />
+          <input
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="bg-[#0A0F1C] border border-white/10 rounded-full pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-all w-full md:w-64"
+            placeholder="Search Protocols..."
+          />
         </div>
-      </div>
+      </header>
 
-      {/* ATOMS */}
-      {activeTab === 'atoms' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {SOVEREIGN_LIBRARY.map(habit => {
-            const Icon = ICON_MAP[habit.visuals.icon] || Info;
-            const active = isAdopted(habit.id);
-            // REVERSED LOGIC: Bold if NOT active, Faded if Active
-            const opacityClass = active ? 'opacity-40 grayscale' : 'opacity-100 hover:border-blue-500/50';
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredLibrary.map((habit) => {
+          const active = isHabitActive(habit.id);
+          const IconComponent = ICON_MAP[habit.visuals.icon] || Plus;
+          const colorClass = habit.visuals.color || 'bg-gray-500';
 
-            return (
-              <div key={habit.id} className={`group relative flex items-center gap-4 p-3 rounded-xl border bg-[#0B1221] border-white/5 transition-all ${opacityClass}`}>
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${habit.visuals.color} text-white shadow-lg`}>
-                  <Icon size={18} strokeWidth={2} />
+          return (
+            <div
+              key={habit.id}
+              className={`relative group bg-[#0A0F1C] border border-white/5 rounded-2xl p-6 transition-all duration-500 ${
+                active ? 'opacity-50' : 'hover:border-blue-500/50 hover:shadow-[0_0_30px_rgba(59,130,246,0.1)]'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 duration-500 ${colorClass} bg-opacity-10 text-white`}
+                >
+                   <IconComponent size={24} />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-xs font-bold text-white truncate">{habit.title}</h3>
-                  <p className="text-[10px] text-slate-500 line-clamp-1">{habit.description}</p>
-                </div>
-                <div className="flex gap-1">
-                  <button onClick={() => setInfoHabit(habit)} className="p-2 text-slate-600 hover:text-white"><Info size={16} /></button>
-                  <button onClick={() => !active && onDeploy(habit)} className={`p-2 rounded-lg ${active ? 'text-slate-700 cursor-default' : 'text-blue-500 hover:bg-blue-500/10'}`}>
-                    {active ? <Check size={16} /> : <Plus size={16} />}
+
+                {active ? (
+                  <div className="bg-green-500/20 text-green-500 p-2 rounded-full border border-green-500/20">
+                    <Check size={16} />
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => handleAdd(habit)}
+                    className="bg-white/5 hover:bg-blue-600 text-white p-2 rounded-full border border-white/10 transition-all"
+                  >
+                    <Plus size={16} />
                   </button>
-                </div>
+                )}
               </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* STACKS */}
-      {activeTab === 'stacks' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PROTOCOL_STACKS.map(stack => (
-            <div key={stack.id} className="p-6 bg-[#0B1221] border border-white/5 rounded-2xl hover:border-blue-500/30 transition-all flex flex-col justify-between h-48 group">
-               <div>
-                 <h3 className="text-xs font-black text-white uppercase tracking-widest mb-2">{stack.title}</h3>
-                 <p className="text-[10px] text-slate-500 leading-relaxed">{stack.description}</p>
-                 <div className="flex gap-1 mt-4 flex-wrap">
-                    {stack.habit_ids.slice(0, 4).map(id => <div key={id} className="w-1.5 h-1.5 rounded-full bg-slate-600" />)}
-                 </div>
-               </div>
-               <button
-                 onClick={() => stack.habit_ids.forEach(id => toggleHabit(id))}
-                 className="w-full py-3 bg-blue-600/10 border border-blue-500/50 text-blue-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-blue-600 hover:text-white transition-all opacity-0 group-hover:opacity-100"
-               >
-                 Deploy Stack
-               </button>
+              <div className="mt-6">
+                <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{habit.title}</h3>
+                <p className="text-gray-500 text-xs mt-1 font-mono tracking-tight leading-relaxed">
+                  {habit.description}
+                </p>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
-
-      {infoHabit && <HabitInfoDrawer habit={infoHabit} onClose={() => setInfoHabit(null)} />}
+          );
+        })}
+      </div>
     </div>
   );
 };
