@@ -100,7 +100,7 @@ export default function Dashboard() {
     if (!isValid(selectedDate)) return '...';
 
     if (view === 'DAILY') {
-      // Format: < SATURDAY, JAN 31 >
+      // ONE-LINE FORMAT: < SATURDAY, JAN 31 >
       return format(selectedDate, 'EEEE, MMM d').toUpperCase();
     }
     if (view === 'WEEKLY') {

@@ -7,28 +7,28 @@ const LENS_OPTIONS = [
   {
     id: 'stoic',
     name: 'STOIC',
-    description: 'Logic and internal regulation.',
+    description: 'Logic and internal regulation. Focus on what is controllable. Endure and prevail.',
     icon: Shield,
     color: 'text-slate-400'
   },
   {
     id: 'operator',
     name: 'OPERATOR',
-    description: 'Military precision and execution.',
+    description: 'Military precision. Radical ownership. Short, punchy execution. No excuses.',
     icon: Flame,
     color: 'text-red-500'
   },
   {
     id: 'scientist',
     name: 'SCIENTIST',
-    description: 'Biological mechanisms and data.',
+    description: 'Biological mechanisms and neurochemistry. Optimization through data and physiological leverage.',
     icon: Brain,
     color: 'text-blue-400'
   },
   {
     id: 'visionary',
     name: 'VISIONARY',
-    description: 'High-level ROI and legacy building.',
+    description: 'System-wide scaling. High-level ROI. Building the legacy and the long-term future.',
     icon: Zap,
     color: 'text-purple-400'
   }
