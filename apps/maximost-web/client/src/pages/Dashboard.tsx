@@ -1,124 +1,251 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../services/supabase';
-import { format, isSameDay, addDays } from 'date-fns';
-import { Info, MoreVertical, Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
-import EditHabitModal from '../components/habits/EditHabitModal';
+import React, { useState, useEffect } from 'react';
+import { Lock, Unlock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, addDays, isSameDay } from 'date-fns';
+import { supabase } from '@/services/supabase';
+import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
+import { WeeklyHabitMatrix } from '@/components/habits/WeeklyHabitMatrix';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Dashboard() {
   const [view, setView] = useState<'DAILY' | 'WEEKLY' | 'MONTHLY'>('DAILY');
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [isLocked, setIsLocked] = useState(() => {
+    const saved = localStorage.getItem('dashboard_locked');
+    return saved ? JSON.parse(saved) : true;
+  });
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [habits, setHabits] = useState<any[]>([]);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isLocked, setIsLocked] = useState(true);
-  const [editingHabit, setEditingHabit] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { fetchHabits(); }, [currentDate]);
+  // Persistence for Lock State
+  useEffect(() => {
+    localStorage.setItem('dashboard_locked', JSON.stringify(isLocked));
+  }, [isLocked]);
+
+  // Data Fetching
+  useEffect(() => {
+    fetchHabits();
+  }, []);
 
   async function fetchHabits() {
-    const { data } = await supabase.from('habits').select(`*, habit_logs(status, date)`).eq('is_active', true);
-    if (data) setHabits(data);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Fetch habits AND their logs
+      // We fetch ALL logs for the weekly view to work correctly
+      const { data, error } = await supabase
+        .from('habits')
+        .select(`*, habit_logs(date, status, value)`)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Transform data to ensure compatibility
+      const transformed = (data || []).map(h => ({
+        ...h,
+        id: h.habit_id || h.id, // Handle potential ID drift
+        // Calculate 'completed' status for the SELECTED date for the UI
+        // This will be re-calculated in render or we can do it here,
+        // but since selectedDate changes, we'll do derivation in render or helper.
+      }));
+
+      setHabits(transformed);
+    } catch (err) {
+      console.error('Fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  const toggleStatus = async (habitId: string) => {
-    const dateStr = format(currentDate, 'yyyy-MM-dd');
-    const habit = habits.find(h => h.id === habitId);
-    const log = habit?.habit_logs?.find((l: any) => l.date === dateStr);
-    const newStatus = log?.status === 'completed' ? 'pending' : 'completed';
-    await supabase.from('habit_logs').upsert({ habit_id: habitId, date: dateStr, status: newStatus });
-    fetchHabits();
+  const changeDate = (days: number) => {
+    const newDate = addDays(selectedDate, days);
+    setSelectedDate(newDate);
   };
 
+  const toggleHabit = async (habitId: string, date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+
+    // 1. Optimistic Update
+    setHabits(prev => prev.map(h => {
+      if (h.id === habitId) {
+        const existingLog = h.habit_logs?.find((l: any) => l.date === dateStr);
+        const isCompleted = existingLog?.status === 'completed';
+        const newStatus = isCompleted ? 'pending' : 'completed';
+
+        // Create new logs array
+        const newLogs = h.habit_logs ? [...h.habit_logs] : [];
+        const logIndex = newLogs.findIndex((l: any) => l.date === dateStr);
+
+        if (logIndex >= 0) {
+          newLogs[logIndex] = { ...newLogs[logIndex], status: newStatus };
+        } else {
+          newLogs.push({ date: dateStr, status: newStatus, habit_id: habitId });
+        }
+
+        return { ...h, habit_logs: newLogs };
+      }
+      return h;
+    }));
+
+    // 2. Supabase Update
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Find current status to toggle
+      const habit = habits.find(h => h.id === habitId);
+      const existingLog = habit?.habit_logs?.find((l: any) => l.date === dateStr);
+      const newStatus = existingLog?.status === 'completed' ? 'pending' : 'completed';
+
+      const { error } = await supabase
+        .from('habit_logs')
+        .upsert({
+          habit_id: habitId,
+          user_id: user.id, // Ensure user_id is set if RLS requires it
+          date: dateStr,
+          status: newStatus
+        }, { onConflict: 'habit_id, date' });
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Toggle failed:', err);
+      fetchHabits(); // Revert on error
+    }
+  };
+
+  // Filter & Prepare Habits for Render
+  const absoluteHabits = habits.filter(h => h.habit_type !== 'FREQUENCY');
+  const frequencyHabits = habits.filter(h => h.habit_type === 'FREQUENCY');
+
+  // Helper to inject 'completed' prop based on selectedDate
+  const prepareForRender = (list: any[]) => list.map(h => ({
+    ...h,
+    completed: h.habit_logs?.some((l: any) => l.date === format(selectedDate, 'yyyy-MM-dd') && l.status === 'completed')
+  }));
+
   return (
-    <div className="min-h-screen bg-[#080a0f] text-white p-4 font-mono">
-      {/* Header Area */}
-      <div className="mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <p className="text-[10px] text-blue-500 font-bold tracking-[0.2em] uppercase">Today's Mission</p>
-            <h1 className="text-2xl font-bold">{format(currentDate, 'EEEE, MMM d')}</h1>
-          </div>
-          <div className="flex gap-2">
-            <button className="p-2 bg-[#1a1f26] rounded-lg border border-gray-800"><MoreVertical size={18}/></button>
-            <button onClick={() => setIsLocked(!isLocked)} className="p-2 bg-[#1a1f26] rounded-lg border border-gray-800">
-              {isLocked ? <Lock size={18} className="text-blue-500" /> : <Unlock size={18} />}
-            </button>
-          </div>
+    <div className="min-h-screen bg-[#020408] pb-20 font-sans text-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-[#0A0F1C]/90 backdrop-blur-md border-b border-white/5 p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <button onClick={() => setIsLocked(!isLocked)} className="text-slate-400 p-2 hover:bg-white/5 rounded-lg transition-colors">
+            {isLocked ? <Lock size={20} /> : <Unlock size={20} className="text-amber-500" />}
+          </button>
+          <h1 className="text-sm font-black tracking-[0.3em] uppercase text-white text-center flex-1">Mission Control</h1>
+          <div className="w-9" /> {/* Spacer for centering */}
         </div>
 
         {/* Tab Switcher */}
-        <div className="bg-[#0c0e14] rounded-xl p-1 grid grid-cols-3 mb-4">
-          {['DAILY', 'WEEKLY', 'MONTHLY'].map(t => (
-            <button key={t} onClick={() => setView(t as any)}
-              className={`py-2 text-[10px] font-bold rounded-lg ${view === t ? 'bg-blue-600' : 'text-gray-500'}`}>{t}</button>
+        <div className="bg-[#020408] p-1 rounded-lg grid grid-cols-3 gap-1 border border-white/10">
+          {['DAILY', 'WEEKLY', 'MONTHLY'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setView(tab as any)}
+              className={`py-1.5 text-[10px] font-bold tracking-widest rounded-md transition-all ${
+                view === tab
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              {tab}
+            </button>
           ))}
         </div>
 
         {/* Date Navigator */}
-        <div className="flex justify-between items-center bg-[#0c0e14] border border-gray-900 rounded-xl p-3">
-          <button onClick={() => setCurrentDate(addDays(currentDate, -1))}><ChevronLeft size={18} className="text-gray-600"/></button>
-          <span className="text-xs font-bold uppercase tracking-widest">
-            {isSameDay(currentDate, new Date()) ? 'Today' : format(currentDate, 'MMMM d')}
+        <div className="flex items-center justify-center gap-6 text-xs font-mono text-blue-400 bg-[#020408]/50 p-2 rounded-xl border border-white/5">
+          <button onClick={() => changeDate(-1)} className="p-1 hover:bg-white/10 rounded"><ChevronLeft size={18} /></button>
+          <span className="uppercase tracking-[0.2em] font-bold min-w-[120px] text-center">
+            {isSameDay(selectedDate, new Date())
+              ? 'Today'
+              : format(selectedDate, 'MMM d, yyyy')}
           </span>
-          <button onClick={() => setCurrentDate(addDays(currentDate, 1))}><ChevronRight size={18} className="text-gray-600"/></button>
+          <button onClick={() => changeDate(1)} className="p-1 hover:bg-white/10 rounded"><ChevronRight size={18} /></button>
         </div>
-      </div>
+      </header>
 
-      {/* Habit List */}
-      <div className="space-y-3">
-        <p className="text-[10px] text-gray-600 font-bold tracking-widest uppercase mb-2">Absolute Habits</p>
-        {habits.map(habit => {
-          const isDone = habit.habit_logs?.some((l: any) => l.date === format(currentDate, 'yyyy-MM-dd') && l.status === 'completed');
-          return (
-            <div key={habit.id} className="bg-[#0c0e14] border border-gray-900 rounded-2xl overflow-hidden">
-              <div className="p-5 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#14171e] flex items-center justify-center text-blue-500">
-                    <PulseIcon />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className={`font-bold text-sm ${isDone ? 'text-gray-600 line-through' : ''}`}>{habit.title}</h3>
-                      <button onClick={() => setExpandedId(expandedId === habit.id ? null : habit.id)}><Info size={14} className="text-gray-600"/></button>
-                      <button onClick={() => setEditingHabit(habit)}><MoreVertical size={14} className="text-gray-600"/></button>
-                    </div>
-                    <p className="text-[9px] text-gray-500 uppercase mt-1">{habit.subtitle}</p>
-                  </div>
-                </div>
-                {/* Circle Toggle */}
-                <button onClick={() => toggleStatus(habit.id)}
-                  className={`w-12 h-12 rounded-full border-2 transition-all ${isDone ? 'bg-blue-600 border-blue-600 shadow-[0_0_15px_rgba(59,130,246,0.5)]' : 'border-blue-900/30'}`} />
-              </div>
+      {/* Main Content */}
+      <main className="max-w-xl mx-auto p-4 space-y-6">
+        <AnimatePresence mode="wait">
 
-              {/* Lens Drawer Down */}
-              {expandedId === habit.id && (
-                <div className="px-5 pb-5 pt-2 grid grid-cols-2 gap-4 text-[10px] bg-[#0e1117] border-t border-gray-900">
-                  <div><span className="text-blue-500 font-bold">STOIC:</span> <p className="text-gray-400">{habit.lens_stoic}</p></div>
-                  <div><span className="text-blue-500 font-bold">OPERATOR:</span> <p className="text-gray-400">{habit.lens_operator}</p></div>
-                  <div><span className="text-blue-500 font-bold">SCIENTIST:</span> <p className="text-gray-400">{habit.lens_scientist}</p></div>
-                  <div><span className="text-blue-500 font-bold">VISIONARY:</span> <p className="text-gray-400">{habit.lens_visionary}</p></div>
-                </div>
+          {/* DAILY VIEW */}
+          {view === 'DAILY' && (
+            <motion.div
+              key="daily"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              {/* Section 1: Absolute */}
+              <section className="space-y-3">
+                <h2 className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] pl-1">Absolute Habits</h2>
+                {prepareForRender(absoluteHabits).map(habit => (
+                  <DailyHabitRow
+                    key={habit.id}
+                    habit={habit}
+                    isLocked={isLocked}
+                    date={selectedDate}
+                    onToggle={toggleHabit}
+                  />
+                ))}
+                {absoluteHabits.length === 0 && !loading && (
+                  <div className="text-center p-8 text-slate-600 text-xs font-mono">NO ABSOLUTE HABITS FOUND</div>
+                )}
+              </section>
+
+              {/* Section 2: Frequency */}
+              {frequencyHabits.length > 0 && (
+                <section className="space-y-3">
+                  <h2 className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] pl-1">Frequency Targets</h2>
+                  {prepareForRender(frequencyHabits).map(habit => (
+                     <DailyHabitRow
+                     key={habit.id}
+                     habit={habit}
+                     isLocked={isLocked}
+                     date={selectedDate}
+                     onToggle={toggleHabit}
+                   />
+                  ))}
+                </section>
               )}
-            </div>
-          );
-        })}
-      </div>
+            </motion.div>
+          )}
 
-      {/* Edit Modal */}
-      {editingHabit && (
-        <EditHabitModal
-          habit={editingHabit}
-          onClose={() => setEditingHabit(null)}
-          onSave={fetchHabits}
-        />
-      )}
+          {/* WEEKLY VIEW */}
+          {view === 'WEEKLY' && (
+             <motion.div
+             key="weekly"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ duration: 0.2 }}
+           >
+             <WeeklyHabitMatrix habits={habits} selectedDate={selectedDate} />
+             <div className="mt-4 text-center text-[10px] text-slate-600 font-mono">
+               WEEKLY VIEW IS LOCKED • REVIEW ONLY
+             </div>
+           </motion.div>
+          )}
+
+          {/* MONTHLY VIEW */}
+          {view === 'MONTHLY' && (
+            <motion.div
+            key="monthly"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="flex flex-col items-center justify-center h-64 border border-dashed border-white/10 rounded-2xl bg-white/5"
+          >
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Macro Cycle View</p>
+            <span className="text-[10px] text-blue-500 mt-2 font-mono">COMING SOON</span>
+          </motion.div>
+          )}
+
+        </AnimatePresence>
+      </main>
     </div>
-  );
-}
-
-function PulseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-    </svg>
   );
 }
