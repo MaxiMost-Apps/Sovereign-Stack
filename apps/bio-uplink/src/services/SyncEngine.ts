@@ -16,6 +16,7 @@ export interface QueueItem {
 export const SyncEngine = {
   db: null as SQLiteDBConnection | null,
   sqlite: new SQLiteConnection(CapacitorSQLite),
+  lastPushTime: null as string | null,
 
   async init() {
     try {
@@ -49,7 +50,7 @@ export const SyncEngine = {
       INSERT INTO sync_queue (metric_type, value, unit, recorded_at, metadata, synced)
       VALUES (?, ?, ?, ?, ?, 0);
     `;
-    const values = [item.metric_type, item.value, item.unit, item.recorded_at, item.metadata];
+    const values = [item.metric_type, item.value, item.unit, item.recorded_at, JSON.stringify(item.metadata)];
 
     await this.db?.run(query, values);
     console.log(`Vaulted: ${item.metric_type} (${item.value})`);
@@ -89,6 +90,10 @@ export const SyncEngine = {
       } catch (e) {
         console.error(`Sync Failed for ${item.id}:`, e);
       }
+    }
+
+    if (successCount > 0) {
+        this.lastPushTime = new Date().toLocaleTimeString();
     }
 
     // Optional: Prune synced items to keep DB small

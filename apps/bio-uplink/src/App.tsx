@@ -7,6 +7,7 @@ import { MetricTransformer } from './services/MetricTransformer';
 function App() {
   const [logs, setLogs] = useState<string[]>(['Mule System Initialized...']);
   const [pendingCount, setPendingCount] = useState(0);
+  const [lastPush, setLastPush] = useState<string>('--:--');
   const [lastReading, setLastReading] = useState<GlucoseReading | null>(null);
 
   const addLog = (msg: string) => {
@@ -27,6 +28,9 @@ function App() {
   const updateVaultStats = async () => {
       const count = await SyncEngine.getPendingCount();
       setPendingCount(count);
+      if (SyncEngine.lastPushTime) {
+          setLastPush(SyncEngine.lastPushTime);
+      }
   };
 
   const runSniffCycle = async () => {
@@ -73,7 +77,7 @@ function App() {
   return (
     <div className="min-h-screen bg-black text-green-500 font-mono p-4 flex flex-col">
       <div className="flex justify-between items-center mb-6 border-b border-green-900 pb-2">
-        <h1 className="text-2xl font-bold tracking-widest">MULE HUD v2.0</h1>
+        <h1 className="text-2xl font-bold tracking-widest">MULE HUD v2.1</h1>
         <div className="text-xs text-gray-500">ID: SOVEREIGN-01</div>
       </div>
 
@@ -82,7 +86,10 @@ function App() {
         <div className="border border-gray-800 p-4 rounded bg-gray-900/50">
             <div className="text-xs text-gray-400 mb-1">VAULT (PENDING)</div>
             <div className="text-4xl font-bold text-white">{pendingCount}</div>
-            <div className="text-xs text-green-700 mt-1">SQLite Encrypted</div>
+            <div className="text-xs text-green-700 mt-1 flex justify-between">
+                <span>SQLite</span>
+                <span>Last Push: {lastPush}</span>
+            </div>
         </div>
         <div className="border border-gray-800 p-4 rounded bg-gray-900/50">
             <div className="text-xs text-gray-400 mb-1">LATEST VITAL</div>
