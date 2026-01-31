@@ -1,140 +1,131 @@
-import React from 'react';
-import { GripVertical, Info, MoreHorizontal, Check, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Info, MoreHorizontal, Check, Shield, Flame, Brain, Zap, Play } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ICON_MAP } from '@/data/sovereign_library';
 
 interface DailyHabitRowProps {
   habit: any;
   isLocked: boolean;
-  isReordering?: boolean;
-  onOpenInfo: (habit: any) => void;
-  onOpenConfig: (habit: any) => void;
-  onToggle: (id: string, value?: number) => void;
-  isLedgerMode?: boolean; // For "Reserves" view (inactive habits)
+  date: Date;
+  onToggle: (id: string, date?: number) => void;
+  onOpenConfig?: (habit: any) => void;
+  animationsEnabled?: boolean;
 }
 
-export const DailyHabitRow: React.FC<DailyHabitRowProps> = ({
-  habit,
-  isLocked,
-  isReordering = false,
-  onOpenInfo,
-  onOpenConfig,
-  onToggle,
-  isLedgerMode = false
-}) => {
-  // Safe Accessors
-  const metadata = habit.metadata || {};
-  const config = metadata.config || habit.default_config || {};
-  const visuals = metadata.visuals || habit.visuals || {};
+export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig, animationsEnabled = true }: DailyHabitRowProps) => {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const isCompleted = habit.completed;
 
-  const frequencyType = config.frequency_type || 'ABSOLUTE';
-  const targetValue = habit.target_value || config.target_days || 1; // Fallback logic
-  const currentValue = habit.current_value || 0;
+  const colorConfig: any = {
+    blue: { glow: 'rgba(59, 130, 246, 0.5)', text: 'text-blue-500', bg: 'bg-blue-500' },
+    red: { glow: 'rgba(239, 68, 68, 0.5)', text: 'text-red-500', bg: 'bg-red-500' },
+    amber: { glow: 'rgba(245, 158, 11, 0.5)', text: 'text-amber-500', bg: 'bg-amber-500' },
+    purple: { glow: 'rgba(168, 85, 247, 0.5)', text: 'text-purple-400', bg: 'bg-purple-500' },
+    emerald: { glow: 'rgba(16, 185, 129, 0.5)', text: 'text-emerald-400', bg: 'bg-emerald-500' },
+  };
+  const theme = colorConfig[habit.visual_color] || colorConfig.blue;
+  const frequencyType = habit.habit_type || 'ABSOLUTE';
 
-  const IconComponent = ICON_MAP[visuals.icon] || Check;
-  const colorClass = visuals.color || 'bg-blue-500';
-  const isCompleted = habit.status === 'completed';
-
-  // --- LEDGER MODE (Inactive) ---
-  if (isLedgerMode) {
-      return (
-        <div className="group flex items-center gap-4 bg-[#0A0F1C] px-4 py-3 rounded-lg border border-white/5 hover:border-blue-500/30 transition-all opacity-60 hover:opacity-100">
-           <div className={`w-8 h-8 rounded-md flex items-center justify-center ${colorClass} bg-opacity-10 text-white/50 group-hover:text-white`}>
-              <IconComponent size={16} />
-           </div>
-           <div className="flex-1">
-              <h4 className="text-sm font-bold text-gray-400 group-hover:text-white transition-colors">{habit.title}</h4>
-           </div>
-           <button
-             onClick={() => onToggle(habit.habit_id)} // Toggle effectively "Equips" it (sets to active)
-             className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500 text-blue-500 hover:text-white text-[10px] font-bold uppercase tracking-widest rounded transition-all flex items-center gap-2"
-           >
-             <Plus size={12} /> Equip
-           </button>
-        </div>
-      );
-  }
-
-  // --- ACTIVE MODE ---
   return (
-    <div className="group flex items-center gap-4 bg-[#0B1221] px-4 py-4 rounded-xl border border-white/5 hover:bg-white/[0.02] hover:border-white/10 transition-all animate-in fade-in duration-500 relative overflow-hidden">
+    <div className="bg-[#0A0F1C] border border-white/5 rounded-2xl overflow-hidden group">
+      <div className="flex items-center justify-between p-4">
 
-      {/* 1. Drag Handle (Visible ONLY if Reordering is true) */}
-      {isReordering && (
-        <div className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-white transition-colors animate-in slide-in-from-left-2 duration-200">
-          <GripVertical size={20} />
-        </div>
-      )}
-
-      {/* 2. Habit Icon & Title */}
-      <div className="flex items-center gap-4 flex-1">
-        <div
-          className={`w-10 h-10 rounded-lg flex items-center justify-center ${colorClass} bg-opacity-10 text-white shadow-[0_0_15px_-5px_rgba(255,255,255,0.1)]`}
-        >
-          <IconComponent size={20} />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h4 className={`text-sm font-bold tracking-tight transition-colors ${isCompleted ? 'text-gray-500 line-through' : 'text-white'}`}>
-                {habit.title}
-            </h4>
-
-            {/* Info and Edit Icons (Hidden if Locked) */}
-            {!isLocked && (
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Left Side: Title & Info */}
+        <div className="flex items-center gap-3 flex-1">
+          {/* Management Icons (Only visible when Unlocked) */}
+          {!isLocked && (
+            <div className="flex items-center gap-2 mr-2">
+              <button
+                onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+                className={`p-1 rounded hover:bg-white/10 ${isDrawerOpen ? 'text-blue-400' : 'text-slate-600'}`}
+              >
+                <Info size={18} />
+              </button>
+              {onOpenConfig && (
                 <button
-                  onClick={() => onOpenInfo(habit)}
-                  className="p-1 hover:bg-blue-400/10 text-gray-600 hover:text-blue-400 rounded-md transition-all"
-                  title="HQ / Info"
+                    onClick={() => onOpenConfig(habit)}
+                    className="p-1 rounded hover:bg-white/10 text-slate-600 hover:text-white"
                 >
-                  <Info size={14} />
+                    <MoreHorizontal size={18} />
                 </button>
+              )}
+            </div>
+          )}
+
+          <div>
+            <h3 className={`font-bold text-sm transition-colors ${isCompleted ? 'text-slate-500 line-through' : 'text-white'}`}>{habit.title}</h3>
+            <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">
+              {habit.description} {habit.stack_labels && `• ${habit.stack_labels}`}
+            </p>
+          </div>
+        </div>
+
+        {/* Right Side: Toggle Action */}
+        <div className="flex-shrink-0">
+             {frequencyType === 'ABSOLUTE' ? (
+                 <motion.button
+                    whileTap={animationsEnabled ? { scale: 0.9 } : {}}
+                    onClick={() => onToggle(habit.id, date.getTime())}
+                    className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all
+                        ${isCompleted ? `border-transparent ${theme.bg}` : 'border-slate-800 bg-transparent'}`}
+                    style={{ boxShadow: isCompleted ? `0 0 15px ${theme.glow}` : 'none' }}
+                 >
+                    {isCompleted && <Check size={20} className="text-white" strokeWidth={3} />}
+                 </motion.button>
+             ) : (
+                /* FREQUENCY LOGIC VISUAL */
                 <button
-                  onClick={() => onOpenConfig(habit)}
-                  className="p-1 hover:bg-white/10 text-gray-600 hover:text-gray-200 rounded-md transition-all"
-                  title="Config"
+                    onClick={() => onToggle(habit.id, date.getTime())}
+                    className="relative h-8 w-24 bg-black/40 rounded-full border border-white/10 overflow-hidden flex items-center justify-center group/pill hover:border-blue-500/30 transition-all"
                 >
-                  <MoreHorizontal size={14} />
+                    <div
+                        className={`absolute left-0 top-0 bottom-0 transition-all duration-500 ${theme.bg}`}
+                        style={{ width: isCompleted ? '100%' : '30%' }}
+                    />
+                    <span className="relative z-10 text-[10px] font-bold font-mono text-white drop-shadow-md">
+                        {isCompleted ? 'DONE' : 'LOG'}
+                    </span>
+                </button>
+             )}
+        </div>
+      </div>
+
+      {/* DRAWER: Identity Lenses */}
+      <AnimatePresence>
+        {isDrawerOpen && (
+          <motion.div
+            initial={animationsEnabled ? { height: 0, opacity: 0 } : false}
+            animate={animationsEnabled ? { height: 'auto', opacity: 1 } : { height: 'auto', opacity: 1 }}
+            exit={animationsEnabled ? { height: 0, opacity: 0 } : { height: 0, opacity: 0 }}
+            transition={{ duration: animationsEnabled ? 0.3 : 0 }}
+            className="bg-black/20 border-t border-white/5 overflow-hidden"
+          >
+            <div className="p-5 grid grid-cols-1 gap-4">
+               {(habit.lens_stoic || habit.lens_operator || habit.lens_scientist || habit.lens_visionary) ? (
+                 <>
+                   {habit.lens_stoic && <div className="space-y-1"><span className="text-[9px] font-black text-slate-500 flex items-center gap-1 uppercase tracking-widest"><Shield size={10}/> STOIC</span><p className="text-[11px] text-slate-300 leading-relaxed font-mono">{habit.lens_stoic}</p></div>}
+                   {habit.lens_operator && <div className="space-y-1"><span className="text-[9px] font-black text-red-500 flex items-center gap-1 uppercase tracking-widest"><Flame size={10}/> OPERATOR</span><p className="text-[11px] text-slate-300 leading-relaxed font-mono">{habit.lens_operator}</p></div>}
+                   {habit.lens_scientist && <div className="space-y-1"><span className="text-[9px] font-black text-blue-400 flex items-center gap-1 uppercase tracking-widest"><Brain size={10}/> SCIENTIST</span><p className="text-[11px] text-slate-300 leading-relaxed font-mono">{habit.lens_scientist}</p></div>}
+                   {habit.lens_visionary && <div className="space-y-1"><span className="text-[9px] font-black text-purple-400 flex items-center gap-1 uppercase tracking-widest"><Zap size={10}/> VISIONARY</span><p className="text-[11px] text-slate-300 leading-relaxed font-mono">{habit.lens_visionary}</p></div>}
+                 </>
+               ) : (
+                 <div className="text-center py-4">
+                    <p className="text-[10px] text-slate-600 font-mono italic">No lens directives configured.</p>
+                 </div>
+               )}
+            </div>
+
+            {habit.habit_type === 'TIMER' && (
+              <div className="px-5 pb-5 pt-0 flex items-center justify-between">
+                <span className="text-[10px] text-blue-500 font-black tracking-widest uppercase">ACTIVE PROTOCOL</span>
+                <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded-full text-[10px] font-bold text-white transition-colors">
+                    <Play size={10} /> START TIMER
                 </button>
               </div>
             )}
-          </div>
-           {/* Subtext removed for cleaner look as per V1.8 spec, unless necessary */}
-        </div>
-      </div>
-
-      {/* 3. VISUAL VARIANT (Absolute vs Frequency) */}
-      <div className="flex-shrink-0">
-         {frequencyType === 'ABSOLUTE' ? (
-             /* BINARY CHECKBOX (Simple Circle) */
-             <button
-                onClick={() => onToggle(habit.habit_id)}
-                className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                  isCompleted
-                  ? 'bg-blue-600 border-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.4)]'
-                  : 'border-white/20 hover:border-blue-500/50 hover:bg-white/5'
-                }`}
-              >
-                {isCompleted && <Check size={14} className="text-white animate-in zoom-in duration-200" strokeWidth={4} />}
-              </button>
-         ) : (
-             /* FREQUENCY PILL (Progress Bar Style) */
-             <button
-                onClick={() => onToggle(habit.habit_id, 1)} // Increment
-                className="relative h-8 w-24 bg-black/40 rounded-full border border-white/10 overflow-hidden flex items-center justify-center group/pill hover:border-blue-500/30 transition-all"
-             >
-                {/* Background Bar */}
-                <div
-                    className={`absolute left-0 top-0 bottom-0 transition-all duration-500 ${currentValue >= targetValue ? 'bg-green-500' : 'bg-blue-600'}`}
-                    style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
-                />
-
-                {/* Text Overlay */}
-                <span className="relative z-10 text-[10px] font-bold font-mono text-white drop-shadow-md">
-                    {currentValue} / {targetValue}
-                </span>
-             </button>
-         )}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
