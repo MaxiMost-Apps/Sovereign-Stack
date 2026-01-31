@@ -4,7 +4,7 @@ import { ToastProvider } from './core/components/Toast';
 import { AIProvider } from './core/context/AIContext';
 import { LensProvider } from '@/context/LensContext'; // V1.8 Lens System
 // import DashboardCore from './core/DashboardSingularity'; // REPLACED
-import { Dashboard } from './pages/Dashboard'; // NEW DASHBOARD
+import Dashboard from './pages/Dashboard'; // NEW DASHBOARD (Default Export)
 import LoginCore from './core/LoginCore'; // Mapped from LoginPage
 import AdminDiagnostics from './core/pages/AdminDiagnostics';
 import LibraryPage from './core/pages/LibraryPage';
