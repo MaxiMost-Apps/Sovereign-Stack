@@ -26,18 +26,19 @@ import {
 // Components
 import { DailyHabitRow } from '@/components/habits/DailyHabitRow';
 import { WeeklyMatrix } from '@/components/dashboard/WeeklyMatrix';
-import { HabitLibrary } from '@/components/library/HabitLibrary';
+import { EditHabitModal } from '@/components/habits/EditHabitModal';
 
-// Hooks (Assuming these exist based on previous context, if not, mock them)
+// Hooks
 import { useHabits } from '@/hooks/useHabits';
 
 export const Dashboard = () => {
-  const { habits, reorderHabits, toggleHabit } = useHabits();
+  const { habits, reorderHabits, toggleHabit, updateHabitConfig } = useHabits(); // added updateHabitConfig
 
   // UI State
   const [view, setView] = useState<'day' | 'week' | 'month'>('day');
   const [isLocked, setIsLocked] = useState(true); // Default to Locked (Safe Mode)
   const [isReordering, setIsReordering] = useState(false);
+  const [editingHabit, setEditingHabit] = useState<any | null>(null);
 
   // DnD Sensors
   const sensors = useSensors(
@@ -62,18 +63,24 @@ export const Dashboard = () => {
     }
   };
 
+  const handleSaveEdit = (updatedHabit: any) => {
+    // Call hook to update
+    updateHabitConfig(updatedHabit.habit_id || updatedHabit.id, updatedHabit);
+    setEditingHabit(null);
+  };
+
   return (
-    <div className="min-h-screen bg-[#020408] text-slate-200 pb-20">
+    <div className="min-h-full pb-20">
 
       {/* HEADER */}
-      <header className="sticky top-0 z-50 bg-[#020408]/80 backdrop-blur-md border-b border-white/5 px-4 py-4">
+      <header className="sticky top-0 z-40 bg-[#020408]/80 backdrop-blur-md border-b border-white/5 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-black tracking-[0.2em] uppercase text-white">
               Mission Control
             </h1>
             <span className="px-1.5 py-0.5 bg-blue-900/30 border border-blue-500/30 text-[10px] font-bold text-blue-400 rounded">
-              V2
+              V2.1
             </span>
           </div>
 
@@ -146,17 +153,23 @@ export const Dashboard = () => {
                 disabled={!isReordering} // Disable DnD logic if not reordering
               >
                 <div className="space-y-3">
-                  {habits.map((habit) => (
-                    <DailyHabitRow
-                      key={habit.id}
-                      habit={habit}
-                      isLocked={isLocked}
-                      isReordering={isReordering}
-                      onToggle={toggleHabit}
-                      onOpenInfo={() => console.log('Open Info', habit.id)}
-                      onOpenEdit={() => console.log('Open Edit', habit.id)}
-                    />
-                  ))}
+                  {habits.length === 0 ? (
+                    <div className="text-center p-10 text-slate-500 border border-dashed border-white/10 rounded-xl">
+                      No active protocols. Initialize one from the Library.
+                    </div>
+                  ) : (
+                    habits.map((habit) => (
+                      <DailyHabitRow
+                        key={habit.id}
+                        habit={habit}
+                        isLocked={isLocked}
+                        isReordering={isReordering}
+                        onToggle={toggleHabit}
+                        onOpenInfo={() => console.log('Open Info', habit.id)}
+                        onOpenEdit={() => setEditingHabit(habit)}
+                      />
+                    ))
+                  )}
                 </div>
               </SortableContext>
             </DndContext>
@@ -174,12 +187,19 @@ export const Dashboard = () => {
 
         </div>
 
-        {/* LIBRARY (Always visible at bottom for easy access) */}
-        <div className="pt-12 border-t border-white/5">
-          <HabitLibrary />
-        </div>
-
       </main>
+
+      <EditHabitModal
+        habit={editingHabit}
+        isOpen={!!editingHabit}
+        onClose={() => setEditingHabit(null)}
+        onSave={handleSaveEdit}
+        onDelete={(id) => {
+           // Mock delete or archive
+           console.log('Archive', id);
+           setEditingHabit(null);
+        }}
+      />
     </div>
   );
 };

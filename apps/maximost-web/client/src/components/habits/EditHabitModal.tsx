@@ -1,118 +1,147 @@
-import React, { useState } from 'react';
-import { X, Check } from 'lucide-react';
-import { ICON_MAP } from '@/data/sovereign_library';
+import React, { useState, useEffect } from 'react';
+import { X, Save, Trash2, Calendar } from 'lucide-react';
 
-export const EditHabitModal = ({ habit, onClose, onSave }: any) => {
-  const [title, setTitle] = useState(habit.title);
-  const [mode, setMode] = useState<'ABSOLUTE' | 'FREQUENCY'>(habit.default_config?.frequency_type || 'ABSOLUTE');
+interface EditHabitModalProps {
+  habit: any | null;
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (habitData: any) => void;
+  onDelete?: (habitId: string) => void;
+}
 
-  // METRICS
-  const [goal, setGoal] = useState(habit.metadata?.config?.target_value || 1);
-  const [unit, setUnit] = useState(habit.metadata?.config?.unit || 'reps');
-  const [freqDays, setFreqDays] = useState(habit.metadata?.config?.target_days || 7);
+export const EditHabitModal = ({ habit, isOpen, onClose, onSave, onDelete }: EditHabitModalProps) => {
+  const [formData, setFormData] = useState<any>({
+    title: '',
+    target_value: 1,
+    unit: 'reps',
+    frequency_type: 'ABSOLUTE',
+    frequency_days: []
+  });
 
-  // VISUALS
-  const [color, setColor] = useState(habit.visuals?.color || 'bg-blue-500');
-  const [iconKey, setIconKey] = useState(habit.visuals?.icon || 'Zap');
+  useEffect(() => {
+    if (habit) {
+      setFormData({
+        title: habit.title || '',
+        target_value: habit.default_config?.target_value || habit.target_value || 1,
+        unit: habit.metadata?.config?.unit || 'reps',
+        frequency_type: habit.default_config?.frequency_type || 'ABSOLUTE',
+        frequency_days: [] // TODO: Implement day selection logic if needed
+      });
+    }
+  }, [habit]);
 
-  // LENS
-  const [how, setHow] = useState(habit.lenses?.FORTITUDE?.how || '');
-  const [why, setWhy] = useState(habit.lenses?.FORTITUDE?.why || '');
-
-  const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-amber-500', 'bg-violet-600', 'bg-red-600', 'bg-cyan-600', 'bg-pink-500', 'bg-slate-500', 'bg-orange-500', 'bg-lime-500'];
-  const icons = Object.keys(ICON_MAP);
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in">
-      <div className="w-full max-w-xl bg-[#0B1221] border border-white/10 rounded-xl shadow-2xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-[100] flex justify-end pointer-events-none">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm pointer-events-auto"
+        onClick={onClose}
+      />
 
-        {/* HEADER */}
-        <div className="p-5 border-b border-white/5 flex justify-between items-center bg-slate-900/50 rounded-t-xl">
-          <h2 className="text-lg font-black tracking-widest uppercase text-white">Edit Protocol</h2>
-          <button onClick={onClose} className="text-slate-500 hover:text-white"><X size={20} /></button>
+      {/* Drawer */}
+      <div className="w-full max-w-md h-full bg-[#0A0F1C] border-l border-white/10 shadow-2xl pointer-events-auto flex flex-col transform transition-transform duration-300">
+
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/5">
+          <div>
+            <h2 className="text-lg font-black tracking-widest text-white uppercase">Protocol Config</h2>
+            <p className="text-xs text-slate-500 font-mono mt-1">
+              {habit?.id ? 'EDIT EXISTING PROTOCOL' : 'INITIALIZE NEW PROTOCOL'}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-colors">
+            <X size={20} />
+          </button>
         </div>
 
+        {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
-          {/* NAME */}
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Habit Name</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-slate-900/50 p-4 rounded-lg border border-white/5 text-white font-bold focus:border-blue-500 outline-none" />
+          {/* Field: Title */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Protocol Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none transition-colors font-mono"
+            />
           </div>
 
-          {/* MODE TOGGLE */}
-          <div className="bg-black/40 p-1 rounded-lg flex border border-white/5">
-             <button onClick={() => setMode('ABSOLUTE')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded transition-all ${mode === 'ABSOLUTE' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-600'}`}>Absolute</button>
-             <button onClick={() => setMode('FREQUENCY')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded transition-all ${mode === 'FREQUENCY' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-600'}`}>Frequency</button>
-          </div>
-
-          {/* FREQUENCY SLIDER (Only show if Frequency Mode) */}
-          {mode === 'FREQUENCY' && (
-            <div className="bg-slate-900/30 p-4 rounded-lg border border-white/5">
-               <div className="flex justify-between mb-2">
-                 <span className="text-[10px] font-bold text-slate-500 uppercase">Weekly Target</span>
-                 <span className="text-xs font-bold text-white">{freqDays} Days / Week</span>
-               </div>
-               <input type="range" min="1" max="7" value={freqDays} onChange={e => setFreqDays(parseInt(e.target.value))} className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" />
-            </div>
-          )}
-
-          {/* GOAL / UNIT */}
+          {/* Field: Target */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Goal (Daily)</label>
-              <input type="number" value={goal} onChange={e => setGoal(parseInt(e.target.value))} className="w-full bg-slate-900/50 p-4 rounded-lg border border-white/5 text-white font-mono focus:border-blue-500 outline-none" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Unit</label>
-              <input value={unit} onChange={e => setUnit(e.target.value)} className="w-full bg-slate-900/50 p-4 rounded-lg border border-white/5 text-white font-mono focus:border-blue-500 outline-none" />
-            </div>
+             <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Target Value</label>
+                <input
+                  type="number"
+                  value={formData.target_value}
+                  onChange={(e) => setFormData({...formData, target_value: parseInt(e.target.value)})}
+                  className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none transition-colors font-mono"
+                />
+             </div>
+             <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Unit</label>
+                <input
+                  type="text"
+                  value={formData.unit}
+                  onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                  className="w-full bg-black/50 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-blue-500 outline-none transition-colors font-mono"
+                  placeholder="e.g. mins"
+                />
+             </div>
           </div>
 
-          {/* VISUALS (SPLIT LAYOUT) */}
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Visuals</label>
-            <div className="grid grid-cols-2 gap-6">
-              {/* COLORS (Left) */}
-              <div className="grid grid-cols-5 gap-2 content-start">
-                {colors.map(c => (
-                  <button key={c} onClick={() => setColor(c)} className={`w-8 h-8 rounded-full ${c} flex items-center justify-center transition-transform hover:scale-110 ${color === c ? 'ring-2 ring-white scale-110' : 'opacity-70'}`}>
-                    {color === c && <Check size={14} className="text-white" />}
-                  </button>
+          {/* Field: Frequency */}
+          <div className="space-y-3">
+             <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+               <Calendar size={14} /> Frequency
+             </label>
+             <div className="flex gap-2 p-1 bg-black/30 rounded-lg border border-white/5">
+                {['Daily', 'Weekly'].map(type => (
+                   <button
+                     key={type}
+                     onClick={() => setFormData({...formData, frequency_type: type === 'Daily' ? 'ABSOLUTE' : 'FREQUENCY'})}
+                     className={`flex-1 py-2 text-xs font-bold uppercase rounded ${
+                        (formData.frequency_type === 'ABSOLUTE' && type === 'Daily') || (formData.frequency_type === 'FREQUENCY' && type === 'Weekly')
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-500 hover:text-white'
+                     }`}
+                   >
+                     {type}
+                   </button>
                 ))}
-              </div>
-              {/* ICONS (Right) */}
-              <div className="grid grid-cols-5 gap-2 h-32 overflow-y-auto pr-2 custom-scrollbar">
-                {icons.map(k => {
-                  const Icon = ICON_MAP[k];
-                  return (
-                    <button key={k} onClick={() => setIconKey(k)} className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${iconKey === k ? 'bg-white text-black border-white' : 'bg-slate-900 border-white/10 text-slate-500 hover:text-white'}`}>
-                      <Icon size={14} />
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* TEXT AREAS */}
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tactical (How)</label>
-            <textarea value={how} onChange={e => setHow(e.target.value)} className="w-full h-20 bg-slate-900/50 p-4 rounded-lg border border-white/5 text-slate-300 text-sm focus:border-blue-500 outline-none resize-none" />
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Identity (Why)</label>
-            <textarea value={why} onChange={e => setWhy(e.target.value)} className="w-full h-20 bg-slate-900/50 p-4 rounded-lg border border-white/5 text-slate-300 text-sm focus:border-blue-500 outline-none resize-none" />
+             </div>
           </div>
 
         </div>
 
-        {/* FOOTER */}
-        <div className="p-5 border-t border-white/5 bg-slate-950/50 flex justify-end gap-3 rounded-b-xl">
-          <button onClick={onClose} className="px-6 py-3 text-xs font-bold text-slate-500 hover:text-white uppercase tracking-widest">Cancel</button>
-          <button onClick={() => onSave({ ...habit, title, visuals: { color, icon: iconKey }, default_config: { frequency_type: mode, target_value: goal, unit, target_days: freqDays }, lenses: { FORTITUDE: { how, why } } })} className="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold tracking-widest shadow-lg uppercase">
-            Save Habit
-          </button>
+        {/* Footer */}
+        <div className="p-6 border-t border-white/5 bg-black/20 flex items-center justify-between gap-4">
+           {habit?.id && onDelete && (
+             <button
+               onClick={() => onDelete(habit.id)}
+               className="flex items-center gap-2 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 hover:bg-red-500/20 transition-all font-bold text-xs uppercase tracking-wider"
+             >
+               <Trash2 size={16} /> Archive
+             </button>
+           )}
+
+           <div className="flex gap-3 ml-auto w-full md:w-auto">
+             <button
+               onClick={onClose}
+               className="px-6 py-3 rounded-lg text-slate-400 hover:text-white font-bold text-xs uppercase tracking-wider"
+             >
+               Cancel
+             </button>
+             <button
+               onClick={() => onSave({ ...habit, ...formData })}
+               className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg text-white shadow-lg shadow-blue-900/20 font-bold text-xs uppercase tracking-wider transition-all"
+             >
+               <Save size={16} /> Initialize Protocol
+             </button>
+           </div>
         </div>
 
       </div>
