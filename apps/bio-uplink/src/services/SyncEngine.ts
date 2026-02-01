@@ -62,6 +62,26 @@ export const SyncEngine = {
     return res?.values?.[0]?.count || 0;
   },
 
+  async getSyncedTodayCount(): Promise<number> {
+    if (!this.db) await this.init();
+    // Rough "today" calculation based on recorded_at string comparison if ISO,
+    // or just count synced items. Since we prune synced items, this might be 0 always
+    // unless we delay pruning or track in a separate table.
+    // For now, we will assume we prune. So this might need a persistent counter or stats table.
+    // Let's implement a simple stats logic:
+    // We won't prune immediately in flushQueue for this to work, or we accept it resets on prune.
+    // Let's modify flushQueue to NOT prune immediately to allow this stat,
+    // OR we just return 0 for now if pruning is active.
+    // User asked for "Synced Today". Let's disable aggressive pruning for today's items.
+
+    const today = new Date().toISOString().split('T')[0];
+    const res = await this.db?.query(`
+        SELECT COUNT(*) as count FROM sync_queue
+        WHERE synced = 1 AND recorded_at LIKE '${today}%';
+    `);
+    return res?.values?.[0]?.count || 0;
+  },
+
   async flushQueue(): Promise<number> {
     if (!this.db) await this.init();
 
@@ -84,7 +104,7 @@ export const SyncEngine = {
             metadata: JSON.parse(item.metadata || '{}')
         });
 
-        // 3. Mark Synced (or delete)
+        // 3. Mark Synced
         await this.db?.run('UPDATE sync_queue SET synced = 1 WHERE id = ?', [item.id]);
         successCount++;
       } catch (e) {
@@ -96,8 +116,10 @@ export const SyncEngine = {
         this.lastPushTime = new Date().toLocaleTimeString();
     }
 
-    // Optional: Prune synced items to keep DB small
-    await this.db?.run('DELETE FROM sync_queue WHERE synced = 1');
+    // Prune items older than 24 hours that are synced
+    // This keeps "Synced Today" accurate-ish while preventing bloat
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    await this.db?.run(`DELETE FROM sync_queue WHERE synced = 1 AND recorded_at < '${yesterday}'`);
 
     return successCount;
   }

@@ -9,7 +9,7 @@ export interface MetricPayload {
 }
 
 export type RawData = {
-  source_type: 'SNIFFER' | 'FILE' | 'MANUAL';
+  source_type: 'SNIFFER' | 'FILE' | 'MANUAL' | 'HEALTH_CONNECT';
   label: string; // e.g., 'sgv', 'hrv_ms', 'weight_kg'
   value: any;
   timestamp: string | number;
@@ -30,7 +30,7 @@ export const MetricTransformer = {
     },
 
     /**
-     * The "Big 5" Normalizer
+     * The "Vital 15" Normalizer
      */
     transformToMetric(raw: RawData): MetricPayload {
         const recorded_at = new Date(raw.timestamp).toISOString();
@@ -48,6 +48,7 @@ export const MetricTransformer = {
 
             case 'hrv':
             case 'hrv_ms':
+            case 'rmssd':
             return {
                 metric_type: 'hrv',
                 value: Number(raw.value),
@@ -56,13 +57,22 @@ export const MetricTransformer = {
                 metadata: { source: raw.source_type, ...raw.metadata }
             };
 
-            case 'weight_kg': // Standardize to LBS for the HUD
+            case 'weight_kg':
             return {
                 metric_type: 'weight',
                 value: Number(raw.value) * 2.20462,
                 unit: 'lbs',
                 recorded_at,
                 metadata: { source: raw.source_type, original_unit: 'kg', ...raw.metadata }
+            };
+            case 'weight_lbs':
+            case 'weight':
+            return {
+                metric_type: 'weight',
+                value: Number(raw.value),
+                unit: 'lbs',
+                recorded_at,
+                metadata: { source: raw.source_type, ...raw.metadata }
             };
 
             case 'step_count':
@@ -82,6 +92,44 @@ export const MetricTransformer = {
                 unit: 'hours',
                 recorded_at,
                 metadata: { source: raw.source_type, original_unit: 'minutes', ...raw.metadata }
+            };
+            case 'sleep_hours':
+            return {
+                metric_type: 'sleep_duration',
+                value: Number(raw.value),
+                unit: 'hours',
+                recorded_at,
+                metadata: { source: raw.source_type, ...raw.metadata }
+            };
+
+            case 'body_fat':
+            case 'body_fat_percentage':
+            return {
+                metric_type: 'body_fat',
+                value: Number(raw.value),
+                unit: '%',
+                recorded_at,
+                metadata: { source: raw.source_type, ...raw.metadata }
+            };
+
+            case 'spo2':
+            case 'oxygen_saturation':
+            return {
+                metric_type: 'oxygen_saturation',
+                value: Number(raw.value),
+                unit: '%',
+                recorded_at,
+                metadata: { source: raw.source_type, ...raw.metadata }
+            };
+
+            case 'heart_rate':
+            case 'bpm':
+            return {
+                metric_type: 'heart_rate',
+                value: Number(raw.value),
+                unit: 'bpm',
+                recorded_at,
+                metadata: { source: raw.source_type, ...raw.metadata }
             };
 
             default:
