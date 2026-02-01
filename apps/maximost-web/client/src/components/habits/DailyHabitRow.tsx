@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Info, MoreHorizontal, Check, Shield, Flame, Brain, Zap, Play } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ICON_MAP } from '@/data/sovereign_library';
 
 interface DailyHabitRowProps {
   habit: any;
@@ -10,9 +9,10 @@ interface DailyHabitRowProps {
   onToggle: (id: string, date?: number) => void;
   onOpenConfig?: (habit: any) => void;
   animationsEnabled?: boolean;
+  activeLens?: string;
 }
 
-export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig, animationsEnabled = true }: DailyHabitRowProps) => {
+export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig, animationsEnabled = true, activeLens = 'stoic' }: DailyHabitRowProps) => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isCompleted = habit.completed;
 
@@ -25,6 +25,19 @@ export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig, a
   };
   const theme = colorConfig[habit.visual_color] || colorConfig.blue;
   const frequencyType = habit.habit_type || 'ABSOLUTE';
+
+  // Resolve Active Lens Data
+  const getLensData = () => {
+      switch (activeLens) {
+          case 'operator': return { icon: Flame, color: 'text-red-500', label: 'OPERATOR', text: habit.lens_operator };
+          case 'scientist': return { icon: Brain, color: 'text-blue-400', label: 'SCIENTIST', text: habit.lens_scientist };
+          case 'visionary': return { icon: Zap, color: 'text-purple-400', label: 'VISIONARY', text: habit.lens_visionary };
+          case 'stoic':
+          default: return { icon: Shield, color: 'text-slate-500', label: 'STOIC', text: habit.lens_stoic };
+      }
+  };
+  const lensData = getLensData();
+  const LensIcon = lensData.icon;
 
   return (
     <div className="bg-[#0A0F1C] border border-white/5 rounded-2xl overflow-hidden group">
@@ -100,17 +113,17 @@ export const DailyHabitRow = ({ habit, isLocked, date, onToggle, onOpenConfig, a
             transition={{ duration: animationsEnabled ? 0.3 : 0 }}
             className="bg-black/20 border-t border-white/5 overflow-hidden"
           >
-            <div className="p-5 grid grid-cols-1 gap-4">
-               {(habit.lens_stoic || habit.lens_operator || habit.lens_scientist || habit.lens_visionary) ? (
-                 <>
-                   {habit.lens_stoic && <div className="space-y-1"><span className="text-[9px] font-black text-slate-500 flex items-center gap-1 uppercase tracking-widest"><Shield size={10}/> STOIC</span><p className="text-[11px] text-slate-300 leading-relaxed font-mono">{habit.lens_stoic}</p></div>}
-                   {habit.lens_operator && <div className="space-y-1"><span className="text-[9px] font-black text-red-500 flex items-center gap-1 uppercase tracking-widest"><Flame size={10}/> OPERATOR</span><p className="text-[11px] text-slate-300 leading-relaxed font-mono">{habit.lens_operator}</p></div>}
-                   {habit.lens_scientist && <div className="space-y-1"><span className="text-[9px] font-black text-blue-400 flex items-center gap-1 uppercase tracking-widest"><Brain size={10}/> SCIENTIST</span><p className="text-[11px] text-slate-300 leading-relaxed font-mono">{habit.lens_scientist}</p></div>}
-                   {habit.lens_visionary && <div className="space-y-1"><span className="text-[9px] font-black text-purple-400 flex items-center gap-1 uppercase tracking-widest"><Zap size={10}/> VISIONARY</span><p className="text-[11px] text-slate-300 leading-relaxed font-mono">{habit.lens_visionary}</p></div>}
-                 </>
+            <div className="p-5">
+               {lensData.text ? (
+                 <div className="space-y-1">
+                    <span className={`text-[9px] font-black flex items-center gap-1 uppercase tracking-widest ${lensData.color}`}>
+                        <LensIcon size={10}/> {lensData.label} DIRECTIVE
+                    </span>
+                    <p className="text-[11px] text-slate-300 leading-relaxed font-mono">{lensData.text}</p>
+                 </div>
                ) : (
-                 <div className="text-center py-4">
-                    <p className="text-[10px] text-slate-600 font-mono italic">No lens directives configured.</p>
+                 <div className="text-center py-2">
+                    <p className="text-[10px] text-slate-600 font-mono italic">No directive for {lensData.label} identity.</p>
                  </div>
                )}
             </div>

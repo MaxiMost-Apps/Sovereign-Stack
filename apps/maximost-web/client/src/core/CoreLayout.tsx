@@ -21,16 +21,13 @@ const CoreLayout: React.FC<CoreLayoutProps> = ({ children }) => {
   const handleSignOut = async () => {
       try {
         // Clear Local Storage State
-        localStorage.removeItem('dashboard_locked');
-        localStorage.removeItem('maximost-theme-lock'); // Specific request
-        localStorage.removeItem('supabase.auth.token');
-
+        localStorage.clear();
         await signOut();
-        navigate('/login');
+        window.location.href = '/login';
       } catch (error) {
         console.error('Logout error:', error);
         // Force redirect anyway
-        navigate('/login');
+        window.location.href = '/login';
       }
   };
 
